@@ -1,57 +1,224 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Connect TronLink Example</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Tron DEX Swap</title>
   <style>
-    body { font-family: Arial, sans-serif; margin: 2em; }
-    #address { font-weight: bold; color: #2d8cf0; }
-    #connectBtn { padding: 0.5em 1em; font-size: 1em; }
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f0f2f5;
+      color: #333;
+      padding: 2rem;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .container {
+      width: 100%;
+      max-width: 480px;
+      background: #fff;
+      padding: 2rem;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 1rem;
+    }
+    button {
+      background: #007bff;
+      color: white;
+      border: none;
+      padding: 0.75rem 1.5rem;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 1rem;
+      margin-top: 1rem;
+    }
+    button:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+    .wallet-box, .balances, .status, .swap-form {
+      margin-top: 1.5rem;
+      background: #f8f9fa;
+      padding: 1rem;
+      border-radius: 8px;
+    }
+    .row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 0.5rem;
+    }
+    .status-line {
+      margin: 0.5rem 0;
+    }
+    input[type="number"] {
+      width: 100%;
+      padding: 0.5rem;
+      margin-top: 0.5rem;
+      font-size: 1rem;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+    .dot-anim::after {
+      content: ' .';
+      animation: dots 1s steps(3, end) infinite;
+    }
+    @keyframes dots {
+      0% { content: ' .'; }
+      33% { content: ' ..'; }
+      66% { content: ' ...'; }
+    }
+    .success { color: green; }
+    .error { color: red; }
   </style>
 </head>
 <body>
-  <h2>Connect TronLink Wallet</h2>
-  <button id="connectBtn">Connect TronLink</button>
-  <div id="status"></div>
-  <div>
-    <p>Your wallet address: <span id="address">Not connected</span></p>
+  <div class="container">
+    <h1>Tron DEX Swap</h1>
+    <button id="connectBtn">Connect Wallet</button>
+
+    <div class="wallet-box" id="walletBox" style="display: none;">
+      <strong>Wallet Address:</strong>
+      <div id="walletAddress"></div>
+    </div>
+
+    <div class="balances" id="balances" style="display: none;">
+      <div class="row"><span>TRX:</span><span id="trxBalance">-</span></div>
+      <div class="row"><span>ZSD:</span><span id="zsdBalance">-</span></div>
+      <div class="row"><span>ZYS:</span><span id="zysBalance">-</span></div>
+    </div>
+
+    <div class="swap-form" id="swapForm" style="display: none;">
+      <label for="amount">ZSD Amount:</label>
+      <input type="number" id="amount" min="0" step="0.000001" placeholder="Enter amount" />
+      <button id="swapBtn">Swap</button>
+    </div>
+
+    <div class="status" id="statusBox" style="display: none;">
+      <h4>Status:</h4>
+      <div id="statusLog"></div>
+    </div>
   </div>
 
   <script>
     const connectBtn = document.getElementById('connectBtn');
-    const addressSpan = document.getElementById('address');
-    const statusDiv = document.getElementById('status');
+    const walletBox = document.getElementById('walletBox');
+    const walletAddressDiv = document.getElementById('walletAddress');
+    const balancesBox = document.getElementById('balances');
+    const trxBalanceEl = document.getElementById('trxBalance');
+    const zsdBalanceEl = document.getElementById('zsdBalance');
+    const zysBalanceEl = document.getElementById('zysBalance');
+    const swapBtn = document.getElementById('swapBtn');
+    const amountInput = document.getElementById('amount');
+    const statusBox = document.getElementById('statusBox');
+    const statusLog = document.getElementById('statusLog');
+    const swapForm = document.getElementById('swapForm');
 
-    async function connectTronLink() {
-      if (!window.tronLink || !window.tronWeb) {
-        statusDiv.textContent = "TronLink extension not found. Please install TronLink and refresh.";
-        return;
-      }
-      try {
-        // Request connection if not already connected
-        if (!window.tronWeb.defaultAddress.base58) {
-          const res = await window.tronLink.request({ method: 'tron_requestAccounts' });
-          if (res.code !== 200) {
-            statusDiv.textContent = "Connection to TronLink rejected.";
-            return;
-          }
-        }
-        // Display connected address
-        addressSpan.textContent = window.tronWeb.defaultAddress.base58;
-        statusDiv.textContent = "TronLink connected!";
-      } catch (err) {
-        statusDiv.textContent = "Error connecting to TronLink: " + err.message;
+    const ZSD = 'TENgTiMGSwRJPe6GQSV5WHmvomzonGjQt8';
+    const ZYS = 'TNXQp3YVmLEf1dZXzqJathi12vHAqGXcjE';
+    const DEX = 'TE5uCHMRNRsCc7aQo9WCy6Q5iKT42UKf61';
+    const DECIMALS = 12;
+
+    const DEX_ABI = {
+      "entrys":[
+        {"inputs":[{"name":"_tokenA","type":"address"},{"name":"_tokenB","type":"address"}],"stateMutability":"Nonpayable","type":"Constructor"},
+        {"inputs":[{"indexed":true,"name":"user","type":"address"},{"name":"amountA","type":"uint256"},{"name":"amountB","type":"uint256"}],"name":"Swapped","type":"Event"},
+        {"outputs":[{"type":"address"}],"name":"owner","stateMutability":"View","type":"Function"},
+        {"outputs":[{"type":"uint256"}],"name":"rateDenominator","stateMutability":"View","type":"Function"},
+        {"outputs":[{"type":"uint256"}],"name":"rateNumerator","stateMutability":"View","type":"Function"},
+        {"inputs":[{"name":"amountA","type":"uint256"}],"name":"swapAForB","stateMutability":"Nonpayable","type":"Function"},
+        {"outputs":[{"type":"address"}],"name":"tokenA","stateMutability":"View","type":"Function"},
+        {"outputs":[{"type":"address"}],"name":"tokenB","stateMutability":"View","type":"Function"},
+        {"inputs":[{"name":"token","type":"address"},{"name":"amount","type":"uint256"}],"name":"withdraw","stateMutability":"Nonpayable","type":"Function"}
+      ]
+    };
+
+    let address = null;
+    let tronWeb = null;
+
+    async function logStatus(msg, success = null, delay = 1000) {
+      const p = document.createElement('div');
+      p.className = 'status-line dot-anim';
+      p.textContent = msg;
+      statusLog.appendChild(p);
+      statusBox.style.display = 'block';
+      await new Promise(res => setTimeout(res, delay));
+      p.classList.remove('dot-anim');
+      if (success === true) {
+        p.innerHTML += ' <span class="success">✔</span>';
+      } else if (success === false) {
+        p.innerHTML += ' <span class="error">✘</span>';
       }
     }
 
-    connectBtn.onclick = connectTronLink;
+    async function connectWallet() {
+      try {
+        if (!window.tronWeb || !window.tronWeb.defaultAddress.base58) {
+          throw new Error('TronLink is not installed or unlocked.');
+        }
+        tronWeb = window.tronWeb;
+        address = tronWeb.defaultAddress.base58;
+        walletAddressDiv.textContent = address;
+        walletBox.style.display = 'block';
+        await updateBalances();
+        swapForm.style.display = 'block';
+      } catch (e) {
+        alert('Error: ' + e.message);
+      }
+    }
 
-    // Auto-detect TronLink and update address if already connected
-    window.addEventListener('DOMContentLoaded', () => {
-      if (window.tronWeb && window.tronWeb.defaultAddress.base58) {
-        addressSpan.textContent = window.tronWeb.defaultAddress.base58;
-        statusDiv.textContent = "TronLink connected!";
+    async function updateBalances() {
+      const trx = await tronWeb.trx.getBalance(address);
+      trxBalanceEl.textContent = (trx / 1e6).toFixed(2);
+
+      const zsdContract = await tronWeb.contract().at(ZSD);
+      const zysContract = await tronWeb.contract().at(ZYS);
+
+      const zsdBalance = await zsdContract.balanceOf(address).call();
+      const zysBalance = await zysContract.balanceOf(address).call();
+
+      zsdBalanceEl.textContent = (BigInt(zsdBalance.toString()) / 10n ** BigInt(DECIMALS)).toString();
+      zysBalanceEl.textContent = (BigInt(zysBalance.toString()) / 10n ** BigInt(DECIMALS)).toString();
+      balancesBox.style.display = 'block';
+    }
+
+    connectBtn.addEventListener('click', connectWallet);
+
+    swapBtn.addEventListener('click', async () => {
+      const amount = parseFloat(amountInput.value);
+      if (isNaN(amount) || amount <= 0) {
+        return alert('Enter a valid amount.');
+      }
+
+      statusLog.innerHTML = '';
+      const zsdContract = await tronWeb.contract().at(ZSD);
+      const dexContract = await tronWeb.contract(DEX_ABI.entrys, DEX);
+      const amountInSun = BigInt(Math.floor(amount * 10 ** DECIMALS));
+
+      try {
+        await logStatus('Checking ZSD allowance...');
+        const allowance = await zsdContract.allowance(address, DEX).call();
+        const allowanceAmount = BigInt(allowance.toString());
+
+        if (allowanceAmount < amountInSun) {
+          await logStatus('Requesting approval for ZSD...');
+          await zsdContract.approve(DEX, amountInSun.toString()).send();
+          await logStatus('Waiting for approval transaction confirmation...', true, 2000);
+        } else {
+          await logStatus('Allowance sufficient!', true);
+        }
+
+        await logStatus('Initiating swap on DEX...');
+        const tx = await dexContract.swapAForB(amountInSun.toString()).send();
+        await logStatus('Waiting for swap transaction confirmation...', true, 2000);
+        await logStatus(`Swap successful! <a href="https://nile.tronscan.org/#/transaction/${tx}" target="_blank">View on Tronscan</a>`, true);
+        await updateBalances();
+      } catch (e) {
+        await logStatus('Swap failed: ' + e.message, false);
       }
     });
   </script>
