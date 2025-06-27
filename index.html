@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Connect TronLink Example</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body { font-family: Arial, sans-serif; margin: 2em; }
+    #address { font-weight: bold; color: #2d8cf0; }
+    #connectBtn { padding: 0.5em 1em; font-size: 1em; }
+  </style>
+</head>
+<body>
+  <h2>Connect TronLink Wallet</h2>
+  <button id="connectBtn">Connect TronLink</button>
+  <div id="status"></div>
+  <div>
+    <p>Your wallet address: <span id="address">Not connected</span></p>
+  </div>
+
+  <script>
+    const connectBtn = document.getElementById('connectBtn');
+    const addressSpan = document.getElementById('address');
+    const statusDiv = document.getElementById('status');
+
+    async function connectTronLink() {
+      if (!window.tronLink || !window.tronWeb) {
+        statusDiv.textContent = "TronLink extension not found. Please install TronLink and refresh.";
+        return;
+      }
+      try {
+        // Request connection if not already connected
+        if (!window.tronWeb.defaultAddress.base58) {
+          const res = await window.tronLink.request({ method: 'tron_requestAccounts' });
+          if (res.code !== 200) {
+            statusDiv.textContent = "Connection to TronLink rejected.";
+            return;
+          }
+        }
+        // Display connected address
+        addressSpan.textContent = window.tronWeb.defaultAddress.base58;
+        statusDiv.textContent = "TronLink connected!";
+      } catch (err) {
+        statusDiv.textContent = "Error connecting to TronLink: " + err.message;
+      }
+    }
+
+    connectBtn.onclick = connectTronLink;
+
+    // Auto-detect TronLink and update address if already connected
+    window.addEventListener('DOMContentLoaded', () => {
+      if (window.tronWeb && window.tronWeb.defaultAddress.base58) {
+        addressSpan.textContent = window.tronWeb.defaultAddress.base58;
+        statusDiv.textContent = "TronLink connected!";
+      }
+    });
+  </script>
+</body>
+</html>
