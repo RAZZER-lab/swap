@@ -23,3 +23,45 @@ GitHub: Build, test, and refine the tools.
 
 Zephyr stays private at its core
 —but L2 grows where the world needs it.
+#
+
+Zephyr Layer 2 Yield Shares - Swap Interface (Testnet v0.01) Latest
+#
+
+Zephyr Yield Shares - Swap Interface (Testnet v0.01)
+Minimal Private Swap Hosting
+This index.html is the only file required to control your swaps on Zephyr Yield Shares (Testnet). Host it locally for maximum privacy.
+
+🚀 Quick Start (Testnet)
+
+- Set Up TronLink on webbrowser
+- Install and switch to TRON Nile Testnet.
+![image](https://github.com/user-attachments/assets/806dd3ef-2120-4287-8699-0c07c4002eb7)
+
+
+- Get free test TRX from Nile Testnet Faucet.
+![image](https://github.com/user-attachments/assets/8c143be7-cf2b-4987-b658-84129e2b0c64)
+
+
+- Host Locally (Recommended for Privacy)
+Create a folder, add index.html, then run:
+![image](https://github.com/user-attachments/assets/5b96260c-fbc0-4b5f-9e0a-4cb4bdd38949)
+
+
+python3 -m http.server 8000
+![image](https://github.com/user-attachments/assets/c728e1a5-34e0-4d99-b852-0c5fa67c33a2)
+
+
+Access at: http://localhost:8000
+![image](https://github.com/user-attachments/assets/0981f1a0-ab00-48c4-a90a-a2e6798644a0)
+
+#
+For Extra Security
+#
+Use a Linux VM (e.g., VirtualBox) to isolate the environment.
+
+⚠️ Important Notes
+Testnet Only: Expect bugs.
+
+Self-Hosting = Privacy: Avoid third-party servers.
+Linux VM: Recommended to reduce OS-level leaks.
