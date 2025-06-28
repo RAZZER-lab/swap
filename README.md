@@ -13,6 +13,7 @@ L2 = Privacy + Usability (For broader adoption, integrating with systems like TR
 
 Zephyr Yield Shares (ZYS): The Next Frontier
 The community is now building Layer 2 tools, starting with ZYS (Zephyr Yield Shares), designed to:
+
 ✅ Integrate seamlessly with TRON’s ecosystem.
 ✅ Preserve maximal privacy where possible.
 ✅ Enable yield strategies without sacrificing core ZEPH values.
