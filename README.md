@@ -66,3 +66,12 @@ Testnet Only: Expect bugs.
 
 Self-Hosting = Privacy: Avoid third-party servers.
 Linux VM: Recommended to reduce OS-level leaks.
+#
+For maximum privacy It must be on localhost
+Othervise everyone can inject code and fuck around
+You use firefox? on ubuntu VM?
+I think it is scam TRONLINK app on firefox
+You must use brave
+or crome
+And if it always close when you use text editor
+Use a paper to create TRONLINK 🙂 
