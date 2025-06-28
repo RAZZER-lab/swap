@@ -24,19 +24,21 @@
       margin-bottom: 2rem;
       border-bottom: 1px dashed #666;
       padding-bottom: 0.5rem;
+      text-transform: uppercase;
     }
     .section {
-      margin: 1rem 0;
+      margin: 1.5rem 0;
     }
     button, input {
       font-family: monospace;
       font-size: 1rem;
-      padding: 0.5rem 1rem;
+      padding: 0.75rem 1rem;
       margin-top: 0.5rem;
       background: #000;
       color: #fff;
       border: 1px solid #fff;
       width: 100%;
+      transition: 0.3s;
     }
     input {
       margin-bottom: 0.5rem;
@@ -49,18 +51,18 @@
     .status {
       margin-top: 2rem;
       white-space: pre-line;
-      border-top: 1px dashed #444;
       padding-top: 1rem;
       color: #0f0;
+      font-size: 0.9rem;
     }
-    .error { color: #f00; }
-    .success { color: #0f0; }
+    .error { color: #f33; font-weight: bold; }
+    .success { color: #0f0; font-weight: bold; }
     .link {
       color: #0ff;
       text-decoration: underline;
     }
     .balance {
-      font-size: 0.95rem;
+      font-size: 1rem;
       margin-top: 0.3rem;
       color: #ccc;
     }
@@ -69,6 +71,18 @@
       padding: 1rem;
       border: 1px solid #333;
       margin-top: 1rem;
+    }
+    .dot-animate::after {
+      content: '';
+      display: inline-block;
+      width: 1ch;
+      animation: dots 1s steps(3, end) infinite;
+    }
+    @keyframes dots {
+      0% { content: ''; }
+      33% { content: '.'; }
+      66% { content: '..'; }
+      100% { content: '...'; }
     }
   </style>
 </head>
@@ -128,7 +142,7 @@
 
     let tronWeb, userAddress;
 
-    const delay = ms => new Promise(res => setTimeout(res, ms));
+    const sleep = ms => new Promise(res => setTimeout(res, ms));
 
     function log(msg, type='') {
       const div = document.createElement('div');
@@ -137,10 +151,31 @@
       statusBox.appendChild(div);
     }
 
+    async function waitForTronLink() {
+      const maxRetries = 30;
+      for (let i = 0; i < maxRetries; i++) {
+        if (window.tronWeb && window.tronWeb.defaultAddress.base58) {
+          return true;
+        }
+        await sleep(500);
+      }
+      return false;
+    }
+
     async function connectWallet() {
-      if (!window.tronWeb || !window.tronWeb.defaultAddress.base58) {
-        log('TronLink not found or not unlocked', 'error');
+      statusBox.innerHTML = '';
+      if (!window.tronWeb) {
+        log("❌ TronLink not found. Install TronLink extension.", "error");
         return;
+      }
+
+      if (!tronWeb?.defaultAddress?.base58) {
+        try {
+          await window.tronWeb.request({ method: 'tron_requestAccounts' });
+        } catch (e) {
+          log("❌ Access to TronLink denied.", "error");
+          return;
+        }
       }
 
       tronWeb = window.tronWeb;
@@ -164,7 +199,7 @@
       statusBox.innerHTML = '';
       const amount = parseFloat(amountInput.value);
       if (isNaN(amount) || amount <= 0) {
-        log('Invalid amount', 'error');
+        log('❌ Invalid amount', 'error');
         return;
       }
 
@@ -174,30 +209,31 @@
 
       try {
         log("Step 1: Checking ZSD allowance...");
-        await delay(1000);
+        await sleep(1000);
+
         const allowance = await zsdC.allowance(userAddress, DEX).call();
         if (BigInt(allowance.toString()) < fullAmount) {
           log("Step 2: Requesting approval for ZSD...");
-          await delay(1000);
+          await sleep(1000);
           await zsdC.approve(DEX, fullAmount.toString()).send();
           log("Step 3: Waiting for approval transaction confirmation...");
-          await delay(2000);
+          await sleep(2000);
         } else {
           log("✔ Allowance sufficient!", "success");
         }
 
         log("Step 4: Initiating swap on DEX...");
-        await delay(1000);
+        await sleep(1000);
         const tx = await dexC.swapAForB(fullAmount.toString()).send();
         log("Step 5: Waiting for swap transaction confirmation...");
-        await delay(2000);
+        await sleep(2000);
 
         log("✔ Swap successful!", "success");
         const a = document.createElement('a');
         a.href = `https://nile.tronscan.org/#/transaction/${tx}`;
         a.target = "_blank";
         a.className = "link";
-        a.textContent = "View on Tronscan";
+        a.textContent = "[ View on Tronscan ]";
         statusBox.appendChild(a);
 
       } catch (err) {
@@ -207,6 +243,14 @@
 
     connectBtn.addEventListener('click', connectWallet);
     swapBtn.addEventListener('click', executeSwap);
+
+    window.addEventListener("load", async () => {
+      const ok = await waitForTronLink();
+      if (!ok) {
+        log("❌ TronLink not found or not unlocked", "error");
+      }
+    });
   </script>
 </body>
 </html>
+
