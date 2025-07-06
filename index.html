@@ -1,1525 +1,414 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Guild Fight 5 vs 5 - Enhanced</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-        
-        body {
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-            color: #fff;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-            overflow: hidden;
-        }
-        
-        .game-container {
-            position: relative;
-            width: 100%;
-            max-width: 1280px;
-            aspect-ratio: 16/9;
-            margin: 0 auto;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-            border-radius: 10px;
-            overflow: hidden;
-            background: #0f1923;
-        }
-        
-        #gameCanvas {
-            display: block;
-            width: 100%;
-            height: 100%;
-            background: radial-gradient(circle at center, #1c2837 0%, #0f1923 100%);
-        }
-        
-        .header {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            padding: 15px 20px;
-            background: rgba(15, 25, 35, 0.8);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 2px solid #2a3a4a;
-            z-index: 10;
-        }
-        
-        .header h1 {
-            font-size: 28px;
-            background: linear-gradient(45deg, #ff6b6b, #ff8e53);
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-        }
-        
-        .score-container {
-            display: flex;
-            gap: 30px;
-        }
-        
-        .score {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-        
-        .score-label {
-            font-size: 14px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            color: #8a9ba8;
-            margin-bottom: 5px;
-        }
-        
-        .score-value {
-            font-size: 32px;
-            font-weight: bold;
-        }
-        
-        .red-score .score-value {
-            color: #ff6b6b;
-        }
-        
-        .green-score .score-value {
-            color: #4ecdc4;
-        }
-        
-        #sidebar {
-            position: absolute;
-            top: 0;
-            right: -250px;
-            width: 250px;
-            height: 100%;
-            background: rgba(15, 25, 35, 0.95);
-            color: #fff;
-            padding: 20px;
-            box-sizing: border-box;
-            overflow-y: auto;
-            transition: right 0.4s ease;
-            z-index: 100;
-            backdrop-filter: blur(10px);
-            border-left: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        
-        #sidebar.visible {
-            right: 0;
-        }
-        
-        #sidebar h2 {
-            margin-bottom: 20px;
-            padding-bottom: 10px;
-            border-bottom: 2px solid #ff6b6b;
-            color: #ff8e53;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
-        .close-btn {
-            background: none;
-            border: none;
-            color: #ff6b6b;
-            font-size: 20px;
-            cursor: pointer;
-            width: 30px;
-            height: 30px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: background 0.3s;
-        }
-        
-        .close-btn:hover {
-            background: rgba(255, 107, 107, 0.2);
-        }
-        
-        #monsterList {
-            list-style: none;
-        }
-        
-        #monsterList li {
-            background: rgba(26, 36, 47, 0.7);
-            padding: 12px;
-            margin-bottom: 10px;
-            border-radius: 6px;
-            font-size: 14px;
-            border-left: 3px solid #ff6b6b;
-            transition: all 0.3s ease;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
-        #monsterList li.green {
-            border-left-color: #4ecdc4;
-        }
-        
-        #monsterList li:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-        }
-        
-        .monster-info {
-            display: flex;
-            flex-direction: column;
-        }
-        
-        .monster-header {
-            font-weight: bold;
-            margin-bottom: 5px;
-        }
-        
-        .monster-stats {
-            display: flex;
-            justify-content: space-between;
-            font-size: 13px;
-        }
-        
-        .monster-hp {
-            color: #ff8e53;
-        }
-        
-        .monster-atk {
-            color: #4ecdc4;
-        }
-        
-        .controls {
-            position: absolute;
-            top: 80px;
-            right: 15px;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            z-index: 50;
-        }
-        
-        .control-group {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            background: rgba(15, 25, 35, 0.9);
-            padding: 10px;
-            border-radius: 8px;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
-            backdrop-filter: blur(5px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        
-        .control-title {
-            font-size: 14px;
-            color: #8a9ba8;
-            margin-bottom: 5px;
-            text-align: center;
-        }
-        
-        .btn-group {
-            display: flex;
-            gap: 5px;
-        }
-        
-        .btn-group button {
-            flex: 1;
-        }
-        
-        button {
-            background: linear-gradient(135deg, #2a3a4a 0%, #1c2837 100%);
-            color: #e0e0e0;
-            border: none;
-            padding: 8px 12px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 14px;
-            transition: all 0.2s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 5px;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-        }
-        
-        button:hover {
-            background: linear-gradient(135deg, #3a4a5a 0%, #2c3847 100%);
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-        }
-        
-        button.active {
-            background: linear-gradient(135deg, #ff6b6b 0%, #ff8e53 100%);
-            color: white;
-        }
-        
-        .checkbox-group {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-        
-        .checkbox-item {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        
-        .checkbox-item input {
-            width: 18px;
-            height: 18px;
-            accent-color: #ff6b6b;
-        }
-        
-        .instructions {
-            position: absolute;
-            bottom: 20px;
-            left: 20px;
-            background: rgba(15, 25, 35, 0.8);
-            padding: 15px;
-            border-radius: 8px;
-            max-width: 300px;
-            font-size: 14px;
-            line-height: 1.5;
-            backdrop-filter: blur(5px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            z-index: 10;
-        }
-        
-        .instructions-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 10px;
-        }
-        
-        .instructions h3 {
-            color: #ff8e53;
-        }
-        
-        .instructions ul {
-            padding-left: 20px;
-        }
-        
-        .instructions li {
-            margin-bottom: 5px;
-        }
-        
-        .game-over {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(10, 15, 23, 0.9);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            z-index: 200;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.5s ease;
-        }
-        
-        .game-over.visible {
-            opacity: 1;
-            pointer-events: all;
-        }
-        
-        .game-over h2 {
-            font-size: 60px;
-            margin-bottom: 20px;
-            background: linear-gradient(45deg, #ff6b6b, #ff8e53);
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
-            text-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-        }
-        
-        .winner {
-            font-size: 40px;
-            margin-bottom: 30px;
-            text-transform: uppercase;
-            letter-spacing: 3px;
-        }
-        
-        .winner.red {
-            color: #ff6b6b;
-        }
-        
-        .winner.green {
-            color: #4ecdc4;
-        }
-        
-        .restart-btn {
-            padding: 15px 40px;
-            font-size: 18px;
-            background: linear-gradient(135deg, #ff6b6b 0%, #ff8e53 100%);
-            border: none;
-            border-radius: 50px;
-            color: white;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 5px 15px rgba(255, 107, 107, 0.4);
-        }
-        
-        .restart-btn:hover {
-            transform: scale(1.05);
-            box-shadow: 0 7px 20px rgba(255, 107, 107, 0.6);
-        }
-        
-        .stats {
-            position: absolute;
-            top: 80px;
-            left: 20px;
-            background: rgba(15, 25, 35, 0.8);
-            padding: 15px;
-            border-radius: 8px;
-            font-size: 14px;
-            backdrop-filter: blur(5px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            z-index: 10;
-        }
-        
-        .stats div {
-            margin-bottom: 8px;
-            display: flex;
-            justify-content: space-between;
-        }
-        
-        .stats span {
-            color: #ff8e53;
-            font-weight: bold;
-        }
-        
-        .swap-modal {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 80%;
-            max-width: 500px;
-            background: rgba(15, 25, 35, 0.95);
-            padding: 25px;
-            border-radius: 10px;
-            z-index: 300;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-            backdrop-filter: blur(10px);
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.4s ease;
-        }
-        
-        .swap-modal.visible {
-            opacity: 1;
-            pointer-events: all;
-        }
-        
-        .swap-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 2px solid #ff6b6b;
-            padding-bottom: 10px;
-        }
-        
-        .swap-header h3 {
-            color: #ff8e53;
-            font-size: 24px;
-        }
-        
-        .swap-content {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
-        
-        /* New styles for swap app */
-        .swap-app {
-            width: 100%;
-            padding: 15px;
-            background: rgba(15, 25, 35, 0.95);
-            border-radius: 8px;
-        }
-        
-        .swap-app h3 {
-            text-align: center;
-            margin-bottom: 15px;
-            color: #ff8e53;
-            border-bottom: 2px solid #ff6b6b;
-            padding-bottom: 8px;
-        }
-        
-        .swap-section {
-            margin: 15px 0;
-        }
-        
-        .swap-balance {
-            font-size: 14px;
-            color: #8a9ba8;
-            margin: 5px 0;
-        }
-        
-        .swap-input {
-            width: 100%;
-            padding: 10px;
-            margin: 10px 0;
-            background: rgba(26, 36, 47, 0.7);
-            color: #fff;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 5px;
-            font-size: 14px;
-        }
-        
-        .swap-btn {
-            width: 100%;
-            padding: 10px;
-            margin: 5px 0;
-            background: linear-gradient(135deg, #2a3a4a 0%, #1c2837 100%);
-            color: #e0e0e0;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 14px;
-            transition: all 0.2s ease;
-        }
-        
-        .swap-btn:hover {
-            background: linear-gradient(135deg, #3a4a5a 0%, #2c3847 100%);
-        }
-        
-        .swap-status {
-            margin-top: 15px;
-            padding: 10px;
-            background: rgba(26, 36, 47, 0.7);
-            border-radius: 5px;
-            font-size: 13px;
-            white-space: pre-line;
-            color: #4ecdc4;
-            max-height: 150px;
-            overflow-y: auto;
-        }
-        
-        .swap-error {
-            color: #ff6b6b;
-        }
-        
-        .swap-success {
-            color: #4ecdc4;
-        }
-        
-        .swap-link {
-            color: #ff8e53;
-            text-decoration: none;
-            display: block;
-            margin-top: 10px;
-            text-align: center;
-        }
-        
-        .swap-link:hover {
-            text-decoration: underline;
-        }
-        
-        @media (max-width: 768px) {
-            .header {
-                flex-direction: column;
-                gap: 15px;
-            }
-            
-            .header h1 {
-                font-size: 22px;
-            }
-            
-            .instructions {
-                max-width: 200px;
-                font-size: 12px;
-            }
-            
-            .stats {
-                top: 140px;
-                font-size: 12px;
-            }
-            
-            .controls {
-                top: 140px;
-            }
-            
-            .swap-modal {
-                width: 90%;
-                padding: 15px;
-            }
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <title>ZEPHYR SWAP // NILE</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: #000;
+      color: #fff;
+      font-family: monospace;
+    }
+    .container {
+      max-width: 45%;
+      margin-left: auto;
+      padding: 2rem;
+      margin-top: -45rem;
+    }
+    h1 {
+      text-align: left;
+      font-size: 1.5rem;
+      letter-spacing: 2px;
+      margin-left: 2rem;
+      border-bottom: 1px dashed #666;
+      padding-bottom: 0.5rem;
+      text-transform: uppercase;
+    }
+    .section {
+      margin: auto;
+      direction: rtl;
+    }
+    button, input {
+      font-family: monospace;
+      font-size: 1rem;
+      padding: 0.75rem 1rem;
+      margin-top: 0.5rem;
+      background: #000;
+      color: #fff;
+      border: 1px solid #fff;
+      width: 100%;
+      transition: 0.3s;
+      direction: rtl;
+    }
+    input {
+      margin-bottom: 0.5rem;
+    }
+    button:hover {
+      background: #fff;
+      color: #000;
+      cursor: pointer;
+    }
+    .status {
+      margin-top: 2rem;
+      white-space: pre-line;
+      padding-top: 1rem;
+      color: #0f0;
+      font-size: 0.9rem;
+    }
+    .error { color: #f33; font-weight: bold; }
+    .success { color: #0f0; font-weight: bold; }
+    .link {
+      color: #0ff;
+      text-decoration: underline;
+    }
+    .balance {
+      font-size: 1rem;
+      margin-top: 0.3rem;
+      color: #ccc;
+    }
+    svg {
+      background: #f9f9f9;
+    }
+    .grid line {
+      stroke: #ddd;
+    }
+    .label {
+      font-size: 10px;
+      fill: #333;
+    }
+
+    .SCbalance {
+      direction: ltr;
+      margin-top: 1rem;
+      border-bottom: 1px dashed #666;
+    }
+  </style>
 </head>
 <body>
-    <div class="game-container">
-        <div class="header">
-            <h1>Guild Fight 5 vs 5</h1>
-            <div class="score-container">
-                <div class="score red-score">
-                    <div class="score-label">Red Team</div>
-                    <div class="score-value" id="redScore">0</div>
-                </div>
-                <div class="score green-score">
-                    <div class="score-label">Green Team</div>
-                    <div class="score-value" id="greenScore">0</div>
-                </div>
-            </div>
-        </div>
-        
-        <canvas id="gameCanvas"></canvas>
-        
-        <div id="sidebar">
-            <h2>Monsters <button class="close-btn" id="closeSidebar">×</button></h2>
-            <ul id="monsterList"></ul>
-        </div>
-        
-        <div class="controls">
-            <div class="control-group">
-                <div class="control-title">Game Controls</div>
-                <button id="pauseButton">⏸️ Pause</button>
-                <button id="infoButton">ℹ️ Monsters</button>
-                <button id="speedButton">⏱️ Speed</button>
-                <button id="gearButton">⚙️ Settings</button>
-            </div>
-            
-            <div id="speedControls" class="control-group">
-                <div class="control-title">Game Speed</div>
-                <div class="btn-group">
-                    <button id="speed1x" class="active">1x</button>
-                    <button id="speed2x">2x</button>
-                    <button id="speed3x">3x</button>
-                </div>
-            </div>
-            
-            <div id="gearControls" class="control-group">
-                <div class="control-title">Display Settings</div>
-                <div class="checkbox-group">
-                    <div class="checkbox-item">
-                        <input type="checkbox" id="showMonsters" checked>
-                        <label for="showMonsters">Show Monsters</label>
-                    </div>
-                    <div class="checkbox-item">
-                        <input type="checkbox" id="showNumbers" checked>
-                        <label for="showNumbers">Show Numbers</label>
-                    </div>
-                    <div class="checkbox-item">
-                        <input type="checkbox" id="showHitboxes">
-                        <label for="showHitboxes">Show Hitboxes</label>
-                    </div>
-                </div>
-                <div class="control-title">Apps</div>
-                <button id="swapButton">SWAP</button>
-            </div>
-        </div>
-        
-        <div class="instructions">
-            <div class="instructions-header">
-                <h3>How to Play</h3>
-                <button class="close-btn" id="closeInstructions">×</button>
-            </div>
-            <ul>
-                <li>Red and Green teams battle each other</li>
-                <li>Monsters fight when they collide</li>
-                <li>Each kill scores a point for the team</li>
-                <li>First team to 10 points wins!</li>
-                <li>Adjust game speed and settings as needed</li>
-            </ul>
-        </div>
-        
-        <div class="stats">
-            <div>Monsters Alive: <span id="aliveCount">10</span></div>
-            <div>Game Speed: <span id="speedDisplay">1x</span></div>
-            <div>FPS: <span id="fpsCounter">0</span></div>
-        </div>
-        
-        <div class="game-over" id="gameOverScreen">
-            <h2>GAME OVER</h2>
-            <div class="winner" id="winnerText">Red Team Wins!</div>
-            <button class="restart-btn" id="restartButton">Play Again</button>
-        </div>
-        
-        <div class="paused-overlay" id="pausedOverlay">
-            <div class="paused-text">PAUSED</div>
-            <button class="restart-btn" id="resumeButton">Resume Game</button>
-        </div>
-        
-        <div class="swap-modal" id="swapModal">
-            <div class="swap-header">
-                <h3>ZEPHYR SWAP</h3>
-                <button class="close-btn" id="closeSwap">×</button>
-            </div>
-            <div class="swap-content">
-                <div class="swap-app">
-                    <h3>ZSD → ZYS Token Swap</h3>
-                    
-                    <div class="swap-section">
-                        <button class="swap-btn" id="connectBtn">[ CONNECT WALLET ]</button>
-                        <div class="swap-balance" id="walletAddress"></div>
-                    </div>
-                    
-                    <div id="balances" class="swap-section" style="display:none;">
-                        <div class="swap-balance">TRX: <span id="trxBal">--</span></div>
-                        <div class="swap-balance">ZSD: <span id="zsdBal">--</span></div>
-                        <div class="swap-balance">ZYS: <span id="zysBal">--</span></div>
-                    </div>
-                    
-                    <div class="swap-section" id="swapSection" style="display:none;">
-                        <input type="number" class="swap-input" id="amountInput" placeholder="Enter amount of ZSD to swap">
-                        <button class="swap-btn" id="swapBtn">[ EXECUTE SWAP ]</button>
-                    </div>
-                    
-                    <div id="status" class="swap-status"></div>
-                </div>
-            </div>
-        </div>
+  <h1>ZYS/USD DEX SWAP</h1>
+  <svg id="chart" width="50%" height="500"></svg>
+  <div class="container">
+    
+    <h1>Over-Collateralization (OC) RATE: </h1>
+    <div id="SCbalances" class="SCsection">
+      <div class="SCbalance">ZSD: <span id="SCzsdBal">--</span></div>
+      <div class="SCbalance">ZYS: <span id="SCzysBal">--</span></div>
+      <div class="SCbalance">OC RATIO (%): <span id="SCocRATIO">--</span></div>
     </div>
 
-    <script>
-        // Cache SVG images globally
-        const redSlimeSVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1147 772">
-  <g transform="matrix(.208065 0 0 0.200972 463.613763 598.374255)">
-    <g>
-      <ellipse rx="240.425567" ry="78.008615" transform="matrix(1.876983 0 0 2.248565 573.5 527.890921)" opacity="0.37" fill="rgba(0,0,0,0.81)"/>
-      <path d="M593.464292,156.618461c-208.354998-592.309432-1021.158454-614.250135-1083.360999,0-7.775318,368.031727,1197.398999,326.563364,1083.360999,0" transform="translate(523.5 314.945434)" fill="#fbecdf" stroke="#000" stroke-width="5"/>
-    </g>
-    <g>
-      <g>
-        <path d="M-277.438127,86.397284c8.276839-73.19411-133.154509-96.175784-133.451839,0-.262469,84.899565,128.788462,80.587279,133.451839,0" transform="translate(523.5 335.998044)" stroke="#000" stroke-width="5"/>
-        <path d="M-277.438127,86.397284c8.276839-73.19411-134.802013-97.448536-134.802013,0c0,82.47741,121.668074,101.224649,134.802013,0" transform="translate(797.638193 452.429771)" fill="rgba(0,0,0,0.87)" stroke="#000" stroke-width="5"/>
-      </g>
-      <g>
-        <path d="M-299.233298,74.363663c12.84668-35.65613-51.776485-56.267218-62.55777-8.070153-7.681173,34.338207,51.739188,58.356942,62.55777,8.070153" transform="translate(797.638193 452.429771)" fill="rgba(255,255,255,0.66)" stroke="#000" stroke-width="2"/>
-        <path d="M-299.233298,74.363663c8.396998-34.442581-49.459659-50.282525-57.671219-5.921376-5.367042,28.994267,52.18263,44.108706,57.671219,5.921376" transform="translate(521.275292 334.540705)" fill="rgba(255,255,255,0.66)" stroke="#000" stroke-width="2"/>
-        <path d="M-354.952866,127.327871c.693396-10.749612-27.247484-24.291212-27.247484,0c0,15.489267,27.247483,13.228678,27.247483,0" transform="translate(797.638193 452.429771)" fill="rgba(255,255,255,0.66)" stroke="#000" stroke-width="5" stroke-miterlimit="2"/>
-        <path d="M-354.952866,127.327871c6.761144-11.154129-18.338531-27.242275-27.247484,0-5.12373,15.667618,27.247483,13.228678,27.247483,0" transform="translate(527.372355 331.641793)" fill="rgba(255,255,255,0.66)" stroke="#000" stroke-width="2"/>
-      </g>
-    </g>
-    <g>
-      <ellipse rx="37.762974" ry="29.44916" transform="matrix(.971679 0.824834-.551912 0.650168 82.171581 462.875582)" opacity="0.58" fill="#ff54ac"/>
-      <ellipse rx="37.762974" ry="29.44916" transform="matrix(.550732 2.048457-4.55662 1.225056 405.80816 164.79881)" opacity="0.58" fill="#ff54ac"/>
-      <ellipse rx="37.762974" ry="29.44916" transform="matrix(2.181302-.013624 0.00785 1.256844 525.300242 659.8189)" opacity="0.58" fill="#ff54ac"/>
-      <ellipse rx="37.762974" ry="29.44916" transform="matrix(2.36805 0.475539-.331133 1.648946 678.900694 159.253231)" opacity="0.58" fill="#ff54ac"/>
-      <ellipse rx="37.762974" ry="29.44916" transform="matrix(.234905 0.304642-.232818 0.179523 102.846566 469.763606)" opacity="0.9" fill="#e7efff"/>
-      <ellipse rx="37.762974" ry="29.44916" transform="matrix(-.063912 0.31257-.806729-.164955 558.38052 649.367213)" opacity="0.9" fill="#e7efff"/>
-    </g>
-  </g>
-</svg>`;
+    <h1>ZEPHYR SWAP : ZSD → ZYS</h1>
+    <div class="section">
+      <button id="connectBtn">[ CONNECT WALLET ]</button>
+      <div id="walletAddress" class="balance"></div>
+    </div>
 
-        const greenSlimeSVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1147 772">
-  <g transform="scale(-1, 1) translate(-1147, 0)">
-    <g transform="matrix(.208065 0 0 0.200972 463.613763 598.374255)">
-      <g>
-        <ellipse rx="240.425567" ry="78.008615" transform="matrix(1.876983 0 0 2.248565 573.5 527.890921)" opacity="0.37" fill="rgba(0,0,0,0.81)"/>
-        <path d="M593.464292,156.618461c-208.354998-592.309432-1021.158454-614.250135-1083.360999,0-7.775318,368.031727,1197.398999,326.563364,1083.360999,0" transform="translate(523.5 314.945434)" fill="#00ff00" stroke="#000" stroke-width="5"/>
-      </g>
-      <g>
-        <g>
-          <path d="M-277.438127,86.397284c8.276839-73.19411-133.154509-96.175784-133.451839,0-.262469,84.899565,128.788462,80.587279,133.451839,0" transform="translate(523.5 335.998044)" stroke="#000" stroke-width="5"/>
-          <path d="M-277.438127,86.397284c8.276839-73.19411-134.802013-97.448536-134.802013,0c0,82.47741,121.668074,101.224649,134.802013,0" transform="translate(797.638193 452.429771)" fill="rgba(0,0,0,0.87)" stroke="#000" stroke-width="5"/>
-        </g>
-        <g>
-          <path d="M-299.233298,74.363663c12.84668-35.65613-51.776485-56.267218-62.55777-8.070153-7.681173,34.338207,51.739188,58.356942,62.55777,8.070153" transform="translate(797.638193 452.429771)" fill="rgba(255,255,255,0.66)" stroke="#000" stroke-width="2"/>
-          <path d="M-299.233298,74.363663c8.396998-34.442581-49.459659-50.282525-57.671219-5.921376-5.367042,28.994267,52.18263,44.108706,57.671219,5.921376" transform="translate(521.275292 334.540705)" fill="rgba(255,255,255,0.66)" stroke="#000" stroke-width="2"/>
-          <path d="M-354.952866,127.327871c.693396-10.749612-27.247484-24.291212-27.247484,0c0,15.489267,27.247483,13.228678,27.247483,0" transform="translate(797.638193 452.429771)" fill="rgba(255,255,255,0.66)" stroke="#000" stroke-width="5" stroke-miterlimit="2"/>
-          <path d="M-354.952866,127.327871c6.761144-11.154129-18.338531-27.242275-27.247484,0-5.12373,15.667618,27.247483,13.228678,27.247483,0" transform="translate(527.372355 331.641793)" fill="rgba(255,255,255,0.66)" stroke="#000" stroke-width="2"/>
-        </g>
-      </g>
-      <g>
-        <ellipse rx="37.762974" ry="29.44916" transform="matrix(.971679 0.824834-.551912 0.650168 82.171581 462.875582)" opacity="0.58" fill="#ff54ac"/>
-        <ellipse rx="37.762974" ry="29.44916" transform="matrix(.550732 2.048457-4.55662 1.225056 405.80816 164.79881)" opacity="0.58" fill="#ff54ac"/>
-        <ellipse rx="37.762974" ry="29.44916" transform="matrix(2.181302-.013624 0.00785 1.256844 525.300242 659.8189)" opacity="0.58" fill="#ff54ac"/>
-        <ellipse rx="37.762974" ry="29.44916" transform="matrix(2.36805 0.475539-.331133 1.648946 678.900694 159.253231)" opacity="0.58" fill="#ff54ac"/>
-        <ellipse rx="37.762974" ry="29.44916" transform="matrix(.234905 0.304642-.232818 0.179523 102.846566 469.763606)" opacity="0.9" fill="#e7efff"/>
-        <ellipse rx="37.762974" ry="29.44916" transform="matrix(-.063912 0.31257-.806729-.164955 558.38052 649.367213)" opacity="0.9" fill="#e7efff"/>
-      </g>
-    </g>
-  </g>
-</svg>`;
+    <div id="balances" class="section" style="display:none;">
+      <div class="balance">TRX: <span id="trxBal">--</span></div>
+      <div class="balance">ZSD: <span id="zsdBal">--</span></div>
+      <div class="balance">ZYS: <span id="zysBal">--</span></div>
+    </div>
 
-        // Create SVG elements only once
-        function createSVGElement(svgString) {
-            const parser = new DOMParser();
-            const svgDoc = parser.parseFromString(svgString, 'image/svg+xml');
-            const svgElement = svgDoc.documentElement;
-            const serializer = new XMLSerializer();
-            const svgStr = serializer.serializeToString(svgElement);
-            const img = new Image();
-            img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgStr);
-            return img;
+    <div class="section" id="swapSection" style="display:none;">
+      <input type="number" id="amountInput" placeholder="Enter amount of ZSD to swap">
+      <button id="swapBtn">[ EXECUTE SWAP ]</button>
+    </div>
+
+    <div id="status" class="status"></div>
+  </div>
+
+  <script>
+    const ZSD = "TENgTiMGSwRJPe6GQSV5WHmvomzonGjQt8";
+    const ZYS = "TNXQp3YVmLEf1dZXzqJathi12vHAqGXcjE";
+    const DEX = "TE5uCHMRNRsCc7aQo9WCy6Q5iKT42UKf61";
+    const DECIMALS = 12;
+
+    const DEX_ABI = {
+      "entrys":[
+        {"inputs":[{"name":"_tokenA","type":"address"},{"name":"_tokenB","type":"address"}],"stateMutability":"Nonpayable","type":"Constructor"},
+        {"inputs":[{"indexed":true,"name":"user","type":"address"},{"name":"amountA","type":"uint256"},{"name":"amountB","type":"uint256"}],"name":"Swapped","type":"Event"},
+        {"outputs":[{"type":"address"}],"name":"owner","stateMutability":"View","type":"Function"},
+        {"outputs":[{"type":"uint256"}],"name":"rateDenominator","stateMutability":"View","type":"Function"},
+        {"outputs":[{"type":"uint256"}],"name":"rateNumerator","stateMutability":"View","type":"Function"},
+        {"inputs":[{"name":"amountA","type":"uint256"}],"name":"swapAForB","stateMutability":"Nonpayable","type":"Function"},
+        {"outputs":[{"type":"address"}],"name":"tokenA","stateMutability":"View","type":"Function"},
+        {"outputs":[{"type":"address"}],"name":"tokenB","stateMutability":"View","type":"Function"},
+        {"inputs":[{"name":"token","type":"address"},{"name":"amount","type":"uint256"}],"name":"withdraw","stateMutability":"Nonpayable","type":"Function"}
+      ]
+    };
+
+    const connectBtn = document.getElementById('connectBtn');
+    const swapBtn = document.getElementById('swapBtn');
+    const amountInput = document.getElementById('amountInput');
+    const statusBox = document.getElementById('status');
+    const walletDisplay = document.getElementById('walletAddress');
+    const balances = document.getElementById('balances');
+    const swapSection = document.getElementById('swapSection');
+    const trxBal = document.getElementById('trxBal');
+    const zsdBal = document.getElementById('zsdBal');
+    const zysBal = document.getElementById('zysBal');
+
+    let tronWeb, userAddress;
+
+    const sleep = ms => new Promise(res => setTimeout(res, ms));
+
+    function log(msg, type = '') {
+      const div = document.createElement('div');
+      div.textContent = msg;
+      if (type) div.classList.add(type);
+      statusBox.appendChild(div);
+    }
+
+    async function waitForTronWeb() {
+      for (let i = 0; i < 30; i++) {
+        if (window.tronWeb && window.tronWeb.ready && window.tronWeb.defaultAddress.base58) {
+          tronWeb = window.tronWeb;
+          return true;
+        }
+        await sleep(500);
+      }
+      return false;
+    }
+
+    async function connectWallet() {
+      statusBox.innerHTML = '';
+      if (!window.tronWeb || !window.tronWeb.ready) {
+        log("❌ TronLink not found or not unlocked", "error");
+        return;
+      }
+
+      tronWeb = window.tronWeb;
+      userAddress = tronWeb.defaultAddress.base58;
+
+      if (!userAddress) {
+        log("❌ Wallet address not found. Unlock TronLink.", "error");
+        return;
+      }
+
+      walletDisplay.textContent = `Connected: ${userAddress}`;
+      balances.style.display = 'block';
+      swapSection.style.display = 'block';
+
+      try {
+        const trx = await tronWeb.trx.getBalance(userAddress);
+        trxBal.textContent = (trx / 1e6).toFixed(2);
+
+        const zsdC = await tronWeb.contract().at(ZSD);
+        const zysC = await tronWeb.contract().at(ZYS);
+        const zsd = await zsdC.balanceOf(userAddress).call();
+        const zys = await zysC.balanceOf(userAddress).call();
+        const SCzsd = await zsdC.balanceOf(DEX).call();
+        const SCzys = await zysC.balanceOf(DEX).call();
+        zsdBal.textContent = (BigInt(zsd.toString()) / 10n**BigInt(DECIMALS)).toString();
+        zysBal.textContent = (BigInt(zys.toString()) / 10n**BigInt(DECIMALS)).toString();
+        // OC
+        SCzsdBal.textContent = (BigInt(SCzsd.toString()) / 10n**BigInt(DECIMALS)).toString();
+        SCzysBal.textContent = (BigInt(SCzys.toString()) / 10n**BigInt(DECIMALS)).toString();
+        // RATIO input later with real SC SCocRATIO
+        SCocRATIO.textContent = SCzsdBal.textContent/(SCzysBal.textContent*1.5)*100;
+      } catch (e) {
+        log("❌ Failed to load balances.", "error");
+      }
+    }
+
+    async function executeSwap() {
+      statusBox.innerHTML = '';
+      const amount = parseFloat(amountInput.value);
+      if (isNaN(amount) || amount <= 0) {
+        log("❌ Invalid amount", "error");
+        return;
+      }
+
+      const fullAmount = BigInt(Math.floor(amount * 10 ** DECIMALS));
+      const zsdC = await tronWeb.contract().at(ZSD);
+      const dexC = await tronWeb.contract(DEX_ABI.entrys, DEX);
+
+      try {
+        log("Step 1: Checking ZSD allowance...");
+        const allowance = await zsdC.allowance(userAddress, DEX).call();
+        if (BigInt(allowance.toString()) < fullAmount) {
+          log("Step 2: Approving ZSD for swap...");
+          await zsdC.approve(DEX, fullAmount.toString()).send();
+          await sleep(2000);
+        } else {
+          log("✔ Allowance sufficient!", "success");
         }
 
-        const redMonsterImage = createSVGElement(redSlimeSVG);
-        const greenMonsterImage = createSVGElement(greenSlimeSVG);
-        const fallbackImage = createSVGElement('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" fill="#00ff00" stroke="#000" stroke-width="2"/></svg>');
+        log("Step 3: Executing swap...");
+        const tx = await dexC.swapAForB(fullAmount.toString()).send();
+        await sleep(2000);
+        log("✔ Swap successful!", "success");
 
-        // Game setup
-        const canvas = document.getElementById('gameCanvas');
-        const ctx = canvas.getContext('2d');
-        const logicalWidth = 1280;
-        const logicalHeight = 720;
-        const aspectRatio = 16 / 9;
-        const baseMonsterSize = (312.5 * 1.25) / logicalWidth; // ~390.625px
-        const hitboxScale = 0.5; // 50% of monster size
-        const baseGroundOffset = 66 / logicalHeight; // 66px at 720px
-        const numMonstersPerTeam = 5;
-        
-        // Game state
-        let gameSpeed = 1;
-        let scaleFactor = 1;
-        let monsterWidth, monsterHeight, hitboxWidth, hitboxHeight, groundY;
-        let showMonsters = true;
-        let showNumbers = true;
-        let showHitboxes = false;
-        let redTeamScore = 0;
-        let greenTeamScore = 0;
-        let gameRunning = true;
-        let lastFrameTime = 0;
-        let fps = 0;
-        let frameCount = 0;
-        let lastFpsUpdate = 0;
-        let gamePaused = false;
+        const a = document.createElement('a');
+        a.href = `https://nile.tronscan.org/#/transaction/${tx}`;
+        a.target = "_blank";
+        a.className = "link";
+        a.textContent = "[ View on Tronscan ]";
+        statusBox.appendChild(a);
+      } catch (err) {
+        log("❌ Swap failed: " + err.message, "error");
+      }
+    }
 
-        // Claw swipe shapes (base size)
-        const clawSwipes = [
-            'M0,0 Q0.0078,-0.0278 0.0156,0 Q0.0234,0.0278 0.0312,0',
-            'M0,0 Q0.0117,0.0208 0.0234,0 Q0.0351,-0.0208 0.0469,0',
-            'M0,0 Q0.0039,-0.0347 0.0195,0 Q0.0273,0.0347 0.0391,0',
-            'M0,0 Q0.0156,-0.0139 0.0234,0.0139 Q0.0312,-0.0139 0.0391,0',
-            'M0,0 Q0.0078,0.0278 0.0156,-0.0139 Q0.0234,0.0139 0.0312,0',
-            'M0,0 Q0.0117,-0.0208 0.0195,0.0139 Q0.0273,-0.0139 0.0351,0',
-            'M0,0 Q0.0039,0.0278 0.0156,0 Q0.0234,-0.0278 0.0312,0',
-            'M0,0 Q0.0078,-0.0417 0.0234,0 Q0.0391,0.0417 0.0469,0',
-            'M0,0 Q0.0156,0.0139 0.0234,-0.0139 Q0.0312,0.0139 0.0391,0',
-            'M0,0 Q0.0117,0.0347 0.0195,-0.0208 Q0.0273,0.0208 0.0351,0'
-        ];
+    connectBtn.addEventListener('click', connectWallet);
+    swapBtn.addEventListener('click', executeSwap);
 
-        // Scale claw swipes 500%
-        const scaledClawSwipes = clawSwipes.map(path => {
-            return path.replace(/([\d.-]+)/g, (match, num) => (parseFloat(num) * 5).toFixed(4));
-        });
+    window.addEventListener("load", async () => {
+      const ok = await waitForTronWeb();
+      if (!ok) {
+        log("❌ TronLink not found or not unlocked", "error");
+        return;
+      }
+      log("🔄 TronLink detected. Ready to connect.");
+    });
+    
+    
+    
+    const yieldData = [
+      { date: "10/13/24", week: 1, ratio: 1.020 },
+      { date: "10/20/24", week: 2, ratio: 1.040 },
 
-        // Resize canvas to fit container while maintaining aspect ratio
-        function resizeCanvas() {
-            const container = document.querySelector('.game-container');
-            const containerWidth = container.clientWidth;
-            const containerHeight = container.clientHeight;
-            
-            // Set canvas internal resolution
-            canvas.width = logicalWidth;
-            canvas.height = logicalHeight;
-            
-            // Calculate scale factor for drawing
-            scaleFactor = Math.min(containerWidth / logicalWidth, containerHeight / logicalHeight);
-            
-            // Recalculate monster dimensions
-            monsterWidth = baseMonsterSize * logicalWidth;
-            monsterHeight = baseMonsterSize * logicalWidth * (logicalHeight / logicalWidth);
-            hitboxWidth = monsterWidth * hitboxScale;
-            hitboxHeight = monsterHeight * hitboxScale;
-            groundY = logicalHeight - baseGroundOffset * logicalHeight;
-        }
+      { date: "10/27/24", week: 3, ratio: 1.057 },
+      { date: "11/03/24", week: 4, ratio: 1.072 },
+      { date: "11/10/24", week: 5, ratio: 1.086 },
 
-        window.addEventListener('resize', resizeCanvas);
-        window.addEventListener('load', resizeCanvas);
-        resizeCanvas();
+      { date: "11/17/24", week: 6, ratio: 1.103 },
+      { date: "11/24/24", week: 7, ratio: 1.123 },
+      { date: "12/01/24", week: 8, ratio: 1.165 },
 
-        class Monster {
-            constructor(team, id) {
-                this.team = team;
-                this.id = id;
-                this.maxHp = 10 + Math.floor(Math.random() * 5); // Random HP between 10-14
-                this.hp = this.maxHp;
-                this.attack = 1 + Math.random(); // Random attack between 1-2
-                this.dead = false;
-                this.speed = (Math.random() * 2 + 1) / logicalWidth;
-                this.x = team === 'RED' ? 1 - baseMonsterSize : 0;
-                this.y = 1 - baseGroundOffset - baseMonsterSize;
-                this.direction = team === 'RED' ? -1 : 1;
-                this.jumpPhase = Math.random() * Math.PI * 2;
-                this.image = team === 'RED' ? redMonsterImage : greenMonsterImage;
-                this.fallbackImage = fallbackImage;
-                this.isAttacking = false;
-                this.attackFrame = 0;
-                this.pushFrame = 0;
-                this.attackSwipes = [];
-                this.bloodParticles = [];
-                this.imageLoaded = true;
-                this.deathProgress = 0; // For death animation
-                this.respawnDelay = 0; // Delay before respawn
-            }
-            
-            update() {
-                if (this.dead || gamePaused) {
-                    // Handle death animation and respawn
-                    this.deathProgress += 0.02 * gameSpeed;
-                    
-                    // Ensure death progress doesn't exceed 1.0
-                    if (this.deathProgress > 1.0) {
-                        this.deathProgress = 1.0;
-                    }
-                    
-                    if (this.deathProgress >= 1) {
-                        this.respawnDelay -= 1 * gameSpeed;
-                        if (this.respawnDelay <= 0) {
-                            this.respawn();
-                        }
-                    }
-                    return;
-                }
-                
-                if (this.isAttacking) {
-                    this.attackFrame++;
-                    this.pushFrame = Math.min(this.pushFrame + 1, 15);
-                    // Update blood particles
-                    this.bloodParticles.forEach(particle => {
-                        particle.x += particle.vx * gameSpeed;
-                        particle.y += particle.vy * gameSpeed;
-                        particle.life--;
-                    });
-                    this.bloodParticles = this.bloodParticles.filter(p => p.life > 0);
-                    if (this.attackFrame > 30 / gameSpeed) {
-                        this.isAttacking = false;
-                        this.pushFrame = 0;
-                    }
-                } else {
-                    this.x += this.direction * this.speed * gameSpeed;
-                    this.y = (1 - baseGroundOffset - baseMonsterSize) + Math.sin(this.jumpPhase) * 0.0139;
-                    this.jumpPhase += 0.1 * gameSpeed;
-                    if (this.team === 'RED' && this.x < 0 || this.team === 'GREEN' && this.x > 1 - baseMonsterSize) {
-                        this.respawn();
-                    }
-                }
-            }
-            
-            draw() {
-                if (this.dead) {
-                    // Clamp deathProgress to [0,1] to prevent negative radius
-                    const deathProgress = Math.min(Math.max(this.deathProgress, 0), 1);
-                    const pixelX = this.x * logicalWidth;
-                    const pixelY = this.y * logicalHeight;
-                    
-                    // Only draw if radius is positive
-                    if (deathProgress < 1) {
-                        const radius = (1 - deathProgress) * 30;
-                        const alpha = 1 - deathProgress;
-                        
-                        ctx.fillStyle = `rgba(255, 0, 0, ${alpha * 0.5})`;
-                        ctx.beginPath();
-                        ctx.arc(pixelX + monsterWidth / 2, pixelY + monsterHeight / 2, radius, 0, Math.PI * 2);
-                        ctx.fill();
-                        
-                        ctx.strokeStyle = `rgba(255, 100, 100, ${alpha})`;
-                        ctx.lineWidth = 2;
-                        ctx.beginPath();
-                        ctx.arc(pixelX + monsterWidth / 2, pixelY + monsterHeight / 2, radius + 10, 0, Math.PI * 2);
-                        ctx.stroke();
-                    }
-                    
-                    return;
-                }
-                
-                const pixelX = this.x * logicalWidth;
-                const pixelY = this.y * logicalHeight;
-                const jumpScale = Math.abs(Math.sin(this.jumpPhase)) * 0.2 + 0.8;
-                let scaleX = this.team === 'RED' ? jumpScale : 1 / jumpScale;
-                let scaleY = this.team === 'RED' ? 1 / jumpScale : jumpScale;
-                let offsetX = 0;
+      { date: "12/08/24", week: 9, ratio: 1.194 },
+      { date: "12/15/24", week: 10, ratio: 1.213 },
+      { date: "12/22/24", week: 11, ratio: 1.231 },
 
-                // Attack push and squeeze
-                if (this.isAttacking) {
-                    const t = this.pushFrame / 15;
-                    const pushDistance = 0.1 * (this.team === 'RED' ? -1 : 1); // 10% canvas width
-                    offsetX = pushDistance * Math.sin(t * Math.PI); // Forward and back
-                    scaleY *= (1 - 0.3 * Math.sin(t * Math.PI)); // Squeeze Y (70% at peak)
-                    scaleX *= (1 + 0.3 * Math.sin(t * Math.PI)); // Stretch X (130% at peak)
-                }
+      { date: "12/29/24", week: 12, ratio: 1.245 },
+      { date: "01/05/25", week: 13, ratio: 1.256 },
+      { date: "01/12/25", week: 14, ratio: 1.268 },
 
-                // Draw hitbox (50% size, centered)
-                if (showHitboxes) {
-                    ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
-                    const hitboxX = pixelX + offsetX * logicalWidth + (monsterWidth - hitboxWidth) / 2;
-                    const hitboxY = pixelY + (monsterHeight - hitboxHeight) / 2;
-                    ctx.fillRect(hitboxX, hitboxY, hitboxWidth, hitboxHeight);
-                }
-                
-                // Draw monster
-                if (showMonsters) {
-                    ctx.save();
-                    ctx.translate(pixelX + monsterWidth / 2 + offsetX * logicalWidth, pixelY + monsterHeight / 2);
-                    ctx.scale(scaleX, scaleY);
-                    ctx.drawImage(this.image, -monsterWidth / 2, -monsterHeight / 2, monsterWidth, monsterHeight);
-                    ctx.restore();
-                }
-                
-                // Draw attack animation (claw swipes)
-                if (this.isAttacking) {
-                    ctx.save();
-                    ctx.translate(pixelX + monsterWidth / 2 + offsetX * logicalWidth, pixelY + monsterHeight / 2);
-                    this.attackSwipes.forEach(swipe => {
-                        ctx.save();
-                        ctx.rotate(swipe.rotation);
-                        ctx.scale(swipe.scale, swipe.scale);
-                        ctx.strokeStyle = 'rgba(255, 255, 255, 0.7)';
-                        ctx.lineWidth = 2;
-                        ctx.beginPath();
-                        let path = new Path2D(swipe.path);
-                        ctx.stroke(path);
-                        ctx.restore();
-                    });
-                    
-                    // Draw blood particles
-                    this.bloodParticles.forEach(particle => {
-                        ctx.fillStyle = `rgba(128, 0, 128, ${particle.life / 30})`;
-                        ctx.beginPath();
-                        ctx.arc(particle.x * logicalWidth, particle.y * logicalHeight, 2, 0, Math.PI * 2);
-                        ctx.fill();
-                    });
-                    ctx.restore();
-                }
-                
-                // Draw HP bar without text
-                const barWidth = 50;
-                const barHeight = 6;
-                const barX = pixelX + monsterWidth / 2 + offsetX * logicalWidth - barWidth / 2;
-                const barY = pixelY - 20;
-                
-                // Background
-                ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
-                ctx.fillRect(barX, barY, barWidth, barHeight);
-                
-                // Health bar
-                const healthWidth = (this.hp / this.maxHp) * barWidth;
-                ctx.fillStyle = this.team === 'RED' ? '#ff6b6b' : '#4ecdc4';
-                ctx.fillRect(barX, barY, healthWidth, barHeight);
-                
-                // Border
-                ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
-                ctx.lineWidth = 1;
-                ctx.strokeRect(barX, barY, barWidth, barHeight);
-            }
-            
-            respawn() {
-                this.x = this.team === 'RED' ? 1 - baseMonsterSize : 0;
-                this.y = 1 - baseGroundOffset - baseMonsterSize;
-                this.jumpPhase = Math.random() * Math.PI * 2;
-                this.isAttacking = false;
-                this.attackFrame = 0;
-                this.pushFrame = 0;
-                this.bloodParticles = [];
-                this.maxHp = 10 + Math.floor(Math.random() * 5);
-                this.hp = this.maxHp;
-                this.attack = 1 + Math.random();
-                this.dead = false;
-                this.deathProgress = 0;
-                this.respawnDelay = 0;
-            }
-            
-            startAttack() {
-                this.isAttacking = true;
-                this.attackFrame = 0;
-                this.pushFrame = 0;
-                this.attackSwipes = [];
-                // Select 10 random claw swipes (scaled)
-                for (let i = 0; i < 10; i++) {
-                    this.attackSwipes.push({
-                        path: scaledClawSwipes[Math.floor(Math.random() * scaledClawSwipes.length)],
-                        rotation: Math.random() * Math.PI * 2,
-                        scale: 0.5 + Math.random() * 0.5
-                    });
-                }
-                // Add blood particles
-                for (let i = 0; i < 20; i++) {
-                    const angle = Math.random() * Math.PI * 2;
-                    const speed = (Math.random() * 0.005 + 0.002) * (this.team === 'RED' ? -1 : 1);
-                    this.bloodParticles.push({
-                        x: this.x + baseMonsterSize / 2,
-                        y: this.y + baseMonsterSize / 2,
-                        vx: Math.cos(angle) * speed,
-                        vy: Math.sin(angle) * speed,
-                        life: 20 + Math.random() * 10
-                    });
-                }
-            }
-            
-            takeDamage() {
-                this.hp -= this.attack;
-                if (this.hp <= 0) {
-                    this.hp = 0;
-                    this.dead = true;
-                    this.deathProgress = 0;
-                    this.respawnDelay = 120; // 2 seconds at 60fps
-                    
-                    // Update score
-                    if (this.team === 'RED') {
-                        greenTeamScore++;
-                        document.getElementById('greenScore').textContent = greenTeamScore;
-                    } else {
-                        redTeamScore++;
-                        document.getElementById('redScore').textContent = redTeamScore;
-                    }
-                    
-                    // Check for win condition
-                    if (redTeamScore >= 10 || greenTeamScore >= 10) {
-                        endGame();
-                    }
-                }
-            }
-        }
+      { date: "01/19/25", week: 15, ratio: 1.285 },
+      { date: "01/26/25", week: 16, ratio: 1.293 },
+      { date: "02/02/25", week: 17, ratio: 1.310 },
 
-        // Create monsters
-        const monsters = [];
-        for (let i = 0; i < numMonstersPerTeam; i++) {
-            monsters.push(new Monster('RED', i + 1));
-            monsters.push(new Monster('GREEN', i + 1));
-        }
+      { date: "02/09/25", week: 18, ratio: 1.321 },
+      { date: "02/16/25", week: 19, ratio: 1.330 },
+      { date: "02/23/25", week: 20, ratio: 1.341 },
 
-        // Update monster list in sidebar
-        const monsterList = document.getElementById('monsterList');
-        function updateMonsterList() {
-            monsterList.innerHTML = '';
-            monsters.forEach(monster => {
-                const li = document.createElement('li');
-                li.className = monster.team.toLowerCase();
-                
-                const hpPercent = Math.floor((monster.hp / monster.maxHp) * 100);
-                
-                li.innerHTML = `
-                    <div class="monster-info">
-                        <div class="monster-header">${monster.team} ${monster.id}</div>
-                        <div class="monster-stats">
-                            <span class="monster-hp">HP ${hpPercent}%</span>
-                            <span class="monster-atk">ATK: ${monster.attack.toFixed(1)}</span>
-                        </div>
-                    </div>
-                `;
-                
-                monsterList.appendChild(li);
-            });
-        }
-        updateMonsterList();
+      { date: "03/02/25", week: 21, ratio: 1.350 },
+      { date: "03/09/25", week: 22, ratio: 1.361 },
 
-        // UI event listeners
-        const infoButton = document.getElementById('infoButton');
-        const sidebar = document.getElementById('sidebar');
-        const closeSidebar = document.getElementById('closeSidebar');
-        
-        infoButton.addEventListener('click', () => {
-            sidebar.classList.toggle('visible');
-        });
-        
-        closeSidebar.addEventListener('click', () => {
-            sidebar.classList.remove('visible');
-        });
+      { date: "03/16/25", week: 23, ratio: 1.367 },
 
-        const closeInstructions = document.getElementById('closeInstructions');
-        closeInstructions.addEventListener('click', () => {
-            document.querySelector('.instructions').style.display = 'none';
-        });
+      { date: "03/23/25", week: 24, ratio: 1.378 },
+      { date: "03/30/25", week: 25, ratio: 1.390 },
+      { date: "04/06/25", week: 26, ratio: 1.398 },
+      { date: "04/13/25", week: 27, ratio: 1.407 },
+      { date: "04/20/25", week: 28, ratio: 1.415 },
+      { date: "04/27/25", week: 29, ratio: 1.424 },
 
-        const speedButton = document.getElementById('speedButton');
-        const speedControls = document.getElementById('speedControls');
-        speedButton.addEventListener('click', () => {
-            speedControls.classList.toggle('visible');
-            gearControls.classList.remove('visible');
-        });
+      { date: "05/04/25", week: 30, ratio: 1.427 },
+      { date: "05/11/25", week: 31, ratio: 1.427 },
+      { date: "05/18/25", week: 32, ratio: 1.427 },
+      { date: "05/25/25", week: 33, ratio: 1.427 },
+      { date: "06/01/25", week: 34, ratio: 1.427 },
+      { date: "06/08/25", week: 35, ratio: 1.523 },
 
-        // Speed controls
-        document.getElementById('speed1x').addEventListener('click', () => setGameSpeed(1));
-        document.getElementById('speed2x').addEventListener('click', () => setGameSpeed(2));
-        document.getElementById('speed3x').addEventListener('click', () => setGameSpeed(3));
+      { date: "06/15/25", week: 36, ratio: 1.531 },
+      { date: "06/22/25", week: 37, ratio: 1.539 },
+      { date: "06/29/25", week: 38, ratio: 1.546 },
 
-        function setGameSpeed(speed) {
-            gameSpeed = speed;
-            document.getElementById('speedDisplay').textContent = `${speed}x`;
-            
-            // Update active button
-            document.querySelectorAll('#speedControls button').forEach(btn => {
-                btn.classList.remove('active');
-            });
-            document.getElementById(`speed${speed}x`).classList.add('active');
-        }
+      { date: "07/06/25", week: 39, ratio: 1.547 }
+    ];
 
-        const gearButton = document.getElementById('gearButton');
-        const gearControls = document.getElementById('gearControls');
-        gearButton.addEventListener('click', () => {
-            gearControls.classList.toggle('visible');
-            speedControls.classList.remove('visible');
-        });
+    const svg = document.getElementById('chart');
+    const width = svg.clientWidth;
+    const height = svg.clientHeight;
+    const padding = 50;
 
-        document.getElementById('showMonsters').addEventListener('change', (e) => {
-            showMonsters = e.target.checked;
-        });
+    const maxRatio = Math.max(...yieldData.map(d => d.ratio));
+    const minRatio = Math.min(...yieldData.map(d => d.ratio));
+    const weeks = yieldData.map(d => d.week);
 
-        document.getElementById('showNumbers').addEventListener('change', (e) => {
-            showNumbers = e.target.checked;
-        });
+    // Scale functions
+    const xScale = week => padding + (week - 1) * ((width - 2 * padding) / (weeks.length - 1));
+    const yScale = ratio => height - padding - ((ratio - minRatio) / (maxRatio - minRatio)) * (height - 2 * padding);
 
-        document.getElementById('showHitboxes').addEventListener('change', (e) => {
-            showHitboxes = e.target.checked;
-        });
+    // Line path
+    const linePath = yieldData.map((d, i) => {
+      const x = xScale(d.week);
+      const y = yScale(d.ratio);
+      return `${i === 0 ? 'M' : 'L'} ${x},${y}`;
 
-        // Pause functionality
-        const pauseButton = document.getElementById('pauseButton');
-        const resumeButton = document.getElementById('resumeButton');
-        const pausedOverlay = document.getElementById('pausedOverlay');
-        
-        pauseButton.addEventListener('click', () => {
-            gamePaused = true;
-            pausedOverlay.classList.add('visible');
-        });
-        
-        resumeButton.addEventListener('click', () => {
-            gamePaused = false;
-            pausedOverlay.classList.remove('visible');
-        });
+    }).join(' ');
 
-        // Swap app functionality
-        const swapButton = document.getElementById('swapButton');
-        const swapModal = document.getElementById('swapModal');
-        const closeSwap = document.getElementById('closeSwap');
-        
-        swapButton.addEventListener('click', () => {
-            gamePaused = true;
-            swapModal.classList.add('visible');
-        });
-        
-        closeSwap.addEventListener('click', () => {
-            gamePaused = false;
-            swapModal.classList.remove('visible');
-        });
+    // Draw gridlines
+    const yAxisSteps = 5;
+    for (let i = 0; i <= yAxisSteps; i++) {
+      const ratio = minRatio + (i * (maxRatio - minRatio)) / yAxisSteps;
 
-        // Restart button
-        document.getElementById('restartButton').addEventListener('click', restartGame);
+      const y = yScale(ratio);
+      const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+      line.setAttribute('x1', padding);
 
-        // Game functions
-        function endGame() {
-            gameRunning = false;
-            const gameOverScreen = document.getElementById('gameOverScreen');
-            const winnerText = document.getElementById('winnerText');
-            
-            if (redTeamScore >= 10) {
-                winnerText.textContent = "Red Team Wins!";
-                winnerText.className = "winner red";
-            } else {
-                winnerText.textContent = "Green Team Wins!";
-                winnerText.className = "winner green";
-            }
-            
-            gameOverScreen.classList.add('visible');
-        }
+      line.setAttribute('x2', width - padding);
+      line.setAttribute('y1', y);
+      line.setAttribute('y2', y);
+      line.setAttribute('stroke', '#eee');
+      svg.appendChild(line);
 
-        function restartGame() {
-            redTeamScore = 0;
-            greenTeamScore = 0;
-            document.getElementById('redScore').textContent = "0";
-            document.getElementById('greenScore').textContent = "0";
-            document.getElementById('gameOverScreen').classList.remove('visible');
-            
-            monsters.forEach(monster => {
-                monster.respawn();
-            });
-            
-            gameRunning = true;
-            gamePaused = false;
-            lastFrameTime = performance.now();
-            requestAnimationFrame(gameLoop);
-        }
 
-        // Collision detection
-        function isColliding(a, b) {
-            if (a.dead || b.dead || a.team === b.team) return false;
-            
-            const aX = a.x * logicalWidth + (a.isAttacking ? a.pushFrame / 15 * 0.1 * (a.team === 'RED' ? -1 : 1) * logicalWidth : 0) + (monsterWidth - hitboxWidth) / 2;
-            const aY = a.y * logicalHeight + (monsterHeight - hitboxHeight) / 2;
-            const bX = b.x * logicalWidth + (b.isAttacking ? b.pushFrame / 15 * 0.1 * (b.team === 'RED' ? -1 : 1) * logicalWidth : 0) + (monsterWidth - hitboxWidth) / 2;
-            const bY = b.y * logicalHeight + (monsterHeight - hitboxHeight) / 2;
-            
-            return aX < bX + hitboxWidth &&
-                   aX + hitboxWidth > bX &&
-                   aY < bY + hitboxHeight &&
-                   aY + hitboxHeight > bY;
-        }
+      const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      label.setAttribute('x', 5);
+      label.setAttribute('y', y + 4);
 
-        function checkCollisions() {
-            for (let i = 0; i < monsters.length; i++) {
-                for (let j = i + 1; j < monsters.length; j++) {
-                    const a = monsters[i];
-                    const b = monsters[j];
-                    
-                    if (a.team !== b.team && !a.isAttacking && !b.isAttacking && isColliding(a, b)) {
-                        a.startAttack();
-                        b.startAttack();
-                        a.takeDamage();
-                        b.takeDamage();
-                    }
-                }
-            }
-        }
+      label.setAttribute('class', 'label');
+      label.textContent = ratio.toFixed(2);
+      svg.appendChild(label);
 
-        // Game loop
-        function gameLoop(timestamp) {
-            // Calculate FPS
-            if (lastFrameTime) {
-                const deltaTime = timestamp - lastFrameTime;
-                fps = Math.round(1000 / deltaTime);
-                frameCount++;
-                
-                // Update FPS display once per second
-                if (timestamp - lastFpsUpdate > 1000) {
-                    document.getElementById('fpsCounter').textContent = fps;
-                    lastFpsUpdate = timestamp;
-                    frameCount = 0;
-                }
-            }
-            lastFrameTime = timestamp;
-            
-            if (!gameRunning || gamePaused) {
-                requestAnimationFrame(gameLoop);
-                return;
-            }
-            
-            ctx.clearRect(0, 0, logicalWidth, logicalHeight);
-            
-            // Draw ground line
-            ctx.beginPath();
-            ctx.moveTo(0, groundY);
-            ctx.lineTo(logicalWidth, groundY);
-            ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
-            ctx.lineWidth = 2;
-            ctx.stroke();
-            
-            // Draw spawn markers
-            ctx.fillStyle = 'rgba(255, 107, 107, 0.7)';
-            ctx.beginPath();
-            ctx.moveTo(logicalWidth - 10, groundY);
-            ctx.lineTo(logicalWidth - 20, groundY + 10);
-            ctx.lineTo(logicalWidth, groundY + 10);
-            ctx.fill();
-            
-            ctx.fillStyle = 'rgba(78, 205, 196, 0.7)';
-            ctx.beginPath();
-            ctx.moveTo(10, groundY);
-            ctx.lineTo(20, groundY + 10);
-            ctx.lineTo(0, groundY + 10);
-            ctx.fill();
-            
-            // Update and draw monsters
-            let aliveCount = 0;
-            monsters.forEach(monster => {
-                monster.update();
-                monster.draw();
-                if (!monster.dead) aliveCount++;
-            });
-            
-            document.getElementById('aliveCount').textContent = aliveCount;
-            updateMonsterList();
-            
-            // Check collisions
-            checkCollisions();
-            
-            requestAnimationFrame(gameLoop);
-        }
+    }
 
-        // Initialize game
-        setGameSpeed(1);
-        lastFrameTime = performance.now();
-        gameLoop();
+    // Draw X-axis labels every 5 weeks
+    yieldData.forEach((d, i) => {
+      const x = xScale(d.week);
+      if (d.week % 8 === 1 || d.week === 1 || d.week === 39) {
+        const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        label.setAttribute('x', x);
+        label.setAttribute('y', height - padding + 15);
 
-        // ======== ZEPHYR SWAP INTEGRATION ========
-        // Fixed contract addresses for Nile testnet
-        const ZSD = "TENgTiMGSwRJPe6GQSV5WHmvomzonGjQt8"; // Corrected address
-        const ZYS = "TNXQp3YVmLEf1dZXzqJathi12vHAqGXcjE";
-        const DEX = "TE5uCHMRNRsCc7aQo9WCy6Q5iKT42UKf61";
-        const DECIMALS = 12;
+        label.setAttribute('class', 'label');
+        label.setAttribute('text-anchor', 'middle');
+        label.textContent = d.date;
 
-        const DEX_ABI = {
-            "entrys":[
-                {"inputs":[{"name":"_tokenA","type":"address"},{"name":"_tokenB","type":"address"}],"stateMutability":"Nonpayable","type":"Constructor"},
-                {"inputs":[{"indexed":true,"name":"user","type":"address"},{"name":"amountA","type":"uint256"},{"name":"amountB","type":"uint256"}],"name":"Swapped","type":"Event"},
-                {"outputs":[{"type":"address"}],"name":"owner","stateMutability":"View","type":"Function"},
-                {"outputs":[{"type":"uint256"}],"name":"rateDenominator","stateMutability":"View","type":"Function"},
-                {"outputs":[{"type":"uint256"}],"name":"rateNumerator","stateMutability":"View","type":"Function"},
-                {"inputs":[{"name":"amountA","type":"uint256"}],"name":"swapAForB","stateMutability":"Nonpayable","type":"Function"},
-                {"outputs":[{"type":"address"}],"name":"tokenA","stateMutability":"View","type":"Function"},
-                {"outputs":[{"type":"address"}],"name":"tokenB","stateMutability":"View","type":"Function"},
-                {"inputs":[{"name":"token","type":"address"},{"name":"amount","type":"uint256"}],"name":"withdraw","stateMutability":"Nonpayable","type":"Function"}
-            ]
-        };
+        svg.appendChild(label);
+      }
+    });
 
-        // Cache DOM elements
-        const connectBtn = document.getElementById('connectBtn');
-        const swapBtn = document.getElementById('swapBtn');
-        const amountInput = document.getElementById('amountInput');
-        const statusBox = document.getElementById('status');
-        const walletDisplay = document.getElementById('walletAddress');
-        const balances = document.getElementById('balances');
-        const swapSection = document.getElementById('swapSection');
-        const trxBal = document.getElementById('trxBal');
-        const zsdBal = document.getElementById('zsdBal');
-        const zysBal = document.getElementById('zysBal');
+    // Draw axes
+    const xAxis = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    xAxis.setAttribute('x1', padding);
+    xAxis.setAttribute('x2', width - padding);
+    xAxis.setAttribute('y1', height - padding);
+    xAxis.setAttribute('y2', height - padding);
+    xAxis.setAttribute('stroke', '#000');
+    svg.appendChild(xAxis);
 
-        let userAddress;
-        let tronWeb = null;
+    const yAxis = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    yAxis.setAttribute('x1', padding);
+    yAxis.setAttribute('x2', padding);
+    yAxis.setAttribute('y1', padding);
+    yAxis.setAttribute('y2', height - padding);
+    yAxis.setAttribute('stroke', '#000');
+    svg.appendChild(yAxis);
 
-        const sleep = ms => new Promise(res => setTimeout(res, ms));
-
-        function log(msg, type = '') {
-            const div = document.createElement('div');
-            div.textContent = msg;
-            if (type) div.classList.add(type);
-            statusBox.appendChild(div);
-            statusBox.scrollTop = statusBox.scrollHeight;
-        }
-
-        async function waitForTronWeb() {
-            for (let i = 0; i < 30; i++) {
-                if (window.tronWeb && window.tronWeb.ready && window.tronWeb.defaultAddress.base58) {
-                    return window.tronWeb;
-                }
-                await sleep(500);
-            }
-            return null;
-        }
-
-        async function connectWallet() {
-            statusBox.innerHTML = '';
-            tronWeb = await waitForTronWeb();
-            
-            if (!tronWeb) {
-                log("❌ TronLink not found or not unlocked", "swap-error");
-                return;
-            }
-
-            userAddress = tronWeb.defaultAddress.base58;
-
-            if (!userAddress) {
-                log("❌ Wallet address not found. Unlock TronLink.", "swap-error");
-                return;
-            }
-
-            walletDisplay.textContent = `Connected: ${userAddress}`;
-            balances.style.display = 'block';
-            swapSection.style.display = 'block';
-
-            try {
-                const trx = await tronWeb.trx.getBalance(userAddress);
-                trxBal.textContent = (trx / 1e6).toFixed(2);
-
-                // Check if we're on Nile testnet
-                const nodeInfo = await tronWeb.trx.getNodeInfo();
-                if (!nodeInfo.net.toLowerCase().includes('nile')) {
-                    log("⚠️ Please switch to Nile testnet in TronLink", "swap-error");
-                    return;
-                }
-
-                const zsdC = await tronWeb.contract().at(ZSD);
-                const zysC = await tronWeb.contract().at(ZYS);
-                const zsd = await zsdC.balanceOf(userAddress).call();
-                const zys = await zysC.balanceOf(userAddress).call();
-                
-                // Convert to readable format
-                const zsdAmount = BigInt(zsd.toString());
-                const zysAmount = BigInt(zys.toString());
-                
-                zsdBal.textContent = (zsdAmount / 10n**BigInt(DECIMALS)).toString();
-                zysBal.textContent = (zysAmount / 10n**BigInt(DECIMALS)).toString();
-                
-                log("✔ Wallet connected successfully", "swap-success");
-            } catch (e) {
-                log("❌ Failed to load balances: " + e.message, "swap-error");
-            }
-        }
-
-        async function executeSwap() {
-            statusBox.innerHTML = '';
-            const amount = parseFloat(amountInput.value);
-            if (isNaN(amount) || amount <= 0) {
-                log("❌ Please enter a valid amount", "swap-error");
-                return;
-            }
-
-            if (!tronWeb) {
-                log("❌ TronLink not available", "swap-error");
-                return;
-            }
-
-            try {
-                const fullAmount = BigInt(Math.floor(amount * 10 ** DECIMALS));
-                const zsdC = await tronWeb.contract().at(ZSD);
-                const dexC = await tronWeb.contract(DEX_ABI.entrys, DEX);
-
-                log("Step 1: Checking ZSD allowance...");
-                const allowance = await zsdC.allowance(userAddress, DEX).call();
-                const allowanceValue = BigInt(allowance.toString());
-                
-                if (allowanceValue < fullAmount) {
-                    log("Step 2: Approving ZSD for swap...");
-                    const txApprove = await zsdC.approve(DEX, fullAmount.toString()).send();
-                    log(`⏳ Approval sent: ${txApprove}`);
-                    
-                    // Wait for transaction to be confirmed
-                    log("Waiting for approval confirmation...");
-                    await new Promise(resolve => setTimeout(resolve, 15000));
-                } else {
-                    log("✔ Allowance sufficient", "swap-success");
-                }
-
-                log("Step 3: Executing swap...");
-                const txSwap = await dexC.swapAForB(fullAmount.toString()).send();
-                log(`⏳ Swap transaction sent: ${txSwap}`);
-                
-                // Wait for transaction to be confirmed
-                log("Step 4: Waiting for confirmation...");
-                await new Promise(resolve => setTimeout(resolve, 15000));
-                
-                log("✔ Swap successful!", "swap-success");
-
-                // Add transaction link
-                const a = document.createElement('a');
-                a.href = `https://nile.tronscan.org/#/transaction/${txSwap}`;
-                a.target = "_blank";
-                a.className = "swap-link";
-                a.textContent = "View on Tronscan";
-                statusBox.appendChild(a);
-                
-                // Update balances
-                const zsd = await zsdC.balanceOf(userAddress).call();
-                const zys = await zysC.balanceOf(userAddress).call();
-                zsdBal.textContent = (BigInt(zsd.toString()) / 10n**BigInt(DECIMALS)).toString();
-                zysBal.textContent = (BigInt(zys.toString()) / 10n**BigInt(DECIMALS)).toString();
-            } catch (err) {
-                log("❌ Swap failed: " + err.message, "swap-error");
-            }
-        }
-
-        // Add event listeners for swap functionality
-        connectBtn.addEventListener('click', connectWallet);
-        swapBtn.addEventListener('click', executeSwap);
-        
-        // Check for TronLink on page load
-        window.addEventListener("load", async () => {
-            tronWeb = await waitForTronWeb();
-            if (tronWeb) {
-                log("🔄 TronLink detected. Ready to connect.");
-            } else {
-                log("⚠️ Install TronLink to use the SWAP feature", "swap-error");
-            }
-        });
-    </script>
+    // Draw the line
+    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    path.setAttribute('d', linePath);
+    path.setAttribute('fill', 'none');
+    path.setAttribute('stroke', 'steelblue');
+    path.setAttribute('stroke-width', '3');
+    svg.appendChild(path);
+    
+  </script>
 </body>
 </html>
+
