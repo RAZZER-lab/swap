@@ -4,6 +4,40 @@
   <meta charset="UTF-8" />
   <title>ZEPHYR SWAP // NILE</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script>
+    // Android WebView interface for TronLink connectivity
+    const AndroidInterface = {
+      connectWallet: function() {
+        // This will be called from Android WebView
+        console.log("Android.connectWallet() called");
+        if (window.TronLinkAndroid && window.TronLinkAndroid.connectWallet) {
+          window.TronLinkAndroid.connectWallet();
+        } else {
+          console.error("TronLinkAndroid interface not found");
+          document.getElementById('status').innerHTML = 
+            '<div class="error">❌ Android bridge not found. Are you in the app?</div>';
+        }
+      },
+      
+      handleTronLinkSuccess: function(address) {
+        console.log("Android.handleTronLinkSuccess called with:", address);
+        window.handleTronLinkSuccess(address);
+      },
+      
+      handleSignedMessage: function(signedMessage) {
+        console.log("Android.handleSignedMessage called");
+        window.handleSignedMessage(signedMessage);
+      },
+      
+      handleTransactionSuccess: function(txId) {
+        console.log("Android.handleTransactionSuccess called with:", txId);
+        window.handleTransactionSuccess(txId);
+      }
+    };
+
+    // Expose to window for Android interface
+    window.AndroidInterface = AndroidInterface;
+  </script>
   <style>
     html, body {
       margin: 0;
@@ -14,12 +48,12 @@
     }
     .container {
       max-width: 45%;
-      margin-left: auto;
+      margin: 0 auto;
       padding: 2rem;
-      margin-top: -45rem;
+      margin-top: -1rem;
     }
     h1 {
-      text-align: left;
+      text-align: center;
       font-size: 1.5rem;
       letter-spacing: 2px;
       margin-left: 2rem;
@@ -71,6 +105,8 @@
     }
     svg {
       background: #f9f9f9;
+      margin-top: 38rem;
+      margin-left: 23rem;display:none;
     }
     .grid line {
       stroke: #ddd;
@@ -85,9 +121,27 @@
       margin-top: 1rem;
       border-bottom: 1px dashed #666;
     }
+    
+    /* Android-specific styles */
+    .android-info {
+      position: fixed;
+      top: 10px;
+      right: 10px;
+      background: rgba(0, 0, 0, 0.7);
+      border: 1px solid #0f0;
+      padding: 10px;
+      border-radius: 5px;
+      font-size: 0.8rem;
+      max-width: 200px;
+    }
   </style>
 </head>
 <body>
+  <div class="android-info">
+    <strong>Android WebView Mode</strong>
+    <div>Using TronLink via Android bridge</div>
+  </div>
+  
   <h1>ZYS/USD DEX SWAP</h1>
   <svg id="chart" width="50%" height="500"></svg>
   <div class="container">
@@ -159,21 +213,24 @@
       div.textContent = msg;
       if (type) div.classList.add(type);
       statusBox.appendChild(div);
+      statusBox.scrollTop = statusBox.scrollHeight;
     }
 
-    async function waitForTronWeb() {
-      for (let i = 0; i < 30; i++) {
-        if (window.tronWeb && window.tronWeb.ready && window.tronWeb.defaultAddress.base58) {
-          tronWeb = window.tronWeb;
-          return true;
-        }
-        await sleep(500);
-      }
-      return false;
+    // Android WebView specific functions
+    function isAndroidWebView() {
+      return navigator.userAgent.toLowerCase().indexOf("wv") > -1;
     }
 
     async function connectWallet() {
       statusBox.innerHTML = '';
+      
+      if (isAndroidWebView()) {
+        log("🔄 Connecting via Android bridge...");
+        AndroidInterface.connectWallet();
+        return;
+      }
+      
+      // Fallback to regular TronLink if not in WebView
       if (!window.tronWeb || !window.tronWeb.ready) {
         log("❌ TronLink not found or not unlocked", "error");
         return;
@@ -252,16 +309,49 @@
       }
     }
 
+    // Callback for Android WebView
+    window.handleTronLinkSuccess = function(address) {
+      log("✅ Wallet connected via Android bridge", "success");
+      userAddress = address;
+      walletDisplay.textContent = `Connected: ${address}`;
+      balances.style.display = 'block';
+      swapSection.style.display = 'block';
+      
+      // For demo purposes - in a real app, you'd make actual API calls
+      trxBal.textContent = "124.56";
+      zsdBal.textContent = "1,245.32";
+      zysBal.textContent = "8,745.21";
+      SCzsdBal.textContent = "1,245,320";
+      SCzysBal.textContent = "874,521";
+      SCocRATIO.textContent = "95.2";
+    };
+
+    window.handleSignedMessage = function(signedMessage) {
+      log("✅ Message signed via Android bridge", "success");
+      log("Signed message: " + signedMessage.substring(0, 40) + "...");
+    };
+
+    window.handleTransactionSuccess = function(txId) {
+      log("✅ Transaction successful via Android bridge", "success");
+      log("Transaction ID: " + txId);
+      
+      const a = document.createElement('a');
+      a.href = `https://nile.tronscan.org/#/transaction/${txId}`;
+      a.target = "_blank";
+      a.className = "link";
+      a.textContent = "[ View on Tronscan ]";
+      statusBox.appendChild(a);
+    };
+
     connectBtn.addEventListener('click', connectWallet);
     swapBtn.addEventListener('click', executeSwap);
 
     window.addEventListener("load", async () => {
-      const ok = await waitForTronWeb();
-      if (!ok) {
-        log("❌ TronLink not found or not unlocked", "error");
-        return;
+      if (!isAndroidWebView()) {
+        log("ℹ️ Using in-browser mode. Install TronLink extension for full functionality.");
+      } else {
+        log("📱 Android WebView detected. Ready to connect to TronLink.");
       }
-      log("🔄 TronLink detected. Ready to connect.");
     });
     
     
@@ -411,4 +501,3 @@
   </script>
 </body>
 </html>
-
