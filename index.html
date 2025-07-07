@@ -60,6 +60,7 @@
     }
     .error { color: #f33; font-weight: bold; }
     .success { color: #0f0; font-weight: bold; }
+    .warning { color: #ff0; font-weight: bold; }
     .link {
       color: #0ff;
       text-decoration: underline;
@@ -100,9 +101,49 @@
       font-size: 0.8rem;
       max-width: 200px;
     }
+
+    /* Loading overlay */
+    #loading {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.7);
+      z-index: 9999;
+    }
+    #loading > div {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: #fff;
+      text-align: center;
+    }
+    .spinner {
+      border: 4px solid rgba(255,255,255,0.3);
+      border-radius: 50%;
+      border-top: 4px solid #0f0;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 20px;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
   </style>
 </head>
 <body>
+  <div id="loading">
+    <div>
+      <div class="spinner"></div>
+      <div>Processing with TronLink...</div>
+    </div>
+  </div>
+  
   <div class="android-info">
     <strong>Android WebView Mode</strong>
     <div>Using TronLink via Android bridge</div>
@@ -145,32 +186,48 @@
     // ======================
     window.handleTronLinkCallback = function(callbackUrl) {
       console.log("Received TronLink callback:", callbackUrl);
-      const url = new URL(callbackUrl);
-      const params = new URLSearchParams(url.search);
-      
-      if (params.has('address')) {
-        const address = params.get('address');
-        handleTronLinkSuccess(address);
-      } 
-      else if (params.has('signedTransaction')) {
-        const signedTx = params.get('signedTransaction');
-        handleSignedTransaction(signedTx);
-      }
-      else if (params.has('txId')) {
-        const txId = params.get('txId');
-        handleTransactionSuccess(txId);
+      try {
+        const url = new URL(callbackUrl);
+        const params = new URLSearchParams(url.search);
+        
+        if (params.has('address')) {
+          const address = params.get('address');
+          handleTronLinkSuccess(address);
+        } 
+        else if (params.has('signedTransaction')) {
+          const signedTx = params.get('signedTransaction');
+          handleSignedTransaction(signedTx);
+        }
+        else if (params.has('txId')) {
+          const txId = params.get('txId');
+          handleTransactionSuccess(txId);
+        }
+        else {
+          log("Unknown callback: " + callbackUrl, "error");
+        }
+      } catch (e) {
+        log("❌ Error processing callback: " + e.message, "error");
       }
     };
 
     function handleTronLinkSuccess(address) {
       log("✅ Wallet connected via Android bridge", "success");
       userAddress = address;
-      walletDisplay.textContent = `Connected: ${address}`;
+      localStorage.setItem('tronAddress', address);
+      
+      // Update UI immediately
+      updateWalletDisplay();
       balances.style.display = 'block';
       swapSection.style.display = 'block';
       
-      // Load balances (in real app, make API calls)
+      // Load balances
       updateBalances();
+    }
+
+    function updateWalletDisplay() {
+      walletDisplay.textContent = `Connected: ${userAddress}`;
+      walletDisplay.style.display = "block";
+      connectBtn.textContent = "[ DISCONNECT ]";
     }
 
     function handleSignedTransaction(signedTx) {
@@ -191,7 +248,9 @@
       statusBox.appendChild(a);
       
       // Refresh balances after successful transaction
-      setTimeout(updateBalances, 3000);
+      setTimeout(() => {
+        if (window.tronWeb) updateBalances();
+      }, 8000);
     }
 
     // ======================
@@ -215,8 +274,9 @@
     const SCzsdBal = document.getElementById('SCzsdBal');
     const SCzysBal = document.getElementById('SCzysBal');
     const SCocRATIO = document.getElementById('SCocRATIO');
+    const loadingOverlay = document.getElementById('loading');
 
-    let userAddress;
+    let userAddress = null;
     let tronWeb = window.tronWeb || {};
 
     function log(msg, type = '') {
@@ -231,32 +291,58 @@
       return navigator.userAgent.toLowerCase().indexOf("wv") > -1;
     }
 
+    function toHex(value) {
+      const bigIntValue = BigInt(value);
+      return bigIntValue.toString(16).padStart(64, '0');
+    }
+
     async function connectWallet() {
       statusBox.innerHTML = '';
       
+      if (userAddress) {
+        // Disconnect if already connected
+        userAddress = null;
+        localStorage.removeItem('tronAddress');
+        walletDisplay.style.display = "none";
+        balances.style.display = "none";
+        swapSection.style.display = "none";
+        connectBtn.textContent = "[ CONNECT WALLET ]";
+        return;
+      }
+      
       if (isAndroidWebView()) {
         log("🔄 Connecting via Android bridge...");
-        if (window.TronLinkAndroid && window.TronLinkAndroid.connectWallet) {
-          window.TronLinkAndroid.connectWallet();
-        } else {
-          log("❌ Android bridge not available", "error");
+        try {
+          // First check if bridge is available
+          if (window.TronLinkAndroid && window.TronLinkAndroid.connectWallet) {
+            window.TronLinkAndroid.connectWallet();
+          } else {
+            throw new Error("Android bridge not available");
+          }
+        } catch (e) {
+          log("❌ Connection failed: " + e.message, "error");
         }
         return;
       }
       
-      // Fallback to browser TronLink
+      // Browser TronLink fallback
       if (!window.tronWeb || !window.tronWeb.ready) {
-        log("❌ TronLink not found or not unlocked", "error");
-        log("Install TronLink extension for browser usage", "error");
+        log("❌ TronLink not detected", "error");
+        log("Install TronLink extension or use mobile app", "error");
         return;
       }
-
-      tronWeb = window.tronWeb;
-      userAddress = tronWeb.defaultAddress.base58;
-      walletDisplay.textContent = `Connected: ${userAddress}`;
-      balances.style.display = 'block';
-      swapSection.style.display = 'block';
-      updateBalances();
+      
+      try {
+        await window.tronWeb.request({ method: 'tron_requestAccounts' });
+        userAddress = window.tronWeb.defaultAddress.base58;
+        localStorage.setItem('tronAddress', userAddress);
+        updateWalletDisplay();
+        balances.style.display = 'block';
+        swapSection.style.display = 'block';
+        updateBalances();
+      } catch (e) {
+        log("❌ Connection rejected: " + e.message, "error");
+      }
     }
 
     async function updateBalances() {
@@ -306,25 +392,32 @@
       }
 
       const fullAmount = BigInt(Math.floor(amount * 10 ** DECIMALS));
+      let swapTimeout;
       
-      if (isAndroidWebView()) {
-        log("🔄 Requesting transaction signing via Android...");
-        if (window.TronLinkAndroid && window.TronLinkAndroid.signTransaction) {
-          // In real app, you would generate a proper raw transaction
-          const rawTx = JSON.stringify({
-            to: DEX,
-            amount: fullAmount.toString(),
-            token: ZSD
-          });
-          window.TronLinkAndroid.signTransaction(rawTx);
-        } else {
-          log("❌ Android bridge not available", "error");
-        }
-        return;
-      }
-      
-      // Browser implementation
       try {
+        loadingOverlay.style.display = 'block';
+        swapTimeout = setTimeout(() => {
+          log("⌛️ Taking longer than expected...", "warning");
+        }, 10000);
+        
+        if (isAndroidWebView()) {
+          log("🔄 Requesting swap via Android...");
+          const rawTx = JSON.stringify({
+            contractAddress: DEX,
+            functionSelector: "swapAForB(uint256)",
+            parameter: toHex(fullAmount),
+            feeLimit: 100000000
+          });
+          
+          if (window.TronLinkAndroid && window.TronLinkAndroid.signTransaction) {
+            window.TronLinkAndroid.signTransaction(rawTx);
+          } else {
+            throw new Error("Android bridge not available");
+          }
+          return;
+        }
+        
+        // Browser implementation
         log("Step 1: Checking allowance...");
         const zsdC = await tronWeb.contract().at(ZSD);
         const allowance = await zsdC.allowance(userAddress, DEX).call();
@@ -350,6 +443,9 @@
         updateBalances();
       } catch (err) {
         log("❌ Swap failed: " + err.message, "error");
+      } finally {
+        clearTimeout(swapTimeout);
+        loadingOverlay.style.display = 'none';
       }
     }
 
@@ -360,10 +456,24 @@
     swapBtn.addEventListener('click', executeSwap);
 
     window.addEventListener("load", () => {
+      // Check for wallet connection persistence
+      const savedAddress = localStorage.getItem('tronAddress');
+      if (savedAddress) {
+        userAddress = savedAddress;
+        updateWalletDisplay();
+        balances.style.display = 'block';
+        swapSection.style.display = 'block';
+        
+        // Load balances if possible
+        if (window.tronWeb) {
+          updateBalances();
+        }
+      }
+      
       if (isAndroidWebView()) {
-        log("📱 Android WebView detected. Ready to connect");
+        log("📱 Android mode: Ready for TronLink");
       } else if (window.tronWeb) {
-        log("🌐 TronLink detected. Click CONNECT WALLET");
+        log("🌐 TronLink detected: Click CONNECT");
       } else {
         log("ℹ️ Install TronLink for full functionality");
       }
