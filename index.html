@@ -1,4 +1,145 @@
- <script>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>ZEPHYR SWAP // NILE</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: #000;
+      color: #fff;
+      font-family: monospace;
+    }
+    .container {
+      max-width: 45%;
+      margin: 0 auto;
+      padding: 2rem;
+      margin-top: -1rem;
+    }
+    h1 {
+      text-align: center;
+      font-size: 1.5rem;
+      letter-spacing: 2px;
+      margin-left: 2rem;
+      border-bottom: 1px dashed #666;
+      padding-bottom: 0.5rem;
+      text-transform: uppercase;
+    }
+    .section {
+      margin: auto;
+      direction: rtl;
+    }
+    button, input {
+      font-family: monospace;
+      font-size: 1rem;
+      padding: 0.75rem 1rem;
+      margin-top: 0.5rem;
+      background: #000;
+      color: #fff;
+      border: 1px solid #fff;
+      width: 100%;
+      transition: 0.3s;
+      direction: rtl;
+    }
+    input {
+      margin-bottom: 0.5rem;
+    }
+    button:hover {
+      background: #fff;
+      color: #000;
+      cursor: pointer;
+    }
+    .status {
+      margin-top: 2rem;
+      white-space: pre-line;
+      padding-top: 1rem;
+      color: #0f0;
+      font-size: 0.9rem;
+    }
+    .error { color: #f33; font-weight: bold; }
+    .success { color: #0f0; font-weight: bold; }
+    .link {
+      color: #0ff;
+      text-decoration: underline;
+    }
+    .balance {
+      font-size: 1rem;
+      margin-top: 0.3rem;
+      color: #ccc;
+    }
+    svg {
+      background: #f9f9f9;
+      margin-top: 38rem;
+      margin-left: 23rem;display:none;
+    }
+    .grid line {
+      stroke: #ddd;
+    }
+    .label {
+      font-size: 10px;
+      fill: #333;
+    }
+
+    .SCbalance {
+      direction: ltr;
+      margin-top: 1rem;
+      border-bottom: 1px dashed #666;
+    }
+    
+    /* Android-specific styles */
+    .android-info {
+      position: fixed;
+      top: 10px;
+      right: 10px;
+      background: rgba(0, 0, 0, 0.7);
+      border: 1px solid #0f0;
+      padding: 10px;
+      border-radius: 5px;
+      font-size: 0.8rem;
+      max-width: 200px;
+    }
+  </style>
+</head>
+<body>
+  <div class="android-info">
+    <strong>Android WebView Mode</strong>
+    <div>Using TronLink via Android bridge</div>
+  </div>
+  
+  <h1>ZYS/USD DEX SWAP</h1>
+  <svg id="chart" width="50%" height="500"></svg>
+  <div class="container">
+    
+    <h1>Over-Collateralization (OC) RATE: </h1>
+    <div id="SCbalances" class="SCsection">
+      <div class="SCbalance">ZSD: <span id="SCzsdBal">--</span></div>
+      <div class="SCbalance">ZYS: <span id="SCzysBal">--</span></div>
+      <div class="SCbalance">OC RATIO (%): <span id="SCocRATIO">--</span></div>
+    </div>
+
+    <h1>ZEPHYR SWAP : ZSD → ZYS</h1>
+    <div class="section">
+      <button id="connectBtn">[ CONNECT WALLET ]</button>
+      <div id="walletAddress" class="balance"></div>
+    </div>
+
+    <div id="balances" class="section" style="display:none;">
+      <div class="balance">TRX: <span id="trxBal">--</span></div>
+      <div class="balance">ZSD: <span id="zsdBal">--</span></div>
+      <div class="balance">ZYS: <span id="zysBal">--</span></div>
+    </div>
+
+    <div class="section" id="swapSection" style="display:none;">
+      <input type="number" id="amountInput" placeholder="Enter amount of ZSD to swap">
+      <button id="swapBtn">[ EXECUTE SWAP ]</button>
+    </div>
+
+    <div id="status" class="status"></div>
+  </div>
+
+  <script>
     // ======================
     // TronLink Bridge Handler
     // ======================
@@ -235,3 +376,5 @@
     
     // ... keep existing chart rendering code unchanged ...
   </script>
+</body>
+</html>
