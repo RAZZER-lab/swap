@@ -1,380 +1,405 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8" />
-  <title>ZEPHYR SWAP // NILE</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <style>
-    html, body {
-      margin: 0;
-      padding: 0;
-      background: #000;
-      color: #fff;
-      font-family: monospace;
-    }
-    .container {
-      max-width: 45%;
-      margin: 0 auto;
-      padding: 2rem;
-      margin-top: -1rem;
-    }
-    h1 {
-      text-align: center;
-      font-size: 1.5rem;
-      letter-spacing: 2px;
-      margin-left: 2rem;
-      border-bottom: 1px dashed #666;
-      padding-bottom: 0.5rem;
-      text-transform: uppercase;
-    }
-    .section {
-      margin: auto;
-      direction: rtl;
-    }
-    button, input {
-      font-family: monospace;
-      font-size: 1rem;
-      padding: 0.75rem 1rem;
-      margin-top: 0.5rem;
-      background: #000;
-      color: #fff;
-      border: 1px solid #fff;
-      width: 100%;
-      transition: 0.3s;
-      direction: rtl;
-    }
-    input {
-      margin-bottom: 0.5rem;
-    }
-    button:hover {
-      background: #fff;
-      color: #000;
-      cursor: pointer;
-    }
-    .status {
-      margin-top: 2rem;
-      white-space: pre-line;
-      padding-top: 1rem;
-      color: #0f0;
-      font-size: 0.9rem;
-    }
-    .error { color: #f33; font-weight: bold; }
-    .success { color: #0f0; font-weight: bold; }
-    .link {
-      color: #0ff;
-      text-decoration: underline;
-    }
-    .balance {
-      font-size: 1rem;
-      margin-top: 0.3rem;
-      color: #ccc;
-    }
-    svg {
-      background: #f9f9f9;
-      margin-top: 38rem;
-      margin-left: 23rem;display:none;
-    }
-    .grid line {
-      stroke: #ddd;
-    }
-    .label {
-      font-size: 10px;
-      fill: #333;
-    }
+<meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<style>
+body{
+margin:0px;
+-webkit-user-drag: none;
+background-color:#343434;
 
-    .SCbalance {
-      direction: ltr;
-      margin-top: 1rem;
-      border-bottom: 1px dashed #666;
-    }
-    
-    /* Android-specific styles */
-    .android-info {
-      position: fixed;
-      top: 10px;
-      right: 10px;
-      background: rgba(0, 0, 0, 0.7);
-      border: 1px solid #0f0;
-      padding: 10px;
-      border-radius: 5px;
-      font-size: 0.8rem;
-      max-width: 200px;
-    }
-  </style>
+
+}
+	#canvasarea{
+		height:100%;
+		width:100%;
+		position:absolute;
+	}
+	#canvasbg{
+		height:100%;
+		width:100%;
+		position:absolute;
+	}
+	#canvasinfo{
+		height:100%;
+		width:100%;
+		position:absolute;
+	}
+	#debug{
+		float:right;
+		position:relative;
+	}
+</style>
+
+<script type="text/javascript">
+
+
+var timex=0,timec=0,timecl=0,timecl_=0,timedif=0,timeres=0,fpsstbil=0;
+var mX = 0;
+var mY = 0;
+var infotexta = false;
+var infotexta = 0;var strix=0;var benscor=0;
+var reglogbuttonc = true,cont_rlb = true;
+var points = [];
+var animationId; // Store the requestAnimationFrame ID
+var lastTime = 0; // Track time for frame rate calculation
+
+function initCanvas()
+{
+    var ctx = document.getElementById('canvasarea').getContext('2d');
+	var ctxbg = document.getElementById('canvasbg').getContext('2d');
+	var ctxinfo = document.getElementById('canvasinfo').getContext('2d');
+	var debug = document.getElementById('debug');
+	var rcountx =0;
+	var setmain=true;
+
+
+	setscale();
+	window.addEventListener('resize', function(event){setscale();});
+	function setscale(){
+		benscor=0;
+		canvas1 = document.getElementById('canvasarea');
+		canvas2 = document.getElementById('canvasbg');
+		canvas3 = document.getElementById('canvasinfo');
+		actualwx=innerWidth;
+		actualhy=innerHeight;
+
+		canvas1.setAttribute('width', actualwx);
+		canvas1.setAttribute('height', actualhy);
+		canvas2.setAttribute('width', actualwx);
+		canvas2.setAttribute('height', actualhy);
+		canvas3.setAttribute('width', actualwx);
+		canvas3.setAttribute('height', actualhy);
+		cW = ctx.canvas.width, cH = ctx.canvas.height;
+
+		gscalx=1280/actualwx,gscaly=720/actualhy;
+		gsscalx=actualwx,gsscaly=actualhy;
+		bgreset=true;
+
+		testx = 420/gscalx;
+
+		setmain=true;
+	}
+
+
+	// benchmark ...
+	var activway = 0;
+	var movex=0,movey=0;
+	var mainact01=1,movedifx=1,movedify=1;
+	var moveticks=0,verhaeltnis=0;
+	var moverestx=0,moveresty=0;
+	function benchmark(numrow,curve,grakart){
+		if(elm[numrow][0][3]==1){
+			for(var ss=2;ss>0;ss--){
+				// move it or stay
+				elm[numrow][ss][0]=elm[numrow][ss-1][0],elm[numrow][ss][1]=elm[numrow][ss-1][1];
+			}
+		}
+
+		// PENIS !!!
+
+        // movespeed generated + X Angel search + Y *-1
+
+		movedifx=elm[numrow][0][0]-waypoints[elm[numrow][0][4]][0];
+		movedify=elm[numrow][0][1]-waypoints[elm[numrow][0][4]][1];
+
+		moveticks=Math.sqrt(Math.pow(movedifx,2)+Math.pow(movedify,2))/elm[numrow][0][2];
+		if(elm[numrow][0][7]==0){elm[numrow][0][7]=moveticks;}
+		if(moveticks>1.3){
+			verhaeltnis=Math.sqrt(Math.pow(movedifx,2)+Math.pow(movedify,2))/elm[numrow][0][2];
+			movex=movedifx/verhaeltnis;
+			movey=movedify/verhaeltnis;
+
+
+			    if(moveticks>(elm[numrow][0][7]*0.2)){
+					moverestx=(elm[numrow][0][5]-movex)/moveticks;
+					moveresty=(elm[numrow][0][6]-movey)/moveticks;
+
+					movex=elm[numrow][0][5]-moverestx;
+					movey=elm[numrow][0][6]-moveresty;
+
+					elm[numrow][0][5]=movex;
+					elm[numrow][0][6]=movey;
+				}
+				elm[numrow][0][0]=elm[numrow][0][0]-movex,elm[numrow][0][1]=elm[numrow][0][1]-movey;
+
+		}else{
+			if(elm[numrow][0][4]<waypoints[0]){
+				elm[numrow][0][4]=elm[numrow][0][4]+1;
+			}else{
+				elm[numrow][0][4]=1;
+			}
+
+			elm[numrow][0][5]=movex;
+			elm[numrow][0][6]=movey;
+			elm[numrow][0][7]=0;
+		}
+		//set grafik
+
+		if(grakart==1){
+			//setgrak(ctx,4,elm[numrow][2][0],elm[numrow][2][1],0.03);
+			if(elm[numrow][0][3]==1){
+				//setgrak(ctx,4,elm[numrow][1][0],elm[numrow][1][1],0.03);
+				setgrak(ctx,4,elm[numrow][0][0],elm[numrow][0][1],0.05);
+			}
+		}else if(grakart==2){
+			//setgrak(ctx,3,elm[numrow][2][0],elm[numrow][2][1],0.03);
+			if(elm[numrow][0][3]==1){
+				//setgrak(ctx,3,elm[numrow][1][0],elm[numrow][1][1],0.03);
+				setgrak(ctx,3,elm[numrow][0][0],elm[numrow][0][1],0.05);
+			}
+		}
+	}
+	//ablauf history ADDER schweif
+var waypoints= [
+	[
+		4
+	],[//N
+		880,80,10
+	],[//E
+		880,640,10
+	],[//S
+		340,640,10
+	],[//W
+		340,80,10
+	]
+];
+//cord x,y, speed, movement status move/stay,waypointDIM    +++NEED last step of movedX and movedY
+var elm= [
+	[	
+		[
+			240,-70,8,1,1,0,0,0
+		],[
+			-600,70,0
+		],[
+			-600,70,0
+		]
+	],[	
+		[
+			240,-70,8,1,1,0,0,0
+		],[
+			-600,70,0
+		],[
+			-600,70,0
+		]
+	]
+];	
+
+	var activetime = false;
+
+	var activemulti= 1;
+	var addelmanelm=1;
+
+
+	function addanelm(){
+
+
+		poo = Math.floor(Math.random()*60+88);
+		addrand=poo/10;
+
+		elm[addelmanelm]=[	
+			[
+				240,-70,addrand,1,1,0,0,0
+			],[
+				-600,70,0
+			],[
+			-600,70,0
+			]
+		];
+	}
+
+	//var trset=0;
+	function animatex(currentTime){
+		// Store the animation ID so we can cancel it if needed
+		animationId = requestAnimationFrame(animatex);
+		
+		// Calculate time delta for frame rate calculation
+		var deltaTime = currentTime - lastTime;
+		lastTime = currentTime;
+		
+		var trset = Math.floor(currentTime);
+		if(reglogbuttonc!=cont_rlb){
+			setscale();cont_rlb=reglogbuttonc;
+		}
+
+		rcountx++;
+		ctx.clearRect(0, 0, cW, cH);	
+		for(var a=0;a<activemulti;a++){ 
+
+			ts = Math.floor(a/2);
+
+			if((ts*2) == a){
+				benchmark(a,3,1);
+			}else{
+				benchmark(a,3,2);
+			}
+		}
+		
+		// Calculate FPS based on deltaTime
+		var currentFPS = deltaTime > 0 ? Math.round(1000 / deltaTime) : 0;
+		
+		if(currentFPS > 54 && trset){
+			// ADD array elm[] new element
+			activemulti++;
+			// if activemulti bigger than addelmanelm -do  it
+			if(activemulti>addelmanelm){
+				addanelm();addelmanelm++;
+			}
+		}else if(currentFPS < 45 && trset){
+			if(activemulti>1){activemulti--;}
+		}
+		if(benscor<activemulti || benscor>(activemulti*1.15)){
+			benscor=activemulti;
+		}
+
+		if(setmain){
+			setgrak(ctxbg,1,412,160,7);
+			setmain=false;
+		}
+
+		ctxstats(rcountx,trset,currentFPS);
+	}
+	
+	// Start the animation loop
+	animationId = requestAnimationFrame(animatex);
+}
+
+var datax= [
+	[
+		[75]
+	],[
+		4,30.0,-8.6,-4.0,-8.7,-7.0,-5.7,-7.0,28.4,-7.0,62.5,-4.1,65.5,30.0,65.4,64.1,65.3,67.0,62.3,67.0,28.4,67.0,-5.5,64.0,-8.5,30.0,-8.6,
+		12.5,
+		0,0,0,0.32,
+		163,170,166,0.32
+	],[
+		4,30.0,-8.6,-4.0,-8.7,-7.0,-5.7,-7.0,28.4,-7.0,62.5,-4.1,65.5,30.0,65.4,64.1,65.3,67.0,62.3,67.0,28.4,67.0,-5.5,64.0,-8.5,30.0,-8.6,
+		12.5,
+		0,0,0,0.32,
+		163,170,166,0.32
+	],[
+		4,
+		-10,-144,
+		69,-144,140,-73,140,6,140,85,67,156,-10,156,-87,156,-160,84,-160,6,-160,-72,-89,-144,-10,-144,
+		7.5,
+		110,246,255,0.66,
+		0,29,52,1
+	],[
+		4,
+		-10,-144,
+		69,-144,140,-73,140,6,140,85,67,156,-10,156,-87,156,-160,84,-160,6,-160,-72,-89,-144,-10,-144,
+		7.5,
+		191,255,80,0.66,
+		255,100,129,1
+	],[
+		4,999
+	],[
+		2,999
+	],[
+		2,999
+	],[
+		2,999
+	],[
+		5,
+		80,29,
+		80,36,52,58,20,59,50,61,74,81,80,89,87,93,251,91,260,89,267,83,264,32,260,29,258,23,81,23,80,29,
+		5.5,
+		62,62,87,0.3,
+		255,254,255,1
+	]
+];
+function setgrak(ctxx,secular,x11,y11,factorxy){
+
+		if(!factorxy){factorxy=1;}
+		var orient=0,x11=x11/gscalx,y11=y11/gscaly,endsum=datax[secular][0]+1;
+
+        for(var i = 0;i<endsum;i++){
+			orient=datax[secular][0];
+			orient=((orient+1)*5)-2+orient;
+			if(i<1){
+				//ctxx.strokeStyle ="rgba("+datax[secular][orient+1]+","+datax[secular][orient+2]+","+datax[secular][orient+3]+","+datax[secular][orient+4]+")";
+				//ctxx.lineWidth = (datax[secular][orient])/gscalx;
+				ctxx.beginPath();
+				ctxx.moveTo(
+				datax[secular][1]/gscalx*factorxy+x11,datax[secular][2]/gscaly*factorxy+y11);
+			}else{
+				adder=2+((i-1)*5);
+				ctxx.bezierCurveTo(
+				datax[secular][i+adder]/gscalx*factorxy+x11,
+				datax[secular][i+1+adder]/gscaly*factorxy+y11,
+				datax[secular][i+2+adder]/gscalx*factorxy+x11,
+				datax[secular][i+3+adder]/gscaly*factorxy+y11,
+				datax[secular][i+4+adder]/gscalx*factorxy+x11,
+				datax[secular][i+5+adder]/gscaly*factorxy+y11);
+			}
+
+		}
+
+		ctxx.closePath();
+		//ctxx.stroke();
+		//ctxx.fillStyle = "rgba("+datax[secular][orient+5]+","+datax[secular][orient+6]+","+datax[secular][orient+7]+","+datax[secular][orient+8]+")";
+		ctxx.fill();
+}	
+function ctxstats(rcount,tms,fps){
+
+	timex = tms;
+	timec = Math.floor(timex/1000);
+
+	if(timec==timecl){
+		timedif=timex-timecl_;
+		timeres=fps || Math.floor(1000/timedif);
+	}
+
+	if(fpsstbil==4){
+		debug.innerHTML   = "FPS : "+timeres+" <br />"+"Round : "+rcount+" <br />"+"benscor: "+benscor+ "x:"+" <br />"+innerWidth+"y"+innerHeight;
+		fpsstbil=0;
+	}else{fpsstbil++;}
+	timecl=timec;
+	timecl_=timex;
+}
+
+function positionHandler(e) {
+	if ((e.clientX)&&(e.clientY)) {
+		points[0] = e;
+        debug.innerHTML   = " mouse ";
+	} else if (e.targetTouches) {
+		points = e.targetTouches;
+		e.preventDefault();
+        debug.innerHTML   = " targetTouches ";
+	}
+}
+
+function fullwin() {
+    debug.innerHTML   = " XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX";
+  var doc = window.document;
+  var docEl = doc.documentElement;
+
+  var requestFullScreen = docEl.requestFullscreen || docEl.mozRequestFullScreen || docEl.webkitRequestFullScreen || docEl.msRequestFullscreen;
+  var cancelFullScreen = doc.exitFullscreen || doc.mozCancelFullScreen || doc.webkitExitFullscreen || doc.msExitFullscreen;
+
+  if(!doc.fullscreenElement && !doc.mozFullScreenElement && !doc.webkitFullscreenElement && !doc.msFullscreenElement) {
+    requestFullScreen.call(docEl);
+  }
+  else {
+    cancelFullScreen.call(doc);
+  }
+}
+
+window.addEventListener('load', function(event){
+	document.getElementById('canvasinfo').addEventListener('mousemove',  positionHandler, false );
+	document.getElementById('canvasinfo').addEventListener('touchstart', positionHandler, false );
+	document.getElementById('canvasinfo').addEventListener('touchmove',  positionHandler, false );
+    document.getElementById('canvasinfo').addEventListener('click',  fullwin, false );
+	initCanvas();
+});
+</script>
 </head>
-<body>
-  <div class="android-info">
-    <strong>Android WebView Mode</strong>
-    <div>Using TronLink via Android bridge</div>
-  </div>
-  
-  <h1>ZYS/USD DEX SWAP</h1>
-  <svg id="chart" width="50%" height="500"></svg>
-  <div class="container">
-    
-    <h1>Over-Collateralization (OC) RATE: </h1>
-    <div id="SCbalances" class="SCsection">
-      <div class="SCbalance">ZSD: <span id="SCzsdBal">--</span></div>
-      <div class="SCbalance">ZYS: <span id="SCzysBal">--</span></div>
-      <div class="SCbalance">OC RATIO (%): <span id="SCocRATIO">--</span></div>
-    </div>
+<body draggable="true">
 
-    <h1>ZEPHYR SWAP : ZSD → ZYS</h1>
-    <div class="section">
-      <button id="connectBtn">[ CONNECT WALLET ]</button>
-      <div id="walletAddress" class="balance"></div>
-    </div>
+<canvas id="canvasbg" width="1280" height="720"draggable="false"></canvas>
+<canvas id="canvasarea" width="1280" height="720"draggable="false"></canvas>
+<canvas id="canvasinfo" width="1280" height="720"draggable="false"></canvas>
+<div id="debug"draggable="false">debug</div>
 
-    <div id="balances" class="section" style="display:none;">
-      <div class="balance">TRX: <span id="trxBal">--</span></div>
-      <div class="balance">ZSD: <span id="zsdBal">--</span></div>
-      <div class="balance">ZYS: <span id="zysBal">--</span></div>
-    </div>
-
-    <div class="section" id="swapSection" style="display:none;">
-      <input type="number" id="amountInput" placeholder="Enter amount of ZSD to swap">
-      <button id="swapBtn">[ EXECUTE SWAP ]</button>
-    </div>
-
-    <div id="status" class="status"></div>
-  </div>
-
-  <script>
-    // ======================
-    // TronLink Bridge Handler
-    // ======================
-    window.handleTronLinkCallback = function(callbackUrl) {
-      console.log("Received TronLink callback:", callbackUrl);
-      const url = new URL(callbackUrl);
-      const params = new URLSearchParams(url.search);
-      
-      if (params.has('address')) {
-        const address = params.get('address');
-        handleTronLinkSuccess(address);
-      } 
-      else if (params.has('signedTransaction')) {
-        const signedTx = params.get('signedTransaction');
-        handleSignedTransaction(signedTx);
-      }
-      else if (params.has('txId')) {
-        const txId = params.get('txId');
-        handleTransactionSuccess(txId);
-      }
-    };
-
-    function handleTronLinkSuccess(address) {
-      log("✅ Wallet connected via Android bridge", "success");
-      userAddress = address;
-      walletDisplay.textContent = `Connected: ${address}`;
-      balances.style.display = 'block';
-      swapSection.style.display = 'block';
-      
-      // Load balances (in real app, make API calls)
-      updateBalances();
-    }
-
-    function handleSignedTransaction(signedTx) {
-      log("✅ Transaction signed via Android bridge", "success");
-      log("Signed TX: " + signedTx.substring(0, 40) + "...");
-      // Continue with broadcast logic if needed
-    }
-
-    function handleTransactionSuccess(txId) {
-      log("✅ Transaction confirmed!", "success");
-      log("Transaction ID: " + txId);
-      
-      const a = document.createElement('a');
-      a.href = `https://nile.tronscan.org/#/transaction/${txId}`;
-      a.target = "_blank";
-      a.className = "link";
-      a.textContent = "[ View on Tronscan ]";
-      statusBox.appendChild(a);
-      
-      // Refresh balances after successful transaction
-      setTimeout(updateBalances, 3000);
-    }
-
-    // ======================
-    // Core Application Logic
-    // ======================
-    const ZSD = "TENgTiMGSwRJPe6GQSV5WHmvomzonGjQt8";
-    const ZYS = "TNXQp3YVmLEf1dZXzqJathi12vHAqGXcjE";
-    const DEX = "TE5uCHMRNRsCc7aQo9WCy6Q5iKT42UKf61";
-    const DECIMALS = 12;
-
-    const connectBtn = document.getElementById('connectBtn');
-    const swapBtn = document.getElementById('swapBtn');
-    const amountInput = document.getElementById('amountInput');
-    const statusBox = document.getElementById('status');
-    const walletDisplay = document.getElementById('walletAddress');
-    const balances = document.getElementById('balances');
-    const swapSection = document.getElementById('swapSection');
-    const trxBal = document.getElementById('trxBal');
-    const zsdBal = document.getElementById('zsdBal');
-    const zysBal = document.getElementById('zysBal');
-    const SCzsdBal = document.getElementById('SCzsdBal');
-    const SCzysBal = document.getElementById('SCzysBal');
-    const SCocRATIO = document.getElementById('SCocRATIO');
-
-    let userAddress;
-    let tronWeb = window.tronWeb || {};
-
-    function log(msg, type = '') {
-      const div = document.createElement('div');
-      div.textContent = msg;
-      if (type) div.classList.add(type);
-      statusBox.appendChild(div);
-      statusBox.scrollTop = statusBox.scrollHeight;
-    }
-
-    function isAndroidWebView() {
-      return navigator.userAgent.toLowerCase().indexOf("wv") > -1;
-    }
-
-    async function connectWallet() {
-      statusBox.innerHTML = '';
-      
-      if (isAndroidWebView()) {
-        log("🔄 Connecting via Android bridge...");
-        if (window.TronLinkAndroid && window.TronLinkAndroid.connectWallet) {
-          window.TronLinkAndroid.connectWallet();
-        } else {
-          log("❌ Android bridge not available", "error");
-        }
-        return;
-      }
-      
-      // Fallback to browser TronLink
-      if (!window.tronWeb || !window.tronWeb.ready) {
-        log("❌ TronLink not found or not unlocked", "error");
-        log("Install TronLink extension for browser usage", "error");
-        return;
-      }
-
-      tronWeb = window.tronWeb;
-      userAddress = tronWeb.defaultAddress.base58;
-      walletDisplay.textContent = `Connected: ${userAddress}`;
-      balances.style.display = 'block';
-      swapSection.style.display = 'block';
-      updateBalances();
-    }
-
-    async function updateBalances() {
-      try {
-        if (!userAddress) return;
-        
-        // In Android mode, use dummy data
-        if (isAndroidWebView()) {
-          trxBal.textContent = "124.56";
-          zsdBal.textContent = "1,245.32";
-          zysBal.textContent = "8,745.21";
-          SCzsdBal.textContent = "1,245,320";
-          SCzysBal.textContent = "874,521";
-          SCocRATIO.textContent = "95.2";
-          return;
-        }
-        
-        // Real implementation for browser
-        const trx = await tronWeb.trx.getBalance(userAddress);
-        trxBal.textContent = (trx / 1e6).toFixed(2);
-
-        const zsdC = await tronWeb.contract().at(ZSD);
-        const zysC = await tronWeb.contract().at(ZYS);
-        const zsd = await zsdC.balanceOf(userAddress).call();
-        const zys = await zysC.balanceOf(userAddress).call();
-        const SCzsd = await zsdC.balanceOf(DEX).call();
-        const SCzys = await zysC.balanceOf(DEX).call();
-        
-        zsdBal.textContent = (BigInt(zsd.toString()) / 10n**BigInt(DECIMALS)).toString();
-        zysBal.textContent = (BigInt(zys.toString()) / 10n**BigInt(DECIMALS)).toString();
-        SCzsdBal.textContent = (BigInt(SCzsd.toString()) / 10n**BigInt(DECIMALS)).toString();
-        SCzysBal.textContent = (BigInt(SCzys.toString()) / 10n**BigInt(DECIMALS)).toString();
-        
-        const ratio = (parseFloat(SCzsdBal.textContent) / (parseFloat(SCzysBal.textContent) * 1.5)) * 100;
-        SCocRATIO.textContent = ratio.toFixed(1);
-      } catch (e) {
-        log("❌ Failed to load balances: " + e.message, "error");
-      }
-    }
-
-    async function executeSwap() {
-      statusBox.innerHTML = '';
-      const amount = parseFloat(amountInput.value);
-      if (isNaN(amount) || amount <= 0) {
-        log("❌ Invalid amount", "error");
-        return;
-      }
-
-      const fullAmount = BigInt(Math.floor(amount * 10 ** DECIMALS));
-      
-      if (isAndroidWebView()) {
-        log("🔄 Requesting transaction signing via Android...");
-        if (window.TronLinkAndroid && window.TronLinkAndroid.signTransaction) {
-          // In real app, you would generate a proper raw transaction
-          const rawTx = JSON.stringify({
-            to: DEX,
-            amount: fullAmount.toString(),
-            token: ZSD
-          });
-          window.TronLinkAndroid.signTransaction(rawTx);
-        } else {
-          log("❌ Android bridge not available", "error");
-        }
-        return;
-      }
-      
-      // Browser implementation
-      try {
-        log("Step 1: Checking allowance...");
-        const zsdC = await tronWeb.contract().at(ZSD);
-        const allowance = await zsdC.allowance(userAddress, DEX).call();
-        
-        if (BigInt(allowance.toString()) < fullAmount) {
-          log("Step 2: Approving ZSD...");
-          await zsdC.approve(DEX, fullAmount.toString()).send();
-          await new Promise(resolve => setTimeout(resolve, 3000));
-        }
-
-        log("Step 3: Executing swap...");
-        const dexC = await tronWeb.contract().at(DEX);
-        const tx = await dexC.swapAForB(fullAmount.toString()).send();
-        
-        log("✅ Swap successful!", "success");
-        const a = document.createElement('a');
-        a.href = `https://nile.tronscan.org/#/transaction/${tx}`;
-        a.target = "_blank";
-        a.className = "link";
-        a.textContent = "[ View on Tronscan ]";
-        statusBox.appendChild(a);
-        
-        updateBalances();
-      } catch (err) {
-        log("❌ Swap failed: " + err.message, "error");
-      }
-    }
-
-    // ======================
-    // Initialization
-    // ======================
-    connectBtn.addEventListener('click', connectWallet);
-    swapBtn.addEventListener('click', executeSwap);
-
-    window.addEventListener("load", () => {
-      if (isAndroidWebView()) {
-        log("📱 Android WebView detected. Ready to connect");
-      } else if (window.tronWeb) {
-        log("🌐 TronLink detected. Click CONNECT WALLET");
-      } else {
-        log("ℹ️ Install TronLink for full functionality");
-      }
-    });
-
-    // ======================
-    // Chart Rendering (Unchanged)
-    // ======================
-    const yieldData = [ /* ... keep existing data ... */ ];
-    
-    // ... keep existing chart rendering code unchanged ...
-  </script>
 </body>
 </html>
