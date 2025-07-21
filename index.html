@@ -1,171 +1,814 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Juwelier & Trauringstudio Saphir – Wildau</title>
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=Open+Sans&display=swap" rel="stylesheet">
-  <style>
-    body {
-      margin: 0;
-      font-family: 'Open Sans', sans-serif;
-      background-color: #f8f8f8;
-      color: #333;
-    }
-
-    header {
-      background-color: white;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-      padding: 20px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-
-    .logo {
-      display: flex;
-      align-items: center;
-    }
-
-    .logo img {
-      height: 60px;
-      filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.2));
-    }
-
-    .nav {
-      display: flex;
-      gap: 20px;
-    }
-
-    .nav a {
-      text-decoration: none;
-      color: #555;
-      font-weight: bold;
-      transition: color 0.3s;
-    }
-
-    .nav a:hover {
-      color: #0074b8;
-    }
-
-    .hero {
-      background: url('https://images.unsplash.com/photo-1600369671859-afe6a94b14c1?ixlib=rb-4.0.3&auto=format&fit=crop&w=1950&q=80') center/cover no-repeat;
-      height: 70vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: white;
-      text-shadow: 0 2px 4px rgba(0,0,0,0.5);
-      text-align: center;
-    }
-
-    .hero h1 {
-      font-family: 'Playfair Display', serif;
-      font-size: 3em;
-      margin: 0;
-    }
-
-    .section {
-      padding: 60px 20px;
-      max-width: 1000px;
-      margin: 0 auto;
-    }
-
-    .section h2 {
-      font-family: 'Playfair Display', serif;
-      font-size: 2em;
-      margin-bottom: 20px;
-      text-align: center;
-    }
-
-    .section p {
-      font-size: 1.1em;
-      line-height: 1.6;
-      text-align: center;
-    }
-
-    .footer {
-      background-color: #333;
-      color: white;
-      text-align: center;
-      padding: 30px 20px;
-      font-size: 0.9em;
-    }
-
-    .footer a {
-      color: #bbb;
-      text-decoration: none;
-    }
-
-    .footer a:hover {
-      color: #fff;
-    }
-
-    .address {
-      margin-top: 15px;
-    }
-
-    @media (max-width: 600px) {
-      .hero h1 {
-        font-size: 2em;
-      }
-
-      .nav {
-        flex-direction: column;
-        gap: 10px;
-      }
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edelsteine | Luxus-Schmuck & Juwelen</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Montserrat:wght@300;400;500&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            --gold: #D4AF37;
+            --dark-gold: #B8860B;
+            --light-gold: #F5DEB3;
+            --black: #0d0d0d;
+            --white: #ffffff;
+            --gray: #f5f5f5;
+            --dark-gray: #333333;
+        }
+        
+        body {
+            font-family: 'Montserrat', sans-serif;
+            color: var(--dark-gray);
+            background-color: var(--white);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+        
+        h1, h2, h3, h4, h5 {
+            font-family: 'Playfair Display', serif;
+            font-weight: 600;
+            color: var(--black);
+        }
+        
+        .container {
+            width: 90%;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        /* Header Styles */
+        header {
+            background-color: rgba(255, 255, 255, 0.95);
+            position: fixed;
+            width: 100%;
+            z-index: 1000;
+            box-shadow: 0 2px 15px rgba(0, 0, 0, 0.05);
+            padding: 15px 0;
+        }
+        
+        .header-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            font-family: 'Playfair Display', serif;
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--gold);
+            text-decoration: none;
+        }
+        
+        .logo span {
+            color: var(--black);
+        }
+        
+        nav ul {
+            display: flex;
+            list-style: none;
+        }
+        
+        nav ul li {
+            margin: 0 15px;
+        }
+        
+        nav ul li a {
+            text-decoration: none;
+            color: var(--black);
+            font-weight: 500;
+            font-size: 16px;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+        
+        nav ul li a:hover {
+            color: var(--gold);
+        }
+        
+        nav ul li a::after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 2px;
+            bottom: -5px;
+            left: 0;
+            background-color: var(--gold);
+            transition: width 0.3s ease;
+        }
+        
+        nav ul li a:hover::after {
+            width: 100%;
+        }
+        
+        .header-icons {
+            display: flex;
+            align-items: center;
+        }
+        
+        .header-icons a {
+            color: var(--black);
+            font-size: 18px;
+            margin-left: 20px;
+            transition: color 0.3s ease;
+        }
+        
+        .header-icons a:hover {
+            color: var(--gold);
+        }
+        
+        .cart-icon {
+            position: relative;
+        }
+        
+        .cart-count {
+            position: absolute;
+            top: -8px;
+            right: -10px;
+            background-color: var(--gold);
+            color: var(--white);
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        /* Hero Section */
+        .hero {
+            height: 100vh;
+            background: linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.3)), url('https://images.unsplash.com/photo-1605100804763-247f67b3557e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1740&q=80') center/cover no-repeat;
+            display: flex;
+            align-items: center;
+            padding-top: 80px;
+        }
+        
+        .hero-content {
+            max-width: 600px;
+            color: var(--white);
+        }
+        
+        .hero h1 {
+            font-size: 56px;
+            margin-bottom: 20px;
+            color: var(--white);
+            line-height: 1.2;
+        }
+        
+        .hero p {
+            font-size: 18px;
+            margin-bottom: 30px;
+            max-width: 500px;
+        }
+        
+        .btn {
+            display: inline-block;
+            padding: 14px 32px;
+            background-color: var(--gold);
+            color: var(--white);
+            text-decoration: none;
+            font-weight: 500;
+            border-radius: 2px;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-size: 14px;
+        }
+        
+        .btn:hover {
+            background-color: var(--dark-gold);
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .btn-outline {
+            background: transparent;
+            border: 2px solid var(--white);
+            margin-left: 15px;
+        }
+        
+        .btn-outline:hover {
+            background: var(--white);
+            color: var(--black);
+        }
+        
+        /* Featured Collections */
+        .section {
+            padding: 100px 0;
+        }
+        
+        .section-header {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+        
+        .section-header h2 {
+            font-size: 36px;
+            position: relative;
+            display: inline-block;
+            padding-bottom: 15px;
+        }
+        
+        .section-header h2::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80px;
+            height: 3px;
+            background-color: var(--gold);
+        }
+        
+        .collections-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 30px;
+        }
+        
+        .collection-card {
+            background: var(--white);
+            border-radius: 5px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+        }
+        
+        .collection-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+        }
+        
+        .collection-img {
+            height: 300px;
+            overflow: hidden;
+        }
+        
+        .collection-img img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s ease;
+        }
+        
+        .collection-card:hover .collection-img img {
+            transform: scale(1.05);
+        }
+        
+        .collection-content {
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .collection-content h3 {
+            font-size: 22px;
+            margin-bottom: 10px;
+        }
+        
+        .collection-content p {
+            margin-bottom: 15px;
+            color: #666;
+        }
+        
+        .price {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--gold);
+        }
+        
+        /* About Section */
+        .about {
+            background-color: var(--gray);
+        }
+        
+        .about-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 50px;
+            align-items: center;
+        }
+        
+        .about-img {
+            border-radius: 5px;
+            overflow: hidden;
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+        }
+        
+        .about-img img {
+            width: 100%;
+            display: block;
+        }
+        
+        .about-text h2 {
+            font-size: 36px;
+            margin-bottom: 20px;
+        }
+        
+        .about-text p {
+            margin-bottom: 20px;
+        }
+        
+        /* Testimonials */
+        .testimonials {
+            background-color: var(--white);
+        }
+        
+        .testimonials-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+        }
+        
+        .testimonial-card {
+            background: var(--white);
+            padding: 30px;
+            border-radius: 5px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            text-align: center;
+        }
+        
+        .testimonial-card i {
+            font-size: 36px;
+            color: var(--gold);
+            margin-bottom: 20px;
+        }
+        
+        .testimonial-text {
+            font-style: italic;
+            margin-bottom: 20px;
+        }
+        
+        .client-info {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .client-img {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            overflow: hidden;
+            margin-right: 15px;
+        }
+        
+        .client-img img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .client-name h4 {
+            margin-bottom: 5px;
+        }
+        
+        .client-name p {
+            font-size: 14px;
+            color: #666;
+        }
+        
+        /* Newsletter */
+        .newsletter {
+            background: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), url('https://images.unsplash.com/photo-1581287053822-fd7bf4f4bfec?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1501&q=80') center/cover no-repeat;
+            padding: 80px 0;
+            color: var(--white);
+            text-align: center;
+        }
+        
+        .newsletter h2 {
+            color: var(--white);
+            font-size: 36px;
+            margin-bottom: 20px;
+        }
+        
+        .newsletter p {
+            max-width: 600px;
+            margin: 0 auto 30px;
+        }
+        
+        .newsletter-form {
+            max-width: 500px;
+            margin: 0 auto;
+            display: flex;
+        }
+        
+        .newsletter-form input {
+            flex: 1;
+            padding: 15px 20px;
+            border: none;
+            border-radius: 2px 0 0 2px;
+            font-family: 'Montserrat', sans-serif;
+        }
+        
+        .newsletter-form button {
+            padding: 0 30px;
+            background-color: var(--gold);
+            color: var(--white);
+            border: none;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            border-radius: 0 2px 2px 0;
+        }
+        
+        .newsletter-form button:hover {
+            background-color: var(--dark-gold);
+        }
+        
+        /* Footer */
+        footer {
+            background-color: var(--black);
+            color: var(--white);
+            padding: 70px 0 20px;
+        }
+        
+        .footer-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 30px;
+            margin-bottom: 50px;
+        }
+        
+        .footer-col h3 {
+            color: var(--white);
+            font-size: 20px;
+            margin-bottom: 25px;
+            position: relative;
+            padding-bottom: 10px;
+        }
+        
+        .footer-col h3::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 50px;
+            height: 2px;
+            background-color: var(--gold);
+        }
+        
+        .footer-col ul {
+            list-style: none;
+        }
+        
+        .footer-col ul li {
+            margin-bottom: 12px;
+        }
+        
+        .footer-col ul li a {
+            color: #bbb;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+        
+        .footer-col ul li a:hover {
+            color: var(--gold);
+            padding-left: 5px;
+        }
+        
+        .social-links {
+            display: flex;
+            margin-top: 20px;
+        }
+        
+        .social-links a {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            background-color: #222;
+            color: var(--white);
+            border-radius: 50%;
+            margin-right: 10px;
+            transition: all 0.3s ease;
+        }
+        
+        .social-links a:hover {
+            background-color: var(--gold);
+            transform: translateY(-3px);
+        }
+        
+        .copyright {
+            text-align: center;
+            padding-top: 20px;
+            border-top: 1px solid #333;
+            font-size: 14px;
+            color: #777;
+        }
+        
+        /* Responsive Design */
+        @media (max-width: 992px) {
+            .hero h1 {
+                font-size: 46px;
+            }
+            
+            .about-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .about-img {
+                max-width: 500px;
+                margin: 0 auto;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .header-container {
+                flex-direction: column;
+            }
+            
+            .logo {
+                margin-bottom: 15px;
+            }
+            
+            nav ul {
+                margin: 20px 0;
+            }
+            
+            .hero {
+                text-align: center;
+            }
+            
+            .hero-content {
+                margin: 0 auto;
+            }
+            
+            .hero-btns {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .btn-outline {
+                margin-left: 0;
+                margin-top: 15px;
+            }
+            
+            .newsletter-form {
+                flex-direction: column;
+            }
+            
+            .newsletter-form input,
+            .newsletter-form button {
+                width: 100%;
+                border-radius: 2px;
+                margin: 5px 0;
+            }
+        }
+        
+        @media (max-width: 576px) {
+            nav ul {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+            
+            nav ul li {
+                margin: 5px 10px;
+            }
+            
+            .hero h1 {
+                font-size: 36px;
+            }
+            
+            .section {
+                padding: 60px 0;
+            }
+        }
+    </style>
 </head>
 <body>
+    <!-- Header -->
+    <header>
+        <div class="container header-container">
+            <a href="#" class="logo">Edel<span>steine</span></a>
+            
+            <nav>
+                <ul>
+                    <li><a href="#">Startseite</a></li>
+                    <li><a href="#">Kollektionen</a></li>
+                    <li><a href="#">Ringe</a></li>
+                    <li><a href="#">Halsketten</a></li>
+                    <li><a href="#">Ohrringe</a></li>
+                    <li><a href="#">Über uns</a></li>
+                </ul>
+            </nav>
+            
+            <div class="header-icons">
+                <a href="#"><i class="fas fa-search"></i></a>
+                <a href="#"><i class="fas fa-user"></i></a>
+                <a href="#" class="cart-icon">
+                    <i class="fas fa-shopping-bag"></i>
+                    <span class="cart-count">3</span>
+                </a>
+            </div>
+        </div>
+    </header>
 
-  <header>
-    <div class="logo">
-      <img src="https://www.a10center.de/fileadmin/user_upload/GLOBAL/brand_stores/logos/saphirjuwelier.png" alt="Saphir Juwelier Logo">
-    </div>
-    <nav class="nav">
-      <a href="#about">Über uns</a>
-      <a href="#trauringe">Trauringe</a>
-      <a href="#kontakt">Kontakt</a>
-    </nav>
-  </header>
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="container">
+            <div class="hero-content">
+                <h1>Handgefertigter Luxusschmuck für besondere Momente</h1>
+                <p>Entdecken Sie unsere exklusive Kollektion von feinsten Diamanten, edlen Goldschmiedearbeiten und zeitlosen Juwelen, die Generationen überdauern.</p>
+                <div class="hero-btns">
+                    <a href="#" class="btn">Kollektion entdecken</a>
+                    <a href="#" class="btn btn-outline">Termin vereinbaren</a>
+                </div>
+            </div>
+        </div>
+    </section>
 
-  <section class="hero">
-    <h1>Willkommen bei Saphir – Ihr Juwelier & Trauringstudio in Wildau</h1>
-  </section>
+    <!-- Featured Collections -->
+    <section class="section">
+        <div class="container">
+            <div class="section-header">
+                <h2>Bestseller Kollektionen</h2>
+            </div>
+            
+            <div class="collections-grid">
+                <div class="collection-card">
+                    <div class="collection-img">
+                        <img src="https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1587&q=80" alt="Diamant Ringe">
+                    </div>
+                    <div class="collection-content">
+                        <h3>Ewige Liebe Ringe</h3>
+                        <p>Hochwertige Diamant-Verlobungsringe in Platin und Weißgold</p>
+                        <div class="price">Ab €1.890</div>
+                    </div>
+                </div>
+                
+                <div class="collection-card">
+                    <div class="collection-img">
+                        <img src="https://images.unsplash.com/photo-1588449668365-d15e397f6787?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1587&q=80" alt="Gold Halsketten">
+                    </div>
+                    <div class="collection-content">
+                        <h3>Goldene Eleganz</h3>
+                        <p>Halsketten und Anhänger aus 18K Gold mit Edelsteinen</p>
+                        <div class="price">Ab €950</div>
+                    </div>
+                </div>
+                
+                <div class="collection-card">
+                    <div class="collection-img">
+                        <img src="https://images.unsplash.com/photo-1617117483870-1d28eba02e3a?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1587&q=80" alt="Perlen Ohrringe">
+                    </div>
+                    <div class="collection-content">
+                        <h3>Perlenzauber</h3>
+                        <p>Zarte Ohrringe mit Süßwasserperlen und Diamantakzenten</p>
+                        <div class="price">Ab €650</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
 
-  <section class="section" id="about">
-    <h2>Über Uns</h2>
-    <p>
-      Seit über 20 Jahren steht Juwelier & Trauringstudio Saphir für Eleganz, Qualität und persönliche Beratung. 
-      Wir begleiten Sie bei der Auswahl Ihrer Trauringe, Schmuckstücke und Uhren – mit Leidenschaft und Stilgefühl.
-    </p>
-  </section>
+    <!-- About Section -->
+    <section class="section about">
+        <div class="container">
+            <div class="about-content">
+                <div class="about-img">
+                    <img src="https://images.unsplash.com/photo-1621184455862-c163dfb30e0f?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1587&q=80" alt="Juwelier Werkstatt">
+                </div>
+                <div class="about-text">
+                    <h2>Tradition seit 1895</h2>
+                    <p>Edelsteine steht für höchste Handwerkskunst und zeitlose Eleganz. Seit über 125 Jahren fertigen wir in unserer Manufaktur in Pforzheim einzigartige Schmuckstücke, die Geschichten erzählen und Emotionen wecken.</p>
+                    <p>Jedes unserer Schmuckstücke wird von Meisterhand gefertigt und durchläuft strenge Qualitätskontrollen. Wir verwenden ausschließlich konfliktfreie Diamanten und Edelsteine sowie recyceltes Gold und Platin.</p>
+                    <p>Besuchen Sie uns in einem unserer Boutiquen in Berlin, München und Hamburg oder vereinbaren Sie einen persönlichen Beratungstermin mit unseren Schmuckexperten.</p>
+                    <a href="#" class="btn">Über uns</a>
+                </div>
+            </div>
+        </div>
+    </section>
 
-  <section class="section" id="trauringe">
-    <h2>Trauringe & Schmuck</h2>
-    <p>
-      Ob klassisch, modern oder individuell angefertigt – unsere Auswahl an Trauringen lässt keine Wünsche offen. 
-      Entdecken Sie außerdem eine exklusive Kollektion an Verlobungsringen, Halsketten, Armbändern und hochwertigen Uhren.
-    </p>
-  </section>
+    <!-- Testimonials -->
+    <section class="section testimonials">
+        <div class="container">
+            <div class="section-header">
+                <h2>Was unsere Kunden sagen</h2>
+            </div>
+            
+            <div class="testimonials-grid">
+                <div class="testimonial-card">
+                    <i class="fas fa-quote-left"></i>
+                    <p class="testimonial-text">"Der Verlobungsring ist atemberaubend schön! Die Beratung war hervorragend und der Diamant funkelt noch mehr als erhofft. Ein Schmuckstück für die Ewigkeit."</p>
+                    <div class="client-info">
+                        <div class="client-img">
+                            <img src="https://randomuser.me/api/portraits/women/65.jpg" alt="Sarah Müller">
+                        </div>
+                        <div class="client-name">
+                            <h4>Sarah Müller</h4>
+                            <p>Verlobungsring</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="testimonial-card">
+                    <i class="fas fa-quote-left"></i>
+                    <p class="testimonial-text">"Ich habe die Perlenohrringe meiner Mutter zum 60. Geburtstag geschenkt. Die Qualität und Verarbeitung sind außergewöhnlich. Sie trägt sie jeden Tag mit Stolz."</p>
+                    <div class="client-info">
+                        <div class="client-img">
+                            <img src="https://randomuser.me/api/portraits/women/32.jpg" alt="Julia Hoffmann">
+                        </div>
+                        <div class="client-name">
+                            <h4>Julia Hoffmann</h4>
+                            <p>Perlen Ohrringe</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="testimonial-card">
+                    <i class="fas fa-quote-left"></i>
+                    <p class="testimonial-text">"Die Halskette war ein Geschenk für meine Frau zum Jubiläum. Der Kundenservice hat mir bei der Auswahl geholfen und eine persönliche Gravur angebracht. Sie war überwältigt!"</p>
+                    <div class="client-info">
+                        <div class="client-img">
+                            <img src="https://randomuser.me/api/portraits/men/54.jpg" alt="Thomas Weber">
+                        </div>
+                        <div class="client-name">
+                            <h4>Thomas Weber</h4>
+                            <p>Gold Halskette</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
 
-  <section class="section" id="kontakt">
-    <h2>Kontakt & Standort</h2>
-    <p>
-      Besuchen Sie uns im A10 Center Wildau – wir freuen uns auf Sie!
-    </p>
-    <p class="address">
-      📍 Chausseestraße 1, 15745 Wildau<br>
-      📞 Telefon: 03375 / 123456<br>
-      ✉️ E-Mail: info@saphir-juwelier.de
-    </p>
-  </section>
+    <!-- Newsletter -->
+    <section class="newsletter">
+        <div class="container">
+            <h2>Exklusive Einladungen & Angebote</h2>
+            <p>Abonnieren Sie unseren Newsletter und verpassen Sie keine neuen Kollektionen, Sonderangebote und exklusiven Veranstaltungen.</p>
+            
+            <form class="newsletter-form">
+                <input type="email" placeholder="Ihre E-Mail Adresse" required>
+                <button type="submit">Abonnieren</button>
+            </form>
+        </div>
+    </section>
 
-  <footer class="footer">
-    &copy; 2025 Juwelier & Trauringstudio Saphir – Alle Rechte vorbehalten.<br>
-    <a href="#impressum">Impressum</a> | <a href="#datenschutz">Datenschutz</a>
-  </footer>
-
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-col">
+                    <h3>Edelsteine</h3>
+                    <p>Luxusschmuck von höchster Handwerkskunst und zeitloser Eleganz. Tradition seit 1895.</p>
+                    <div class="social-links">
+                        <a href="#"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#"><i class="fab fa-instagram"></i></a>
+                        <a href="#"><i class="fab fa-pinterest-p"></i></a>
+                        <a href="#"><i class="fab fa-youtube"></i></a>
+                    </div>
+                </div>
+                
+                <div class="footer-col">
+                    <h3>Kollektionen</h3>
+                    <ul>
+                        <li><a href="#">Verlobungsringe</a></li>
+                        <li><a href="#">Eheringe</a></li>
+                        <li><a href="#">Diamantschmuck</a></li>
+                        <li><a href="#">Goldschmuck</a></li>
+                        <li><a href="#">Limitierte Editionen</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-col">
+                    <h3>Unternehmen</h3>
+                    <ul>
+                        <li><a href="#">Über uns</a></li>
+                        <li><a href="#">Nachhaltigkeit</a></li>
+                        <li><a href="#">Karriere</a></li>
+                        <li><a href="#">Boutiquen</a></li>
+                        <li><a href="#">Presse</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-col">
+                    <h3>Kundenservice</h3>
+                    <ul>
+                        <li><a href="#">Kontakt</a></li>
+                        <li><a href="#">Beratungstermin</a></li>
+                        <li><a href="#">Versand & Rückgabe</a></li>
+                        <li><a href="#">Pflegehinweise</a></li>
+                        <li><a href="#">FAQ</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="copyright">
+                <p>&copy; 2023 Edelsteine GmbH. Alle Rechte vorbehalten.</p>
+            </div>
+        </div>
+    </footer>
 </body>
 </html>
