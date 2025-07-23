@@ -1,814 +1,1911 @@
-<!DOCTYPE html>
-<html lang="de">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Edelsteine | Luxus-Schmuck & Juwelen</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Montserrat:wght@300;400;500&display=swap" rel="stylesheet">
+<!DOCTYPE html><html lang="en"><head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Zephyr Protocol: The Untraceable Stablecoin Ecosystem</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Tiempos+Headline:wght@400;600;700&amp;family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10.6.1/dist/mermaid.min.js"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
         :root {
-            --gold: #D4AF37;
-            --dark-gold: #B8860B;
-            --light-gold: #F5DEB3;
-            --black: #0d0d0d;
-            --white: #ffffff;
-            --gray: #f5f5f5;
-            --dark-gray: #333333;
+            --color-primary: #1a4d3a;
+            --color-secondary: #2d5a47;
+            --color-accent: #4a7c59;
+            --color-muted: #6b7280;
+            --color-background: #fafafa;
+            --color-surface: #ffffff;
+            --color-border: #e5e7eb;
         }
         
-        body {
-            font-family: 'Montserrat', sans-serif;
-            color: var(--dark-gray);
-            background-color: var(--white);
-            line-height: 1.6;
-            overflow-x: hidden;
+        .font-tiempos { font-family: 'Tiempos Headline', serif; }
+        .font-inter { font-family: 'Inter', sans-serif; }
+        
+        .hero-gradient {
+            background: linear-gradient(135deg, rgba(26, 77, 58, 0.95) 0%, rgba(45, 90, 71, 0.85) 100%);
         }
         
-        h1, h2, h3, h4, h5 {
-            font-family: 'Playfair Display', serif;
-            font-weight: 600;
-            color: var(--black);
+        .asset-card {
+            transition: all 0.3s ease;
+            border-left: 4px solid transparent;
         }
         
-        .container {
-            width: 90%;
-            max-width: 1200px;
-            margin: 0 auto;
+        .asset-card:hover {
+            border-left-color: var(--color-accent);
+            transform: translateY(-2px);
         }
         
-        /* Header Styles */
-        header {
-            background-color: rgba(255, 255, 255, 0.95);
+        .toc-fixed {
             position: fixed;
-            width: 100%;
-            z-index: 1000;
-            box-shadow: 0 2px 15px rgba(0, 0, 0, 0.05);
-            padding: 15px 0;
-        }
-        
-        .header-container {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
-        .logo {
-            font-family: 'Playfair Display', serif;
-            font-size: 28px;
-            font-weight: 700;
-            color: var(--gold);
-            text-decoration: none;
-        }
-        
-        .logo span {
-            color: var(--black);
-        }
-        
-        nav ul {
-            display: flex;
-            list-style: none;
-        }
-        
-        nav ul li {
-            margin: 0 15px;
-        }
-        
-        nav ul li a {
-            text-decoration: none;
-            color: var(--black);
-            font-weight: 500;
-            font-size: 16px;
-            position: relative;
-            transition: all 0.3s ease;
-        }
-        
-        nav ul li a:hover {
-            color: var(--gold);
-        }
-        
-        nav ul li a::after {
-            content: '';
-            position: absolute;
-            width: 0;
-            height: 2px;
-            bottom: -5px;
+            top: 0;
             left: 0;
-            background-color: var(--gold);
-            transition: width 0.3s ease;
-        }
-        
-        nav ul li a:hover::after {
-            width: 100%;
-        }
-        
-        .header-icons {
-            display: flex;
-            align-items: center;
-        }
-        
-        .header-icons a {
-            color: var(--black);
-            font-size: 18px;
-            margin-left: 20px;
-            transition: color 0.3s ease;
-        }
-        
-        .header-icons a:hover {
-            color: var(--gold);
-        }
-        
-        .cart-icon {
-            position: relative;
-        }
-        
-        .cart-count {
-            position: absolute;
-            top: -8px;
-            right: -10px;
-            background-color: var(--gold);
-            color: var(--white);
-            border-radius: 50%;
-            width: 18px;
-            height: 18px;
-            font-size: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        
-        /* Hero Section */
-        .hero {
+            width: 280px;
             height: 100vh;
-            background: linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.3)), url('https://images.unsplash.com/photo-1605100804763-247f67b3557e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1740&q=80') center/cover no-repeat;
-            display: flex;
-            align-items: center;
-            padding-top: 80px;
+            background: var(--color-surface);
+            border-right: 1px solid var(--color-border);
+            overflow-y: auto;
+            z-index: 1000;
+            padding: 2rem 1.5rem;
         }
         
-        .hero-content {
-            max-width: 600px;
-            color: var(--white);
+        .main-content {
+            margin-left: 280px;
+            min-height: 100vh;
         }
         
-        .hero h1 {
-            font-size: 56px;
-            margin-bottom: 20px;
-            color: var(--white);
-            line-height: 1.2;
+        .section-anchor {
+            scroll-margin-top: 2rem;
         }
         
-        .hero p {
-            font-size: 18px;
-            margin-bottom: 30px;
-            max-width: 500px;
-        }
-        
-        .btn {
-            display: inline-block;
-            padding: 14px 32px;
-            background-color: var(--gold);
-            color: var(--white);
+        .citation-link {
+            color: var(--color-accent);
             text-decoration: none;
             font-weight: 500;
-            border-radius: 2px;
-            transition: all 0.3s ease;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            font-size: 14px;
+            border-bottom: 1px dotted var(--color-accent);
         }
         
-        .btn:hover {
-            background-color: var(--dark-gold);
-            transform: translateY(-3px);
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        .citation-link:hover {
+            color: var(--color-primary);
+            border-bottom-style: solid;
         }
         
-        .btn-outline {
-            background: transparent;
-            border: 2px solid var(--white);
-            margin-left: 15px;
+        .code-block {
+            background: #1e293b;
+            color: #e2e8f0;
+            border-radius: 8px;
+            padding: 1.5rem;
+            overflow-x: auto;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.875rem;
+            line-height: 1.6;
         }
         
-        .btn-outline:hover {
-            background: var(--white);
-            color: var(--black);
+        .highlight-box {
+            background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
+            border-left: 4px solid var(--color-accent);
         }
         
-        /* Featured Collections */
-        .section {
-            padding: 100px 0;
-        }
-        
-        .section-header {
-            text-align: center;
-            margin-bottom: 60px;
-        }
-        
-        .section-header h2 {
-            font-size: 36px;
-            position: relative;
-            display: inline-block;
-            padding-bottom: 15px;
-        }
-        
-        .section-header h2::after {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 80px;
-            height: 3px;
-            background-color: var(--gold);
-        }
-        
-        .collections-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 30px;
-        }
-        
-        .collection-card {
-            background: var(--white);
-            border-radius: 5px;
-            overflow: hidden;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
-            transition: all 0.3s ease;
-        }
-        
-        .collection-card:hover {
-            transform: translateY(-10px);
-            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
-        }
-        
-        .collection-img {
-            height: 300px;
-            overflow: hidden;
-        }
-        
-        .collection-img img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            transition: transform 0.5s ease;
-        }
-        
-        .collection-card:hover .collection-img img {
-            transform: scale(1.05);
-        }
-        
-        .collection-content {
-            padding: 20px;
-            text-align: center;
-        }
-        
-        .collection-content h3 {
-            font-size: 22px;
-            margin-bottom: 10px;
-        }
-        
-        .collection-content p {
-            margin-bottom: 15px;
-            color: #666;
-        }
-        
-        .price {
-            font-size: 20px;
-            font-weight: 600;
-            color: var(--gold);
-        }
-        
-        /* About Section */
-        .about {
-            background-color: var(--gray);
-        }
-        
-        .about-content {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 50px;
-            align-items: center;
-        }
-        
-        .about-img {
-            border-radius: 5px;
-            overflow: hidden;
-            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
-        }
-        
-        .about-img img {
-            width: 100%;
-            display: block;
-        }
-        
-        .about-text h2 {
-            font-size: 36px;
-            margin-bottom: 20px;
-        }
-        
-        .about-text p {
-            margin-bottom: 20px;
-        }
-        
-        /* Testimonials */
-        .testimonials {
-            background-color: var(--white);
-        }
-        
-        .testimonials-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 30px;
-        }
-        
-        .testimonial-card {
-            background: var(--white);
-            padding: 30px;
-            border-radius: 5px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
-            text-align: center;
-        }
-        
-        .testimonial-card i {
-            font-size: 36px;
-            color: var(--gold);
-            margin-bottom: 20px;
-        }
-        
-        .testimonial-text {
-            font-style: italic;
-            margin-bottom: 20px;
-        }
-        
-        .client-info {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        
-        .client-img {
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            overflow: hidden;
-            margin-right: 15px;
-        }
-        
-        .client-img img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-        
-        .client-name h4 {
-            margin-bottom: 5px;
-        }
-        
-        .client-name p {
-            font-size: 14px;
-            color: #666;
-        }
-        
-        /* Newsletter */
-        .newsletter {
-            background: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), url('https://images.unsplash.com/photo-1581287053822-fd7bf4f4bfec?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1501&q=80') center/cover no-repeat;
-            padding: 80px 0;
-            color: var(--white);
-            text-align: center;
-        }
-        
-        .newsletter h2 {
-            color: var(--white);
-            font-size: 36px;
-            margin-bottom: 20px;
-        }
-        
-        .newsletter p {
-            max-width: 600px;
-            margin: 0 auto 30px;
-        }
-        
-        .newsletter-form {
-            max-width: 500px;
-            margin: 0 auto;
-            display: flex;
-        }
-        
-        .newsletter-form input {
-            flex: 1;
-            padding: 15px 20px;
-            border: none;
-            border-radius: 2px 0 0 2px;
-            font-family: 'Montserrat', sans-serif;
-        }
-        
-        .newsletter-form button {
-            padding: 0 30px;
-            background-color: var(--gold);
-            color: var(--white);
-            border: none;
-            font-weight: 500;
-            cursor: pointer;
-            transition: background-color 0.3s ease;
-            border-radius: 0 2px 2px 0;
-        }
-        
-        .newsletter-form button:hover {
-            background-color: var(--dark-gold);
-        }
-        
-        /* Footer */
-        footer {
-            background-color: var(--black);
-            color: var(--white);
-            padding: 70px 0 20px;
-        }
-        
-        .footer-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 30px;
-            margin-bottom: 50px;
-        }
-        
-        .footer-col h3 {
-            color: var(--white);
-            font-size: 20px;
-            margin-bottom: 25px;
-            position: relative;
-            padding-bottom: 10px;
-        }
-        
-        .footer-col h3::after {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            width: 50px;
-            height: 2px;
-            background-color: var(--gold);
-        }
-        
-        .footer-col ul {
-            list-style: none;
-        }
-        
-        .footer-col ul li {
-            margin-bottom: 12px;
-        }
-        
-        .footer-col ul li a {
-            color: #bbb;
-            text-decoration: none;
-            transition: all 0.3s ease;
-        }
-        
-        .footer-col ul li a:hover {
-            color: var(--gold);
-            padding-left: 5px;
-        }
-        
-        .social-links {
-            display: flex;
-            margin-top: 20px;
-        }
-        
-        .social-links a {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 40px;
-            height: 40px;
-            background-color: #222;
-            color: var(--white);
-            border-radius: 50%;
-            margin-right: 10px;
-            transition: all 0.3s ease;
-        }
-        
-        .social-links a:hover {
-            background-color: var(--gold);
-            transform: translateY(-3px);
-        }
-        
-        .copyright {
-            text-align: center;
-            padding-top: 20px;
-            border-top: 1px solid #333;
-            font-size: 14px;
-            color: #777;
-        }
-        
-        /* Responsive Design */
-        @media (max-width: 992px) {
-            .hero h1 {
-                font-size: 46px;
+        @media (max-width: 1024px) {
+            .toc-fixed {
+                display: none;
             }
-            
-            .about-content {
-                grid-template-columns: 1fr;
-            }
-            
-            .about-img {
-                max-width: 500px;
-                margin: 0 auto;
-            }
-        }
-        
-        @media (max-width: 768px) {
-            .header-container {
-                flex-direction: column;
-            }
-            
-            .logo {
-                margin-bottom: 15px;
-            }
-            
-            nav ul {
-                margin: 20px 0;
-            }
-            
-            .hero {
-                text-align: center;
-            }
-            
-            .hero-content {
-                margin: 0 auto;
-            }
-            
-            .hero-btns {
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-            }
-            
-            .btn-outline {
+            .main-content {
                 margin-left: 0;
-                margin-top: 15px;
             }
-            
-            .newsletter-form {
-                flex-direction: column;
+            .mermaid-control-btn:not(.reset-zoom) {
+                display: none;
             }
-            
-            .newsletter-form input,
-            .newsletter-form button {
-                width: 100%;
-                border-radius: 2px;
-                margin: 5px 0;
+            .mermaid-controls {
+                top: auto;
+                bottom: 15px;
+                right: 15px;
             }
         }
         
-        @media (max-width: 576px) {
-            nav ul {
-                flex-wrap: wrap;
-                justify-content: center;
-            }
-            
-            nav ul li {
-                margin: 5px 10px;
-            }
-            
-            .hero h1 {
-                font-size: 36px;
-            }
-            
-            .section {
-                padding: 60px 0;
-            }
+        /* Mermaid chart styling */
+        .mermaid-container {
+            display: flex;
+            justify-content: center;
+            min-height: 300px;
+            max-height: 800px;
+            background: #ffffff;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 30px;
+            margin: 30px 0;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+            position: relative;
+            overflow: hidden;
         }
+        
+        .mermaid-container .mermaid {
+            width: 100%;
+            max-width: 100%;
+            height: 100%;
+            cursor: grab;
+            transition: transform 0.3s ease;
+            transform-origin: center center;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            touch-action: none; /* 防止触摸设备上的默认行为 */
+            -webkit-user-select: none; /* 防止文本选择 */
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+        
+        .mermaid-container .mermaid svg {
+            max-width: 100%;
+            height: 100%;
+            display: block;
+            margin: 0 auto;
+        }
+        
+        .mermaid-container .mermaid:active {
+            cursor: grabbing;
+        }
+        
+        .mermaid-container.zoomed .mermaid {
+            height: 100%;
+            width: 100%;
+            cursor: grab;
+        }
+        
+        .mermaid-controls {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            display: flex;
+            gap: 10px;
+            z-index: 20;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 8px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .mermaid-control-btn {
+            background: #ffffff;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            padding: 10px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            color: #374151;
+            font-size: 14px;
+            min-width: 36px;
+            height: 36px;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .mermaid-control-btn:hover {
+            background: #f8fafc;
+            border-color: #3b82f6;
+            color: #3b82f6;
+            transform: translateY(-1px);
+        }
+        
+        .mermaid-control-btn:active {
+            transform: scale(0.95);
+        }
+        
+        /* Enhanced mermaid theme customization */
+        .mermaid .node rect,
+        .mermaid .node circle,
+        .mermaid .node ellipse,
+        .mermaid .node polygon {
+            stroke-width: 2px;
+            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+        }
+        
+        .mermaid .edgePath .path {
+            stroke: #64748b;
+            stroke-width: 2px;
+            filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1));
+        }
+        
+        .mermaid .edgeLabel {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 4px;
+            padding: 2px 6px;
+            font-size: 12px;
+            font-weight: 500;
+            color: #374151;
+        }
+        
+        .mermaid .cluster rect {
+            fill: #f8fafc;
+            stroke: #cbd5e1;
+            stroke-width: 1px;
+            rx: 8px;
+            ry: 8px;
+            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.05));
+        }
+        
+        .mermaid .cluster .label {
+            color: #334155;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        
+        /* Enhanced text contrast for different node colors */
+        .mermaid .node[style*="fill:#1a4d3a"] text,
+        .mermaid .node[style*="fill: #1a4d3a"] text {
+            fill: #ffffff !important;
+            font-weight: 600 !important;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+        }
+        
+        .mermaid .node[style*="fill:#4a7c59"] text,
+        .mermaid .node[style*="fill: #4a7c59"] text {
+            fill: #ffffff !important;
+            font-weight: 600 !important;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+        }
+        
+        .mermaid .node[style*="fill:#059669"] text,
+        .mermaid .node[style*="fill: #059669"] text {
+            fill: #ffffff !important;
+            font-weight: 600 !important;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+        }
+        
+        .mermaid .node[style*="fill:#f0fdf4"] text,
+        .mermaid .node[style*="fill: #f0fdf4"] text,
+        .mermaid .node[style*="fill:#ecfdf5"] text,
+        .mermaid .node[style*="fill: #ecfdf5"] text,
+        .mermaid .node[style*="fill:#f8fafc"] text,
+        .mermaid .node[style*="fill: #f8fafc"] text,
+        .mermaid .node[style*="fill:#ffffff"] text,
+        .mermaid .node[style*="fill: #ffffff"] text {
+            fill: #1f2937 !important;
+            font-weight: 600 !important;
+            text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8);
+        }
+        
+        .mermaid .node text {
+            font-family: 'Inter', sans-serif !important;
+            font-size: 13px !important;
+            font-weight: 500 !important;
+        }
+        
+        /* Enhanced contrast for secondary colored nodes */
+        .mermaid .node[style*="fill:#dcfce7"] text,
+        .mermaid .node[style*="fill: #dcfce7"] text,
+        .mermaid .node[style*="fill:#bbf7d0"] text,
+        .mermaid .node[style*="fill: #bbf7d0"] text {
+            fill: #14532d !important;
+            font-weight: 600 !important;
+            text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8);
+        }
+        
+        /* Ensure proper contrast for all text elements */
+        .mermaid text {
+            fill: #1f2937 !important;
+            font-family: 'Inter', sans-serif !important;
+            font-size: 13px !important;
+            font-weight: 500 !important;
+        }
+
+    @media (max-width: 768px) {
+      .max-w-7xl.mx-auto.px-8 {
+        padding-left: 1rem;
+        padding-right: 1rem;
+      }
+
+      .hero .grid {
+        grid-template-columns: 1fr;
+      }
+
+      .hero h1 {
+        font-size: 2.5rem;
+      }
+
+      .hero p {
+        font-size: 1rem;
+      }
+
+      .hero .grid.grid-cols-2 {
+        grid-template-columns: 1fr;
+      }
+
+      .hero .h-64 {
+        height: auto;
+      }
+
+      .hero .space-y-4 > div {
+        padding: 1rem;
+      }
+
+      .hero .text-xl {
+        font-size: 1rem;
+      }
+
+      .hero .text-2xl {
+        font-size: 1.5rem;
+      }
+
+      .hero .text-3xl {
+        font-size: 1.75rem;
+      }
+
+      .hero .text-5xl {
+        font-size: 2.25rem;
+      }
+
+      .hero .text-7xl {
+        font-size: 3rem;
+      }
+
+      .mermaid-container {
+        padding: 15px;
+      }
+    }
     </style>
-</head>
-<body>
-    <!-- Header -->
-    <header>
-        <div class="container header-container">
-            <a href="#" class="logo">Edel<span>steine</span></a>
-            
-            <nav>
-                <ul>
-                    <li><a href="#">Startseite</a></li>
-                    <li><a href="#">Kollektionen</a></li>
-                    <li><a href="#">Ringe</a></li>
-                    <li><a href="#">Halsketten</a></li>
-                    <li><a href="#">Ohrringe</a></li>
-                    <li><a href="#">Über uns</a></li>
-                </ul>
-            </nav>
-            
-            <div class="header-icons">
-                <a href="#"><i class="fas fa-search"></i></a>
-                <a href="#"><i class="fas fa-user"></i></a>
-                <a href="#" class="cart-icon">
-                    <i class="fas fa-shopping-bag"></i>
-                    <span class="cart-count">3</span>
+  </head>
+
+  <body class="bg-gray-50 font-inter">
+    <!-- Fixed Table of Contents -->
+    <nav class="toc-fixed">
+      <div class="mb-8">
+        <h3 class="font-tiempos text-lg font-bold text-gray-900 mb-4">Contents</h3>
+        <ul class="space-y-2 text-sm">
+          <li>
+            <a href="#overview" class="text-gray-600 hover:text-gray-900 transition-colors">Protocol Overview</a>
+          </li>
+          <li>
+            <a href="#releases" class="text-gray-600 hover:text-gray-900 transition-colors">Wallet Releases</a>
+          </li>
+          <li>
+            <a href="#rpc-capabilities" class="text-gray-600 hover:text-gray-900 transition-colors">RPC Capabilities</a>
+          </li>
+          <li>
+            <a href="#native-assets" class="text-gray-600 hover:text-gray-900 transition-colors">Native Assets</a>
+          </li>
+          <li>
+            <a href="#github-repositories" class="text-gray-600 hover:text-gray-900 transition-colors">GitHub Repositories</a>
+          </li>
+          <li>
+            <a href="#technical-specifications" class="text-gray-600 hover:text-gray-900 transition-colors">Technical Specifications</a>
+          </li>
+          <li>
+            <a href="#integration-guide" class="text-gray-600 hover:text-gray-900 transition-colors">Integration Guide</a>
+          </li>
+        </ul>
+      </div>
+
+      <div class="border-t pt-6">
+        <h4 class="font-semibold text-gray-900 mb-3">Quick Links</h4>
+        <div class="space-y-2 text-xs">
+          <a href="https://github.com/ZephyrProtocol/zephyr/releases" class="flex items-center text-gray-600 hover:text-gray-900">
+            <i class="fas fa-download mr-2"></i>GitHub Releases
+          </a>
+          <a href="https://zephyrprotocol.com/documentation" class="flex items-center text-gray-600 hover:text-gray-900">
+            <i class="fas fa-book mr-2"></i>RPC Documentation
+          </a>
+          <a href="https://github.com/ZephyrProtocol" class="flex items-center text-gray-600 hover:text-gray-900">
+            <i class="fab fa-github mr-2"></i>GitHub Organization
+          </a>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <!-- Hero Section -->
+      <section class="relative min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 overflow-hidden">
+        <div class="absolute inset-0 hero-gradient"></div>
+        <div class="relative z-10 container mx-auto px-8 py-16">
+          <!-- Bento Grid Layout -->
+          <div class="grid grid-cols-12 gap-8 min-h-screen items-center">
+            <!-- Main Title Block -->
+            <div class="col-span-8">
+              <div class="space-y-6">
+                <h1 class="font-tiempos text-7xl font-bold text-white leading-tight">
+                  <span class="italic">Zephyr</span>
+                  <br/>
+                  <span class="text-5xl font-normal">Protocol</span>
+                </h1>
+                <p class="text-2xl text-gray-200 max-w-2xl">
+                  The Untraceable Stablecoin Protocol combining privacy-first architecture with multi-asset functionality
+                </p>
+                <div class="flex items-center space-x-6 pt-4">
+                  <div class="flex items-center text-gray-300">
+                    <i class="fas fa-shield-alt mr-2"></i>
+                    <span>Audited &amp; Secure</span>
+                  </div>
+                  <div class="flex items-center text-gray-300">
+                    <i class="fas fa-coins mr-2"></i>
+                    <span>Multi-Asset</span>
+                  </div>
+                  <div class="flex items-center text-gray-300">
+                    <i class="fas fa-code mr-2"></i>
+                    <span>Open Source</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Key Metrics Block -->
+            <div class="col-span-4 space-y-6">
+              <div class="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
+                <div class="text-green-400 text-sm font-medium">Latest Release</div>
+                <div class="text-white text-2xl font-bold">v2.3.0</div>
+                <div class="text-gray-300 text-sm">Audit Completion</div>
+              </div>
+
+              <div class="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
+                <div class="text-green-400 text-sm font-medium">Hardfork</div>
+                <div class="text-white text-2xl font-bold">v11</div>
+                <div class="text-gray-300 text-sm">Active at Block 536,000</div>
+              </div>
+
+              <div class="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
+                <div class="text-green-400 text-sm font-medium">Native Assets</div>
+                <div class="text-white text-2xl font-bold">4</div>
+                <div class="text-gray-300 text-sm">ZPH, ZSD, ZRS, ZYS</div>
+              </div>
+            </div>
+
+            <!-- Protocol Overview -->
+            <div class="col-span-12 mt-12">
+              <div class="grid grid-cols-3 gap-8">
+                <div class="bg-white/5 backdrop-blur-sm rounded-xl p-6 border border-white/10">
+                  <i class="fas fa-eye-slash text-green-400 text-2xl mb-4"></i>
+                  <h3 class="text-white text-xl font-semibold mb-2">Untraceable</h3>
+                  <p class="text-gray-300 text-sm">Privacy-focused transactions with Monero-based cryptography</p>
+                </div>
+
+                <div class="bg-white/5 backdrop-blur-sm rounded-xl p-6 border border-white/10">
+                  <i class="fas fa-balance-scale text-green-400 text-2xl mb-4"></i>
+                  <h3 class="text-white text-xl font-semibold mb-2">Stablecoin</h3>
+                  <p class="text-gray-300 text-sm">ZSD stablecoin pegged to USD with over-collateralization</p>
+                </div>
+
+                <div class="bg-white/5 backdrop-blur-sm rounded-xl p-6 border border-white/10">
+                  <i class="fas fa-network-wired text-green-400 text-2xl mb-4"></i>
+                  <h3 class="text-white text-xl font-semibold mb-2">Multi-Asset</h3>
+                  <p class="text-gray-300 text-sm">Four native assets with integrated conversion mechanisms</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Symbolic Hero Image -->
+        <div class="absolute bottom-0 right-0 w-1/3 h-1/2 opacity-20">
+          <img src="https://kimi-web-img.moonshot.cn/img/static.vecteezy.com/457693b1f2613a96ed63bc6e5baed84776e71c24.jpg" alt="Abstract geometric representation of blockchain nodes and transactions" class="w-full h-full object-cover" size="large" aspect="wide" query="abstract blockchain network geometry" referrerpolicy="no-referrer" data-modified="1" data-score="11594.00"/>
+        </div>
+      </section>
+
+      <!-- Protocol Overview Section -->
+      <section id="overview" class="section-anchor py-20 bg-white">
+        <div class="container mx-auto px-8 max-w-6xl">
+          <div class="text-center mb-16">
+            <h2 class="font-tiempos text-4xl font-bold text-gray-900 mb-6">Protocol Architecture</h2>
+            <p class="text-xl text-gray-600 max-w-3xl mx-auto">
+              Zephyr Protocol represents a groundbreaking approach to stablecoin implementation,
+              combining the privacy features of Monero with the stability mechanisms of the Djed protocol.
+            </p>
+          </div>
+
+          <!-- Architecture Diagram -->
+          <div class="mb-16">
+            <div class="mermaid-container">
+              <div class="mermaid-controls">
+                <button class="mermaid-control-btn zoom-in" title="放大">
+                  <i class="fas fa-search-plus"></i>
+                </button>
+                <button class="mermaid-control-btn zoom-out" title="缩小">
+                  <i class="fas fa-search-minus"></i>
+                </button>
+                <button class="mermaid-control-btn reset-zoom" title="重置">
+                  <i class="fas fa-expand-arrows-alt"></i>
+                </button>
+                <button class="mermaid-control-btn fullscreen" title="全屏查看">
+                  <i class="fas fa-expand"></i>
+                </button>
+              </div>
+              <div class="mermaid" id="protocol-architecture">
+                graph TB
+                ZEPH[&#34;Zephyr Base Coin
+                <br/>Asset Type: ZPH&#34;] --&gt; STABLE[&#34;Zephyr Stable Dollar
+                <br/>Asset Type: ZSD&#34;]
+                ZEPH --&gt; RESERVE[&#34;Zephyr Reserve Share
+                <br/>Asset Type: ZRS&#34;]
+                ZSD --&gt; YIELD[&#34;Zephyr Yield Share
+                <br/>Asset Type: ZYS&#34;]
+
+                DAEMON[&#34;Zephyr Daemon
+                <br/>zephyrd&#34;] --&gt; RPC[&#34;RPC Interface
+                <br/>JSON-RPC&#34;]
+                WALLET[&#34;Zephyr Wallet
+                <br/>zephyr-wallet-rpc&#34;] --&gt; RPC
+
+                RPC --&gt; CLI[&#34;Command Line
+                <br/>zephyr-cli&#34;]
+                RPC --&gt; GUI[&#34;Graphical UI
+                <br/>Zephyr-Wallet&#34;]
+                RPC --&gt; LIB[&#34;Libraries
+                <br/>JS &amp; C++&#34;]
+
+                MINING[&#34;Mining Pools&#34;] --&gt; NETWORK[&#34;Zephyr Network
+                <br/>Blockchain&#34;]
+                EXCHANGES[&#34;Exchanges&#34;] --&gt; NETWORK
+                SERVICES[&#34;Services&#34;] --&gt; NETWORK
+
+                NETWORK --&gt; CONVERSION[&#34;Conversion Engine
+                <br/>Djed Protocol&#34;]
+                CONVERSION --&gt; MINT[&#34;Mint ZSD/ZRS&#34;]
+                CONVERSION --&gt; REDEEM[&#34;Redeem ZSD/ZRS&#34;]
+
+                style ZEPH fill:#1a4d3a,stroke:#ffffff,stroke-width:3px,color:#ffffff
+                style STABLE fill:#4a7c59,stroke:#ffffff,stroke-width:3px,color:#ffffff
+                style RESERVE fill:#059669,stroke:#ffffff,stroke-width:3px,color:#ffffff
+                style YIELD fill:#10b981,stroke:#ffffff,stroke-width:3px,color:#ffffff
+                style DAEMON fill:#f0fdf4,stroke:#059669,stroke-width:3px,color:#1f2937
+                style WALLET fill:#f0fdf4,stroke:#059669,stroke-width:3px,color:#1f2937
+                style RPC fill:#ecfdf5,stroke:#10b981,stroke-width:3px,color:#1f2937
+                style CONVERSION fill:#dcfce7,stroke:#34d399,stroke-width:3px,color:#1f2937
+              </div>
+            </div>
+          </div>
+
+          <!-- Key Features Grid -->
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div class="highlight-box p-6 rounded-xl">
+              <i class="fas fa-lock text-green-600 text-2xl mb-4"></i>
+              <h3 class="font-tiempos text-xl font-bold mb-3">Privacy-First Design</h3>
+              <p class="text-gray-700">
+                Built on Monero&#39;s proven cryptography, Zephyr ensures untraceable transactions
+                through ring signatures, stealth addresses, and confidential transactions.
+              </p>
+            </div>
+
+            <div class="highlight-box p-6 rounded-xl">
+              <i class="fas fa-coins text-green-600 text-2xl mb-4"></i>
+              <h3 class="font-tiempos text-xl font-bold mb-3">Multi-Asset System</h3>
+              <p class="text-gray-700">
+                Four native assets working in harmony: ZPH (base coin), ZSD (stablecoin),
+                ZRS (reserve shares), and ZYS (yield shares).
+              </p>
+            </div>
+
+            <div class="highlight-box p-6 rounded-xl">
+              <i class="fas fa-cogs text-green-600 text-2xl mb-4"></i>
+              <h3 class="font-tiempos text-xl font-bold mb-3">Djed Protocol</h3>
+              <p class="text-gray-700">
+                Based on the Minimal Djed protocol, ensuring ZSD stablecoin is
+                over-collateralized by ZPH held in the reserve pool.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Wallet Releases Section -->
+      <section id="releases" class="section-anchor py-20 bg-gray-50">
+        <div class="container mx-auto px-8 max-w-6xl">
+          <h2 class="font-tiempos text-4xl font-bold text-gray-900 mb-12 text-center">Wallet Releases &amp; Distribution</h2>
+
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-16">
+            <!-- Latest Release Info -->
+            <div class="bg-white rounded-2xl p-8 shadow-lg">
+              <div class="flex items-center justify-between mb-6">
+                <h3 class="font-tiempos text-2xl font-bold text-gray-900">Latest Stable Release</h3>
+                <span class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">
+                  Required Update
+                </span>
+              </div>
+
+              <div class="space-y-4">
+                <div class="flex justify-between items-center py-3 border-b border-gray-100">
+                  <span class="text-gray-600">Version</span>
+                  <span class="font-semibold">v2.3.0 &#34;Audit Completion&#34;</span>
+                </div>
+                <div class="flex justify-between items-center py-3 border-b border-gray-100">
+                  <span class="text-gray-600">Hardfork</span>
+                  <span class="font-semibold">v11 (Block 536,000)</span>
+                </div>
+                <div class="flex justify-between items-center py-3 border-b border-gray-100">
+                  <span class="text-gray-600">Release Date</span>
+                  <span class="font-semibold">Latest Stable</span>
+                </div>
+                <div class="flex justify-between items-center py-3">
+                  <span class="text-gray-600">Status</span>
+                  <span class="font-semibold text-green-600">Active</span>
+                </div>
+              </div>
+
+              <div class="mt-6 p-4 bg-green-50 rounded-lg">
+                <p class="text-sm text-green-800">
+                  <i class="fas fa-exclamation-triangle mr-2"></i>
+                  This release transitions supply figures to new, audited asset types.
+                  Old asset types are no longer valid.
+                </p>
+              </div>
+            </div>
+
+            <!-- Asset Type Mapping -->
+            <div class="bg-white rounded-2xl p-8 shadow-lg">
+              <h3 class="font-tiempos text-2xl font-bold text-gray-900 mb-6">Asset Type Transition</h3>
+              <p class="text-gray-600 mb-6">Hardfork v11 introduced audited asset types:</p>
+
+              <div class="space-y-3">
+                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <div>
+                    <span class="text-gray-500 text-sm">Old: ZEPH</span>
+                    <i class="fas fa-arrow-right mx-3 text-gray-400"></i>
+                    <span class="font-semibold">ZPH</span>
+                  </div>
+                  <span class="text-xs text-gray-500">Base Coin</span>
+                </div>
+                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <div>
+                    <span class="text-gray-500 text-sm">Old: ZEPHUSD</span>
+                    <i class="fas fa-arrow-right mx-3 text-gray-400"></i>
+                    <span class="font-semibold">ZSD</span>
+                  </div>
+                  <span class="text-xs text-gray-500">Stable Dollar</span>
+                </div>
+                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <div>
+                    <span class="text-gray-500 text-sm">Old: ZEPHRSV</span>
+                    <i class="fas fa-arrow-right mx-3 text-gray-400"></i>
+                    <span class="font-semibold">ZRS</span>
+                  </div>
+                  <span class="text-xs text-gray-500">Reserve Share</span>
+                </div>
+                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <div>
+                    <span class="text-gray-500 text-sm">Old: ZYIELD</span>
+                    <i class="fas fa-arrow-right mx-3 text-gray-400"></i>
+                    <span class="font-semibold">ZYS</span>
+                  </div>
+                  <span class="text-xs text-gray-500">Yield Share</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Download Options -->
+          <div class="bg-white rounded-2xl p-8 shadow-lg">
+            <h3 class="font-tiempos text-2xl font-bold text-gray-900 mb-8">Download Options</h3>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <!-- CLI Wallets -->
+              <div>
+                <h4 class="font-semibold text-gray-900 mb-4 flex items-center">
+                  <i class="fas fa-terminal mr-2 text-green-600"></i>
+                  Command Line Interface
+                </h4>
+                <div class="space-y-3">
+                  <div class="p-3 border border-gray-200 rounded-lg hover:border-green-400 transition-colors">
+                    <div class="flex justify-between items-center">
+                      <span class="font-medium">Linux</span>
+                      <span class="text-sm text-gray-500">28.5 MB</span>
+                    </div>
+                    <div class="text-xs text-gray-500 mt-1">SHA256: d60a94d187e288de0ea76d26ecba26c8...</div>
+                  </div>
+                  <div class="p-3 border border-gray-200 rounded-lg hover:border-green-400 transition-colors">
+                    <div class="flex justify-between items-center">
+                      <span class="font-medium">Windows</span>
+                      <span class="text-sm text-gray-500">41.6 MB</span>
+                    </div>
+                    <div class="text-xs text-gray-500 mt-1">SHA256: 1139bde911980ff6f93e8540bf1b9d0b...</div>
+                  </div>
+                  <div class="p-3 border border-gray-200 rounded-lg hover:border-green-400 transition-colors">
+                    <div class="flex justify-between items-center">
+                      <span class="font-medium">macOS</span>
+                      <span class="text-sm text-gray-500">25.7 MB</span>
+                    </div>
+                    <div class="text-xs text-gray-500 mt-1">SHA256: a5b1677d60b1dc0dcc636c8a7a6a0753...</div>
+                  </div>
+                  <div class="p-3 border border-gray-200 rounded-lg hover:border-green-400 transition-colors">
+                    <div class="flex justify-between items-center">
+                      <span class="font-medium">ARM64</span>
+                      <span class="text-sm text-gray-500">26 MB</span>
+                    </div>
+                    <div class="text-xs text-gray-500 mt-1">SHA256: 2f9f786af49c1ba1dc463d42f2881e1c...</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- GUI Wallets -->
+              <div>
+                <h4 class="font-semibold text-gray-900 mb-4 flex items-center">
+                  <i class="fas fa-desktop mr-2 text-green-600"></i>
+                  Graphical User Interface
+                </h4>
+                <div class="space-y-3">
+                  <div class="p-3 border border-gray-200 rounded-lg hover:border-green-400 transition-colors">
+                    <div class="flex justify-between items-center">
+                      <span class="font-medium">Windows GUI</span>
+                      <span class="text-sm text-gray-500">221 MB</span>
+                    </div>
+                    <div class="text-xs text-gray-500 mt-1">SHA256: 2972464ff4bd7f4e667155da9d257dae...</div>
+                  </div>
+                  <div class="p-3 border border-gray-200 rounded-lg hover:border-green-400 transition-colors">
+                    <div class="flex justify-between items-center">
+                      <span class="font-medium">macOS ARM64</span>
+                      <span class="text-sm text-gray-500">100 MB</span>
+                    </div>
+                    <div class="text-xs text-gray-500 mt-1">SHA256: dfef2485aeb3b6f0ceeb497d7260bedb...</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="mt-6 p-4 bg-blue-50 rounded-lg">
+              <p class="text-sm text-blue-800">
+                <i class="fas fa-shield-alt mr-2"></i>
+                Always verify downloaded files using the provided SHA256 checksums to ensure authenticity and security.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- RPC Capabilities Section -->
+      <section id="rpc-capabilities" class="section-anchor py-20 bg-white">
+        <div class="container mx-auto px-8 max-w-6xl">
+          <h2 class="font-tiempos text-4xl font-bold text-gray-900 mb-12 text-center">RPC Capabilities</h2>
+
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-16">
+            <!-- Daemon RPC -->
+            <div class="bg-gray-50 rounded-2xl p-8">
+              <div class="flex items-center mb-6">
+                <i class="fas fa-server text-green-600 text-2xl mr-4"></i>
+                <h3 class="font-tiempos text-2xl font-bold text-gray-900">Daemon RPC</h3>
+              </div>
+              <p class="text-gray-600 mb-6">
+                Interface for communicating with the
+                <code class="bg-gray-200 px-2 py-1 rounded text-sm">zephyrd</code> process,
+                allowing applications to query blockchain state and network information.
+              </p>
+
+              <div class="space-y-4">
+                <div class="flex items-center p-3 bg-white rounded-lg">
+                  <i class="fas fa-cube text-green-600 mr-3"></i>
+                  <span>Block height &amp; difficulty queries</span>
+                </div>
+                <div class="flex items-center p-3 bg-white rounded-lg">
+                  <i class="fas fa-exchange-alt text-green-600 mr-3"></i>
+                  <span>Transaction pool management</span>
+                </div>
+                <div class="flex items-center p-3 bg-white rounded-lg">
+                  <i class="fas fa-network-wired text-green-600 mr-3"></i>
+                  <span>Network peer information</span>
+                </div>
+                <div class="flex items-center p-3 bg-white rounded-lg">
+                  <i class="fas fa-chart-line text-green-600 mr-3"></i>
+                  <span>Hashrate statistics</span>
+                </div>
+              </div>
+
+              <div class="mt-6">
+                <a href="https://zephyrprotocol.com/documentation/daemon-rpc" class="citation-link text-sm">
+                  View Daemon RPC Documentation →
                 </a>
+              </div>
             </div>
-        </div>
-    </header>
 
-    <!-- Hero Section -->
-    <section class="hero">
-        <div class="container">
-            <div class="hero-content">
-                <h1>Handgefertigter Luxusschmuck für besondere Momente</h1>
-                <p>Entdecken Sie unsere exklusive Kollektion von feinsten Diamanten, edlen Goldschmiedearbeiten und zeitlosen Juwelen, die Generationen überdauern.</p>
-                <div class="hero-btns">
-                    <a href="#" class="btn">Kollektion entdecken</a>
-                    <a href="#" class="btn btn-outline">Termin vereinbaren</a>
+            <!-- Wallet RPC -->
+            <div class="bg-gray-50 rounded-2xl p-8">
+              <div class="flex items-center mb-6">
+                <i class="fas fa-wallet text-green-600 text-2xl mr-4"></i>
+                <h3 class="font-tiempos text-2xl font-bold text-gray-900">Wallet RPC</h3>
+              </div>
+              <p class="text-gray-600 mb-6">
+                Dedicated interface for programmatic wallet management through
+                <code class="bg-gray-200 px-2 py-1 rounded text-sm">zephyr-wallet-rpc</code>,
+                replacing older RPC interfaces.
+              </p>
+
+              <div class="space-y-4">
+                <div class="flex items-center p-3 bg-white rounded-lg">
+                  <i class="fas fa-coins text-green-600 mr-3"></i>
+                  <span>Balance queries with asset type support</span>
                 </div>
-            </div>
-        </div>
-    </section>
+                <div class="flex items-center p-3 bg-white rounded-lg">
+                  <i class="fas fa-paper-plane text-green-600 mr-3"></i>
+                  <span>Transaction creation &amp; sending</span>
+                </div>
+                <div class="flex items-center p-3 bg-white rounded-lg">
+                  <i class="fas fa-sync-alt text-green-600 mr-3"></i>
+                  <span>Asset conversion between ZPH/ZSD/ZRS/ZYS</span>
+                </div>
+                <div class="flex items-center p-3 bg-white rounded-lg">
+                  <i class="fas fa-address-book text-green-600 mr-3"></i>
+                  <span>Address management &amp; generation</span>
+                </div>
+              </div>
 
-    <!-- Featured Collections -->
-    <section class="section">
-        <div class="container">
-            <div class="section-header">
-                <h2>Bestseller Kollektionen</h2>
+              <div class="mt-6">
+                <a href="https://zephyrprotocol.com/documentation/wallet-rpc" class="citation-link text-sm">
+                  View Wallet RPC Documentation →
+                </a>
+              </div>
             </div>
+          </div>
+
+          <!-- Transfer Method Example -->
+          <div class="bg-gray-900 rounded-2xl p-8 text-white">
+            <h3 class="font-tiempos text-2xl font-bold mb-6">Key RPC Method:
+              <code class="text-green-400">transfer</code>
+            </h3>
+            <p class="text-gray-300 mb-6">
+              The
+              <code class="text-green-400">transfer</code> method handles sending funds and converting between Zephyr&#39;s native assets.
+              Here&#39;s an example of sending 1 ZEPH:
+            </p>
+
+            <div class="code-block">
+              <pre><code>curl http://127.0.0.1:17777/json_rpc -d &#39;{
+  &#34;jsonrpc&#34;: &#34;2.0&#34;,
+  &#34;id&#34;: &#34;0&#34;,
+  &#34;method&#34;: &#34;transfer&#34;,
+  &#34;params&#34;: {
+    &#34;destinations&#34;: [
+      {
+        &#34;address&#34;: &#34;ZEPHXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX&#34;,
+        &#34;amount&#34;: 1000000000000
+      }
+    ],
+    &#34;source_asset&#34;: &#34;ZPH&#34;,
+    &#34;destination_asset&#34;: &#34;ZPH&#34;,
+    &#34;priority&#34;: 1,
+    &#34;mixin&#34;: 16,
+    &#34;ring_size&#34;: 17,
+    &#34;unlock_time&#34;: 0,
+    &#34;get_tx_key&#34;: true
+  }
+}&#39; -H &#39;Content-Type: application/json&#39;</code></pre>
+            </div>
+
+            <div class="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+              <div class="bg-gray-800 p-4 rounded-lg">
+                <div class="text-green-400 font-semibold">Atomic Units</div>
+                <div class="text-gray-300">1 ZEPH = 1,000,000,000,000 atomic units</div>
+              </div>
+              <div class="bg-gray-800 p-4 rounded-lg">
+                <div class="text-green-400 font-semibold">Asset Types</div>
+                <div class="text-gray-300">Must specify source and destination assets</div>
+              </div>
+              <div class="bg-gray-800 p-4 rounded-lg">
+                <div class="text-green-400 font-semibold">Conversion</div>
+                <div class="text-gray-300">Set different source/destination assets</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Native Assets Section -->
+      <section id="native-assets" class="section-anchor py-20 bg-gray-50">
+        <div class="container mx-auto px-8 max-w-6xl">
+          <h2 class="font-tiempos text-4xl font-bold text-gray-900 mb-12 text-center">Native Assets Architecture</h2>
+
+          <!-- Asset Cards -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-16">
+            <div class="asset-card bg-white rounded-2xl p-8 shadow-lg">
+              <div class="flex items-center mb-6">
+                <div class="w-12 h-12 bg-green-600 rounded-full flex items-center justify-center mr-4">
+                  <i class="fas fa-coins text-white text-xl"></i>
+                </div>
+                <div>
+                  <h3 class="font-tiempos text-xl font-bold">Zephyr (ZPH)</h3>
+                  <p class="text-gray-600">Base Coin</p>
+                </div>
+              </div>
+              <p class="text-gray-700 mb-4">
+                The main cryptocurrency of the Zephyr network. Used for transaction fees,
+                mining rewards, and as primary collateral.
+              </p>
+              <div class="space-y-2 text-sm">
+                <div class="flex justify-between">
+                  <span class="text-gray-500">Asset Type:</span>
+                  <code class="bg-gray-100 px-2 py-1 rounded">ZPH</code>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-gray-500">Ticker:</span>
+                  <span class="font-semibold">$ZEPH</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="asset-card bg-white rounded-2xl p-8 shadow-lg">
+              <div class="flex items-center mb-6">
+                <div class="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center mr-4">
+                  <i class="fas fa-dollar-sign text-white text-xl"></i>
+                </div>
+                <div>
+                  <h3 class="font-tiempos text-xl font-bold">Zephyr Stable Dollar (ZSD)</h3>
+                  <p class="text-gray-600">Stablecoin</p>
+                </div>
+              </div>
+              <p class="text-gray-700 mb-4">
+                Native stablecoin pegged to the US Dollar. Minted by locking ZPH as collateral
+                and can be redeemed for ZPH.
+              </p>
+              <div class="space-y-2 text-sm">
+                <div class="flex justify-between">
+                  <span class="text-gray-500">Asset Type:</span>
+                  <code class="bg-gray-100 px-2 py-1 rounded">ZSD</code>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-gray-500">Ticker:</span>
+                  <span class="font-semibold">$ZSD</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="asset-card bg-white rounded-2xl p-8 shadow-lg">
+              <div class="flex items-center mb-6">
+                <div class="w-12 h-12 bg-purple-600 rounded-full flex items-center justify-center mr-4">
+                  <i class="fas fa-chart-pie text-white text-xl"></i>
+                </div>
+                <div>
+                  <h3 class="font-tiempos text-xl font-bold">Zephyr Reserve Share (ZRS)</h3>
+                  <p class="text-gray-600">Reserve Pool Share</p>
+                </div>
+              </div>
+              <p class="text-gray-700 mb-4">
+                Shares in the Zephyr reserve pool that backs the ZSD stablecoin.
+                Holders benefit from fees and reserve equity.
+              </p>
+              <div class="space-y-2 text-sm">
+                <div class="flex justify-between">
+                  <span class="text-gray-500">Asset Type:</span>
+                  <code class="bg-gray-100 px-2 py-1 rounded">ZRS</code>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-gray-500">Ticker:</span>
+                  <span class="font-semibold">$ZRS</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="asset-card bg-white rounded-2xl p-8 shadow-lg">
+              <div class="flex items-center mb-6">
+                <div class="w-12 h-12 bg-yellow-600 rounded-full flex items-center justify-center mr-4">
+                  <i class="fas fa-percentage text-white text-xl"></i>
+                </div>
+                <div>
+                  <h3 class="font-tiempos text-xl font-bold">Zephyr Yield Share (ZYS)</h3>
+                  <p class="text-gray-600">Yield Instrument</p>
+                </div>
+              </div>
+              <p class="text-gray-700 mb-4">
+                Represents a user&#39;s share in the ZSD Yield Reserve. Generated by staking ZSD
+                and entitles holders to yield rewards.
+              </p>
+              <div class="space-y-2 text-sm">
+                <div class="flex justify-between">
+                  <span class="text-gray-500">Asset Type:</span>
+                  <code class="bg-gray-100 px-2 py-1 rounded">ZYS</code>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-gray-500">Ticker:</span>
+                  <span class="font-semibold">$ZYS</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Asset Relationships -->
+          <div class="bg-white rounded-2xl p-8 shadow-lg">
+            <h3 class="font-tiempos text-2xl font-bold text-gray-900 mb-8 text-center">Asset Relationships &amp; Conversion</h3>
+
+            <div class="mermaid-container">
+              <div class="mermaid-controls">
+                <button class="mermaid-control-btn zoom-in" title="放大">
+                  <i class="fas fa-search-plus"></i>
+                </button>
+                <button class="mermaid-control-btn zoom-out" title="缩小">
+                  <i class="fas fa-search-minus"></i>
+                </button>
+                <button class="mermaid-control-btn reset-zoom" title="重置">
+                  <i class="fas fa-expand-arrows-alt"></i>
+                </button>
+                <button class="mermaid-control-btn fullscreen" title="全屏查看">
+                  <i class="fas fa-expand"></i>
+                </button>
+              </div>
+              <div class="mermaid" id="asset-relationships">
+                flowchart LR
+                ZPH[&#34;ZPH
+                <br/>Base Coin&#34;] --&gt;|&#34;Mint&#34;| ZSD[&#34;ZSD
+                <br/>Stablecoin&#34;]
+                ZSD --&gt;|&#34;Redeem&#34;| ZPH
+                ZPH --&gt;|&#34;Mint&#34;| ZRS[&#34;ZRS
+                <br/>Reserve Share&#34;]
+                ZRS --&gt;|&#34;Redeem&#34;| ZPH
+
+                ZSD --&gt;|&#34;Stake&#34;| ZYS[&#34;ZYS
+                <br/>Yield Share&#34;]
+                ZYS --&gt;|&#34;Unstake&#34;| ZSD
+
+                RESERVE[&#34;Reserve Pool&#34;] --&gt; COLLATERAL[&#34;Over-Collateralization&#34;]
+                COLLATERAL --&gt; PEG[&#34;USD Peg
+                <br/>Maintained&#34;]
+
+                style ZPH fill:#1a4d3a,stroke:#ffffff,stroke-width:3px,color:#ffffff
+                style ZSD fill:#2563eb,stroke:#ffffff,stroke-width:3px,color:#ffffff
+                style ZRS fill:#7c3aed,stroke:#ffffff,stroke-width:3px,color:#ffffff
+                style ZYS fill:#f59e0b,stroke:#ffffff,stroke-width:3px,color:#ffffff
+                style RESERVE fill:#f0fdf4,stroke:#059669,stroke-width:2px,color:#1f2937
+                style COLLATERAL fill:#ecfdf5,stroke:#10b981,stroke-width:2px,color:#1f2937
+                style PEG fill:#dcfce7,stroke:#34d399,stroke-width:2px,color:#1f2937
+              </div>
+            </div>
+
+            <div class="mt-8 grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div class="p-6 bg-green-50 rounded-xl">
+                <h4 class="font-semibold text-gray-900 mb-3">Minting Process</h4>
+                <p class="text-gray-700 text-sm">
+                  Users lock ZPH as collateral to mint ZSD (stablecoin) or ZRS (reserve shares)
+                  according to the protocol&#39;s collateralization requirements.
+                </p>
+              </div>
+              <div class="p-6 bg-blue-50 rounded-xl">
+                <h4 class="font-semibold text-gray-900 mb-3">Redemption Process</h4>
+                <p class="text-gray-700 text-sm">
+                  ZSD and ZRS can be redeemed for ZPH at the current redemption rate,
+                  maintaining the stablecoin&#39;s peg through algorithmic mechanisms.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- GitHub Repositories Section -->
+      <section id="github-repositories" class="section-anchor py-20 bg-white">
+        <div class="container mx-auto px-8 max-w-6xl">
+          <h2 class="font-tiempos text-4xl font-bold text-gray-900 mb-12 text-center">Development Ecosystem</h2>
+
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-16">
+            <!-- Core Protocol -->
+            <div class="bg-gray-50 rounded-2xl p-8">
+              <div class="flex items-center mb-6">
+                <i class="fab fa-github text-gray-800 text-2xl mr-4"></i>
+                <h3 class="font-tiempos text-2xl font-bold text-gray-900">Core Protocol (C++)</h3>
+              </div>
+              <p class="text-gray-600 mb-6">
+                The foundational C++ implementation of the Zephyr Protocol, containing
+                the daemon and command-line wallet interfaces.
+              </p>
+
+              <div class="space-y-4 mb-6">
+                <div class="flex items-center p-3 bg-white rounded-lg">
+                  <i class="fas fa-server text-green-600 mr-3"></i>
+                  <span>zephyrd - Core daemon/node software</span>
+                </div>
+                <div class="flex items-center p-3 bg-white rounded-lg">
+                  <i class="fas fa-terminal text-green-600 mr-3"></i>
+                  <span>zephyr-wallet-cli - Command-line wallet</span>
+                </div>
+                <div class="flex items-center p-3 bg-white rounded-lg">
+                  <i class="fas fa-cogs text-green-600 mr-3"></i>
+                  <span>Multi-platform build support</span>
+                </div>
+              </div>
+
+              <div class="flex items-center justify-between">
+                <a href="https://github.com/ZephyrProtocol/zephyr" class="citation-link">
+                  View Repository →
+                </a>
+                <span class="text-xs text-gray-500">C++</span>
+              </div>
+            </div>
+
+            <!-- JavaScript Library -->
+            <div class="bg-gray-50 rounded-2xl p-8">
+              <div class="flex items-center mb-6">
+                <i class="fab fa-js-square text-yellow-500 text-2xl mr-4"></i>
+                <h3 class="font-tiempos text-2xl font-bold text-gray-900">JavaScript Library</h3>
+              </div>
+              <p class="text-gray-600 mb-6">
+                Adaptation of monero-javascript for Zephyr Protocol, enabling
+                browser and Node.js applications to interact with the network.
+              </p>
+
+              <div class="space-y-4 mb-6">
+                <div class="flex items-center p-3 bg-white rounded-lg">
+                  <i class="fas fa-browser text-green-600 mr-3"></i>
+                  <span>Browser-based wallet support</span>
+                </div>
+                <div class="flex items-center p-3 bg-white rounded-lg">
+                  <i class="fab fa-node-js text-green-600 mr-3"></i>
+                  <span>Node.js RPC clients</span>
+                </div>
+                <div class="flex items-center p-3 bg-white rounded-lg">
+                  <i class="fas fa-cube text-green-600 mr-3"></i>
+                  <span>WebAssembly compilation</span>
+                </div>
+              </div>
+
+              <div class="flex items-center justify-between">
+                <a href="https://github.com/ZephyrProtocol/zephyr-javascript" class="citation-link">
+                  View Repository →
+                </a>
+                <span class="text-xs text-gray-500">JavaScript</span>
+              </div>
+            </div>
+
+            <!-- C++ Library -->
+            <div class="bg-gray-50 rounded-2xl p-8">
+              <div class="flex items-center mb-6">
+                <i class="fas fa-code text-blue-600 text-2xl mr-4"></i>
+                <h3 class="font-tiempos text-2xl font-bold text-gray-900">C++ Library</h3>
+              </div>
+              <p class="text-gray-600 mb-6">
+                C++ adaptation of monero-cpp for native application development
+                with Zephyr Protocol integration capabilities.
+              </p>
+
+              <div class="space-y-4 mb-6">
+                <div class="flex items-center p-3 bg-white rounded-lg">
+                  <i class="fas fa-desktop text-green-600 mr-3"></i>
+                  <span>Native desktop applications</span>
+                </div>
+                <div class="flex items-center p-3 bg-white rounded-lg">
+                  <i class="fas fa-exchange-alt text-green-600 mr-3"></i>
+                  <span>Exchange backend integration</span>
+                </div>
+                <div class="flex items-center p-3 bg-white rounded-lg">
+                  <i class="fas fa-tachometer-alt text-green-600 mr-3"></i>
+                  <span>High-performance applications</span>
+                </div>
+              </div>
+
+              <div class="flex items-center justify-between">
+                <a href="https://github.com/ZephyrProtocol/zephyr-cpp" class="citation-link">
+                  View Repository →
+                </a>
+                <span class="text-xs text-gray-500">C++</span>
+              </div>
+            </div>
+
+            <!-- Python Conversion Functions -->
+            <div class="bg-gray-50 rounded-2xl p-8">
+              <div class="flex items-center mb-6">
+                <i class="fab fa-python text-blue-500 text-2xl mr-4"></i>
+                <h3 class="font-tiempos text-2xl font-bold text-gray-900">Conversion Functions</h3>
+              </div>
+              <p class="text-gray-600 mb-6">
+                Python implementation of Djed-inspired conversion functions,
+                demonstrating the mathematical foundations of Zephyr&#39;s stablecoin system.
+              </p>
+
+              <div class="space-y-4 mb-6">
+                <div class="flex items-center p-3 bg-white rounded-lg">
+                  <i class="fas fa-calculator text-green-600 mr-3"></i>
+                  <span>Collateral calculations</span>
+                </div>
+                <div class="flex items-center p-3 bg-white rounded-lg">
+                  <i class="fas fa-chart-line text-green-600 mr-3"></i>
+                  <span>Conversion rate algorithms</span>
+                </div>
+                <div class="flex items-center p-3 bg-white rounded-lg">
+                  <i class="fas fa-graduation-cap text-green-600 mr-3"></i>
+                  <span>Educational reference</span>
+                </div>
+              </div>
+
+              <div class="flex items-center justify-between">
+                <a href="https://github.com/ZephyrProtocol/zephyr-conversion-functions" class="citation-link">
+                  View Repository →
+                </a>
+                <span class="text-xs text-gray-500">Python</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Build Instructions -->
+          <div class="bg-gray-900 rounded-2xl p-8 text-white">
+            <h3 class="font-tiempos text-2xl font-bold mb-6">Build Instructions Overview</h3>
+            <p class="text-gray-300 mb-6">
+              The core C++ implementation supports building on multiple platforms with detailed instructions provided in the repository.
+            </p>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div class="bg-gray-800 p-4 rounded-lg">
+                <h4 class="text-green-400 font-semibold mb-2">Linux &amp; macOS</h4>
+                <pre class="text-xs text-gray-300"><code>git clone https://github.com/ZephyrProtocol/zephyr
+cd zephyr
+make</code></pre>
+              </div>
+              <div class="bg-gray-800 p-4 rounded-lg">
+                <h4 class="text-green-400 font-semibold mb-2">Windows</h4>
+                <pre class="text-xs text-gray-300"><code># Requires MSYS2 and Mingw-w64
+# Detailed instructions in README</code></pre>
+              </div>
+              <div class="bg-gray-800 p-4 rounded-lg">
+                <h4 class="text-green-400 font-semibold mb-2">Raspberry Pi</h4>
+                <pre class="text-xs text-gray-300"><code># ARM-specific builds
+# Optimized for SBCs</code></pre>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Technical Specifications Section -->
+      <section id="technical-specifications" class="section-anchor py-20 bg-gray-50">
+        <div class="container mx-auto px-8 max-w-6xl">
+          <h2 class="font-tiempos text-4xl font-bold text-gray-900 mb-12 text-center">Technical Specifications</h2>
+
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-16">
+            <!-- Network Specifications -->
+            <div class="bg-white rounded-2xl p-8 shadow-lg">
+              <h3 class="font-tiempos text-2xl font-bold text-gray-900 mb-6">Network Parameters</h3>
+
+              <div class="space-y-4">
+                <div class="flex justify-between items-center py-3 border-b border-gray-100">
+                  <span class="text-gray-600">Latest Hardfork</span>
+                  <div class="text-right">
+                    <span class="font-semibold">v11</span>
+                    <div class="text-xs text-gray-500">Block 536,000</div>
+                  </div>
+                </div>
+                <div class="flex justify-between items-center py-3 border-b border-gray-100">
+                  <span class="text-gray-600">Atomic Units</span>
+                  <div class="text-right">
+                    <span class="font-semibold">1 ZEPH = 1e12</span>
+                    <div class="text-xs text-gray-500">1,000,000,000,000</div>
+                  </div>
+                </div>
+                <div class="flex justify-between items-center py-3 border-b border-gray-100">
+                  <span class="text-gray-600">RPC Port</span>
+                  <span class="font-semibold">17777</span>
+                </div>
+                <div class="flex justify-between items-center py-3 border-b border-gray-100">
+                  <span class="text-gray-600">Daemon Port</span>
+                  <span class="font-semibold">17767</span>
+                </div>
+                <div class="flex justify-between items-center py-3">
+                  <span class="text-gray-600">Protocol</span>
+                  <span class="font-semibold">JSON-RPC 2.0</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Cryptographic Specifications -->
+            <div class="bg-white rounded-2xl p-8 shadow-lg">
+              <h3 class="font-tiempos text-2xl font-bold text-gray-900 mb-6">Cryptographic Features</h3>
+
+              <div class="space-y-4">
+                <div class="flex items-center p-3 bg-gray-50 rounded-lg">
+                  <i class="fas fa-user-secret text-green-600 mr-3"></i>
+                  <span>Ring Signatures</span>
+                </div>
+                <div class="flex items-center p-3 bg-gray-50 rounded-lg">
+                  <i class="fas fa-eye-slash text-green-600 mr-3"></i>
+                  <span>Stealth Addresses</span>
+                </div>
+                <div class="flex items-center p-3 bg-gray-50 rounded-lg">
+                  <i class="fas fa-lock text-green-600 mr-3"></i>
+                  <span>Confidential Transactions</span>
+                </div>
+                <div class="flex items-center p-3 bg-gray-50 rounded-lg">
+                  <i class="fas fa-network-wired text-green-600 mr-3"></i>
+                  <span>Tor Integration</span>
+                </div>
+                <div class="flex items-center p-3 bg-gray-50 rounded-lg">
+                  <i class="fas fa-shield-alt text-green-600 mr-3"></i>
+                  <span>Audited Cryptography</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- RPC Command Examples -->
+          <div class="bg-white rounded-2xl p-8 shadow-lg">
+            <h3 class="font-tiempos text-2xl font-bold text-gray-900 mb-8">Common RPC Commands</h3>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <!-- Starting RPC Wallet -->
+              <div>
+                <h4 class="font-semibold text-gray-900 mb-4">Starting RPC Wallet</h4>
+                <div class="code-block text-sm">
+                  <pre><code>./zephyr-wallet-rpc \
+  --rpc-bind-port 17777 \
+  --disable-rpc-login \
+  --wallet-file &lt;WALLET_NAME&gt; \
+  --password &lt;YOUR_PASSWORD&gt; \
+  --daemon-address 127.0.0.1:17767 \
+  --trusted-daemon</code></pre>
+                </div>
+              </div>
+
+              <!-- Querying Balance -->
+              <div>
+                <h4 class="font-semibold text-gray-900 mb-4">Querying Balance</h4>
+                <div class="code-block text-sm">
+                  <pre><code>curl http://127.0.0.1:17777/json_rpc -d &#39;{
+  &#34;jsonrpc&#34;: &#34;2.0&#34;,
+  &#34;id&#34;: &#34;0&#34;,
+  &#34;method&#34;: &#34;get_balance&#34;,
+  &#34;params&#34;: {
+    &#34;account_index&#34;: 0,
+    &#34;asset_type&#34;: &#34;ZPH&#34;
+  }
+}&#39; -H &#39;Content-Type: application/json&#39;</code></pre>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Integration Guide Section -->
+      <section id="integration-guide" class="section-anchor py-20 bg-white">
+        <div class="container mx-auto px-8 max-w-6xl">
+          <h2 class="font-tiempos text-4xl font-bold text-gray-900 mb-12 text-center">Integration Guide</h2>
+
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-16">
+            <!-- For Exchanges -->
+            <div class="bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl p-8">
+              <div class="flex items-center mb-6">
+                <i class="fas fa-exchange-alt text-blue-600 text-2xl mr-4"></i>
+                <h3 class="font-tiempos text-xl font-bold text-gray-900">For Exchanges</h3>
+              </div>
+
+              <div class="space-y-4 mb-6">
+                <div class="flex items-start">
+                  <i class="fas fa-check-circle text-green-600 mt-1 mr-3"></i>
+                  <div>
+                    <div class="font-semibold text-sm">Asset Type Handling</div>
+                    <div class="text-xs text-gray-600">Always check asset_type field in transactions</div>
+                  </div>
+                </div>
+                <div class="flex items-start">
+                  <i class="fas fa-check-circle text-green-600 mt-1 mr-3"></i>
+                  <div>
+                    <div class="font-semibold text-sm">ZSD Withdrawals</div>
+                    <div class="text-xs text-gray-600">Set source/destination assets to &#34;ZSD&#34;</div>
+                  </div>
+                </div>
+                <div class="flex items-start">
+                  <i class="fas fa-check-circle text-green-600 mt-1 mr-3"></i>
+                  <div>
+                    <div class="font-semibold text-sm">Required Updates</div>
+                    <div class="text-xs text-gray-600">Mandatory v2.3.0 update for all users</div>
+                  </div>
+                </div>
+              </div>
+
+              <a href="https://zephyrprotocol.com/documentation/wallet-rpc" class="citation-link text-sm">
+                Exchange Integration Guide →
+              </a>
+            </div>
+
+            <!-- For Developers -->
+            <div class="bg-gradient-to-br from-green-50 to-green-100 rounded-2xl p-8">
+              <div class="flex items-center mb-6">
+                <i class="fas fa-code text-green-600 text-2xl mr-4"></i>
+                <h3 class="font-tiempos text-xl font-bold text-gray-900">For Developers</h3>
+              </div>
+
+              <div class="space-y-4 mb-6">
+                <div class="flex items-start">
+                  <i class="fas fa-check-circle text-green-600 mt-1 mr-3"></i>
+                  <div>
+                    <div class="font-semibold text-sm">Language Options</div>
+                    <div class="text-xs text-gray-600">JavaScript, C++, Python libraries available</div>
+                  </div>
+                </div>
+                <div class="flex items-start">
+                  <i class="fas fa-check-circle text-green-600 mt-1 mr-3"></i>
+                  <div>
+                    <div class="font-semibold text-sm">WebAssembly Support</div>
+                    <div class="text-xs text-gray-600">Browser-based applications possible</div>
+                  </div>
+                </div>
+                <div class="flex items-start">
+                  <i class="fas fa-check-circle text-green-600 mt-1 mr-3"></i>
+                  <div>
+                    <div class="font-semibold text-sm">Documentation</div>
+                    <div class="text-xs text-gray-600">Comprehensive RPC documentation</div>
+                  </div>
+                </div>
+              </div>
+
+              <a href="https://github.com/ZephyrProtocol" class="citation-link text-sm">
+                Development Resources →
+              </a>
+            </div>
+
+            <!-- For Users -->
+            <div class="bg-gradient-to-br from-purple-50 to-purple-100 rounded-2xl p-8">
+              <div class="flex items-center mb-6">
+                <i class="fas fa-users text-purple-600 text-2xl mr-4"></i>
+                <h3 class="font-tiempos text-xl font-bold text-gray-900">For Users</h3>
+              </div>
+
+              <div class="space-y-4 mb-6">
+                <div class="flex items-start">
+                  <i class="fas fa-check-circle text-green-600 mt-1 mr-3"></i>
+                  <div>
+                    <div class="font-semibold text-sm">GUI &amp; CLI Options</div>
+                    <div class="text-xs text-gray-600">Desktop wallets for all platforms</div>
+                  </div>
+                </div>
+                <div class="flex items-start">
+                  <i class="fas fa-check-circle text-green-600 mt-1 mr-3"></i>
+                  <div>
+                    <div class="font-semibold text-sm">Security Verification</div>
+                    <div class="text-xs text-gray-600">Always verify SHA256 checksums</div>
+                  </div>
+                </div>
+                <div class="flex items-start">
+                  <i class="fas fa-check-circle text-green-600 mt-1 mr-3"></i>
+                  <div>
+                    <div class="font-semibold text-sm">Asset Conversion</div>
+                    <div class="text-xs text-gray-600">Built-in ZPH/ZSD/ZRS/ZYS conversion</div>
+                  </div>
+                </div>
+              </div>
+
+              <a href="https://github.com/ZephyrProtocol/zephyr/releases" class="citation-link text-sm">
+                Download Wallets →
+              </a>
+            </div>
+          </div>
+
+          <!-- Critical Considerations -->
+          <div class="bg-red-50 border-l-4 border-red-500 rounded-r-2xl p-8">
+            <h3 class="font-tiempos text-xl font-bold text-red-900 mb-4">
+              <i class="fas fa-exclamation-triangle mr-3"></i>
+              Critical Integration Notes
+            </h3>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <h4 class="font-semibold text-red-900 mb-2">Asset Type Requirements</h4>
+                <p class="text-red-800 text-sm mb-4">
+                  All RPC calls involving transactions must explicitly specify asset types.
+                  Failure to check asset_type fields will result in incorrect balance calculations.
+                </p>
+
+                <div class="bg-red-100 p-3 rounded-lg">
+                  <code class="text-xs text-red-900">
+                                    // Always check asset_type<br/>
+                                    if (tx.asset_type === &#34;ZPH&#34;) {<br/>
+                                      // Handle ZEPH transaction<br/>
+                                    } else if (tx.asset_type === &#34;ZSD&#34;) {<br/>
+                                      // Handle ZSD transaction<br/>
+                                    }
+                                </code>
+                </div>
+              </div>
+
+              <div>
+                <h4 class="font-semibold text-red-900 mb-2">Deprecated Asset Types</h4>
+                <p class="text-red-800 text-sm mb-4">
+                  Old asset types (ZEPH, ZEPHUSD, ZEPHRSV, ZYIELD) are no longer valid.
+                  Only the new audited asset types (ZPH, ZSD, ZRS, ZYS) should be used.
+                </p>
+
+                <div class="bg-red-100 p-3 rounded-lg">
+                  <p class="text-xs text-red-900">
+                    <strong>Important:</strong> MEXC exchange balances were specifically handled in Hardfork v11.
+                    Other exchanges must update their systems to recognize new asset types.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Footer -->
+      <footer class="bg-gray-900 text-white py-12">
+        <div class="container mx-auto px-8 max-w-6xl">
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div>
+              <h3 class="font-tiempos text-xl font-bold mb-4">Zephyr Protocol</h3>
+              <p class="text-gray-400 text-sm">
+                The Untraceable Stablecoin Protocol combining privacy-focused transactions
+                with algorithmic stability mechanisms.
+              </p>
+            </div>
+
+            <div>
+              <h4 class="font-semibold mb-4">Resources</h4>
+              <div class="space-y-2 text-sm">
+                <a href="https://github.com/ZephyrProtocol/zephyr/releases" class="block text-gray-400 hover:text-white transition-colors">
+                  <i class="fas fa-download mr-2"></i>GitHub Releases
+                </a>
+                <a href="https://zephyrprotocol.com/documentation" class="block text-gray-400 hover:text-white transition-colors">
+                  <i class="fas fa-book mr-2"></i>RPC Documentation
+                </a>
+                <a href="https://github.com/ZephyrProtocol" class="block text-gray-400 hover:text-white transition-colors">
+                  <i class="fab fa-github mr-2"></i>Source Code
+                </a>
+              </div>
+            </div>
+
+            <div>
+              <h4 class="font-semibold mb-4">Community</h4>
+              <p class="text-gray-400 text-sm mb-4">
+                Open source development with community contributions welcome.
+              </p>
+              <div class="flex space-x-4">
+                <i class="fab fa-github text-gray-400 hover:text-white cursor-pointer transition-colors"></i>
+                <i class="fab fa-discord text-gray-400 hover:text-white cursor-pointer transition-colors"></i>
+                <i class="fab fa-telegram text-gray-400 hover:text-white cursor-pointer transition-colors"></i>
+              </div>
+            </div>
+          </div>
+
+          <div class="border-t border-gray-800 mt-8 pt-8 text-center">
+            <p class="text-gray-400 text-sm">
+              Documentation generated from official Zephyr Protocol sources.
+              Always verify information against the latest releases and documentation.
+            </p>
+          </div>
+        </div>
+      </footer>
+    </main>
+
+    <script>
+        // Initialize Mermaid with enhanced theme and configuration
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'base',
+            themeVariables: {
+                primaryColor: '#1a4d3a',
+                primaryTextColor: '#ffffff',
+                primaryBorderColor: '#ffffff',
+                lineColor: '#64748b',
+                secondaryColor: '#f0fdf4',
+                tertiaryColor: '#ecfdf5',
+                background: '#ffffff',
+                mainBkg: '#1a4d3a',
+                secondBkg: '#4a7c59',
+                tertiaryBkg: '#059669',
+                primaryTextColor: '#ffffff',
+                secondaryTextColor: '#ffffff',
+                tertiaryTextColor: '#ffffff',
+                textColor: '#1f2937',
+                nodeTextColor: '#1f2937',
+                clusterBkg: '#f8fafc',
+                clusterBorder: '#cbd5e1',
+                defaultLinkColor: '#64748b',
+                titleColor: '#1f2937',
+                edgeLabelBackground: 'rgba(255, 255, 255, 0.9)',
+                nodeBorder: '#ffffff',
+                clusterTextColor: '#334155',
+                // Enhanced contrast colors
+                cScale0: '#1a4d3a',
+                cScale1: '#4a7c59',
+                cScale2: '#059669',
+                cScale3: '#10b981',
+                cScale4: '#34d399',
+                cScale5: '#6ee7b7',
+                cScale6: '#a7f3d0',
+                cScale7: '#d1fae5',
+                cScale8: '#ecfdf5',
+                cScale9: '#f0fdf4'
+            },
+            flowchart: {
+                nodeSpacing: 60,
+                rankSpacing: 100,
+                curve: 'basis',
+                padding: 30,
+                useMaxWidth: false,
+                htmlLabels: true
+            },
+            sequence: {
+                diagramMarginX: 50,
+                diagramMarginY: 10,
+                actorMargin: 50,
+                width: 150,
+                height: 65,
+                boxMargin: 10,
+                boxTextMargin: 5,
+                noteMargin: 10,
+                messageMargin: 35
+            },
+            gantt: {
+                fontSize: 11,
+                fontFamily: 'Inter, sans-serif'
+            },
+            fontFamily: 'Inter, sans-serif',
+            fontSize: '13px',
+            wrap: true,
+            securityLevel: 'loose'
+        });
+
+        // Initialize Mermaid Controls for zoom and pan
+        function initializeMermaidControls() {
+            const containers = document.querySelectorAll('.mermaid-container');
+
+            containers.forEach(container => {
+            const mermaidElement = container.querySelector('.mermaid');
+            let scale = 1;
+            let isDragging = false;
+            let startX, startY, translateX = 0, translateY = 0;
+
+            // 触摸相关状态
+            let isTouch = false;
+            let touchStartTime = 0;
+            let initialDistance = 0;
+            let initialScale = 1;
+            let isPinching = false;
+
+            // Zoom controls
+            const zoomInBtn = container.querySelector('.zoom-in');
+            const zoomOutBtn = container.querySelector('.zoom-out');
+            const resetBtn = container.querySelector('.reset-zoom');
+            const fullscreenBtn = container.querySelector('.fullscreen');
+
+            function updateTransform() {
+                mermaidElement.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
+
+                if (scale > 1) {
+                container.classList.add('zoomed');
+                } else {
+                container.classList.remove('zoomed');
+                }
+
+                mermaidElement.style.cursor = isDragging ? 'grabbing' : 'grab';
+            }
+
+            if (zoomInBtn) {
+                zoomInBtn.addEventListener('click', () => {
+                scale = Math.min(scale * 1.25, 4);
+                updateTransform();
+                });
+            }
+
+            if (zoomOutBtn) {
+                zoomOutBtn.addEventListener('click', () => {
+                scale = Math.max(scale / 1.25, 0.3);
+                if (scale <= 1) {
+                    translateX = 0;
+                    translateY = 0;
+                }
+                updateTransform();
+                });
+            }
+
+            if (resetBtn) {
+                resetBtn.addEventListener('click', () => {
+                scale = 1;
+                translateX = 0;
+                translateY = 0;
+                updateTransform();
+                });
+            }
+
+            if (fullscreenBtn) {
+                fullscreenBtn.addEventListener('click', () => {
+                if (container.requestFullscreen) {
+                    container.requestFullscreen();
+                } else if (container.webkitRequestFullscreen) {
+                    container.webkitRequestFullscreen();
+                } else if (container.msRequestFullscreen) {
+                    container.msRequestFullscreen();
+                }
+                });
+            }
+
+            // Mouse Events
+            mermaidElement.addEventListener('mousedown', (e) => {
+                if (isTouch) return; // 如果是触摸设备，忽略鼠标事件
+
+                isDragging = true;
+                startX = e.clientX - translateX;
+                startY = e.clientY - translateY;
+                mermaidElement.style.cursor = 'grabbing';
+                updateTransform();
+                e.preventDefault();
+            });
+
+            document.addEventListener('mousemove', (e) => {
+                if (isDragging && !isTouch) {
+                translateX = e.clientX - startX;
+                translateY = e.clientY - startY;
+                updateTransform();
+                }
+            });
+
+            document.addEventListener('mouseup', () => {
+                if (isDragging && !isTouch) {
+                isDragging = false;
+                mermaidElement.style.cursor = 'grab';
+                updateTransform();
+                }
+            });
+
+            document.addEventListener('mouseleave', () => {
+                if (isDragging && !isTouch) {
+                isDragging = false;
+                mermaidElement.style.cursor = 'grab';
+                updateTransform();
+                }
+            });
+
+            // 获取两点之间的距离
+            function getTouchDistance(touch1, touch2) {
+                return Math.hypot(
+                touch2.clientX - touch1.clientX,
+                touch2.clientY - touch1.clientY
+                );
+            }
+
+            // Touch Events - 触摸事件处理
+            mermaidElement.addEventListener('touchstart', (e) => {
+                isTouch = true;
+                touchStartTime = Date.now();
+
+                if (e.touches.length === 1) {
+                // 单指拖动
+                isPinching = false;
+                isDragging = true;
+
+                const touch = e.touches[0];
+                startX = touch.clientX - translateX;
+                startY = touch.clientY - translateY;
+
+                } else if (e.touches.length === 2) {
+                // 双指缩放
+                isPinching = true;
+                isDragging = false;
+
+                const touch1 = e.touches[0];
+                const touch2 = e.touches[1];
+                initialDistance = getTouchDistance(touch1, touch2);
+                initialScale = scale;
+                }
+
+                e.preventDefault();
+            }, { passive: false });
+
+            mermaidElement.addEventListener('touchmove', (e) => {
+                if (e.touches.length === 1 && isDragging && !isPinching) {
+                // 单指拖动
+                const touch = e.touches[0];
+                translateX = touch.clientX - startX;
+                translateY = touch.clientY - startY;
+                updateTransform();
+
+                } else if (e.touches.length === 2 && isPinching) {
+                // 双指缩放
+                const touch1 = e.touches[0];
+                const touch2 = e.touches[1];
+                const currentDistance = getTouchDistance(touch1, touch2);
+
+                if (initialDistance > 0) {
+                    const newScale = Math.min(Math.max(
+                    initialScale * (currentDistance / initialDistance),
+                    0.3
+                    ), 4);
+                    scale = newScale;
+                    updateTransform();
+                }
+                }
+
+                e.preventDefault();
+            }, { passive: false });
+
+            mermaidElement.addEventListener('touchend', (e) => {
+                // 重置状态
+                if (e.touches.length === 0) {
+                isDragging = false;
+                isPinching = false;
+                initialDistance = 0;
+
+                // 延迟重置isTouch，避免鼠标事件立即触发
+                setTimeout(() => {
+                    isTouch = false;
+                }, 100);
+                } else if (e.touches.length === 1 && isPinching) {
+                // 从双指变为单指，切换为拖动模式
+                isPinching = false;
+                isDragging = true;
+
+                const touch = e.touches[0];
+                startX = touch.clientX - translateX;
+                startY = touch.clientY - translateY;
+                }
+
+                updateTransform();
+            });
+
+            mermaidElement.addEventListener('touchcancel', (e) => {
+                isDragging = false;
+                isPinching = false;
+                initialDistance = 0;
+
+                setTimeout(() => {
+                isTouch = false;
+                }, 100);
+
+                updateTransform();
+            });
+
+            // Enhanced wheel zoom with better center point handling
+            container.addEventListener('wheel', (e) => {
+                e.preventDefault();
+                const rect = container.getBoundingClientRect();
+                const centerX = rect.width / 2;
+                const centerY = rect.height / 2;
+
+                const delta = e.deltaY > 0 ? 0.9 : 1.1;
+                const newScale = Math.min(Math.max(scale * delta, 0.3), 4);
+
+                // Adjust translation to zoom towards center
+                if (newScale !== scale) {
+                const scaleDiff = newScale / scale;
+                translateX = translateX * scaleDiff;
+                translateY = translateY * scaleDiff;
+                scale = newScale;
+
+                if (scale <= 1) {
+                    translateX = 0;
+                    translateY = 0;
+                }
+
+                updateTransform();
+                }
+            });
+
+            // Initialize display
+            updateTransform();
+            });
+        }
+
+        // Initialize Mermaid controls when DOM is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeMermaidControls();
+        });
+
+        // Smooth scrolling for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // Add scroll-based active section highlighting in TOC
+        window.addEventListener('scroll', () => {
+            const sections = document.querySelectorAll('.section-anchor');
+            const tocLinks = document.querySelectorAll('.toc-fixed a');
             
-            <div class="collections-grid">
-                <div class="collection-card">
-                    <div class="collection-img">
-                        <img src="https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1587&q=80" alt="Diamant Ringe">
-                    </div>
-                    <div class="collection-content">
-                        <h3>Ewige Liebe Ringe</h3>
-                        <p>Hochwertige Diamant-Verlobungsringe in Platin und Weißgold</p>
-                        <div class="price">Ab €1.890</div>
-                    </div>
-                </div>
-                
-                <div class="collection-card">
-                    <div class="collection-img">
-                        <img src="https://images.unsplash.com/photo-1588449668365-d15e397f6787?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1587&q=80" alt="Gold Halsketten">
-                    </div>
-                    <div class="collection-content">
-                        <h3>Goldene Eleganz</h3>
-                        <p>Halsketten und Anhänger aus 18K Gold mit Edelsteinen</p>
-                        <div class="price">Ab €950</div>
-                    </div>
-                </div>
-                
-                <div class="collection-card">
-                    <div class="collection-img">
-                        <img src="https://images.unsplash.com/photo-1617117483870-1d28eba02e3a?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1587&q=80" alt="Perlen Ohrringe">
-                    </div>
-                    <div class="collection-content">
-                        <h3>Perlenzauber</h3>
-                        <p>Zarte Ohrringe mit Süßwasserperlen und Diamantakzenten</p>
-                        <div class="price">Ab €650</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
+            let current = '';
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop;
+                const sectionHeight = section.clientHeight;
+                if (window.pageYOffset >= sectionTop - 200) {
+                    current = section.getAttribute('id');
+                }
+            });
 
-    <!-- About Section -->
-    <section class="section about">
-        <div class="container">
-            <div class="about-content">
-                <div class="about-img">
-                    <img src="https://images.unsplash.com/photo-1621184455862-c163dfb30e0f?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1587&q=80" alt="Juwelier Werkstatt">
-                </div>
-                <div class="about-text">
-                    <h2>Tradition seit 1895</h2>
-                    <p>Edelsteine steht für höchste Handwerkskunst und zeitlose Eleganz. Seit über 125 Jahren fertigen wir in unserer Manufaktur in Pforzheim einzigartige Schmuckstücke, die Geschichten erzählen und Emotionen wecken.</p>
-                    <p>Jedes unserer Schmuckstücke wird von Meisterhand gefertigt und durchläuft strenge Qualitätskontrollen. Wir verwenden ausschließlich konfliktfreie Diamanten und Edelsteine sowie recyceltes Gold und Platin.</p>
-                    <p>Besuchen Sie uns in einem unserer Boutiquen in Berlin, München und Hamburg oder vereinbaren Sie einen persönlichen Beratungstermin mit unseren Schmuckexperten.</p>
-                    <a href="#" class="btn">Über uns</a>
-                </div>
-            </div>
-        </div>
-    </section>
+            tocLinks.forEach(link => {
+                link.classList.remove('text-green-600', 'font-semibold');
+                link.classList.add('text-gray-600');
+                if (link.getAttribute('href') === `#${current}`) {
+                    link.classList.remove('text-gray-600');
+                    link.classList.add('text-green-600', 'font-semibold');
+                }
+            });
+        });
+    </script>
+  
 
-    <!-- Testimonials -->
-    <section class="section testimonials">
-        <div class="container">
-            <div class="section-header">
-                <h2>Was unsere Kunden sagen</h2>
-            </div>
-            
-            <div class="testimonials-grid">
-                <div class="testimonial-card">
-                    <i class="fas fa-quote-left"></i>
-                    <p class="testimonial-text">"Der Verlobungsring ist atemberaubend schön! Die Beratung war hervorragend und der Diamant funkelt noch mehr als erhofft. Ein Schmuckstück für die Ewigkeit."</p>
-                    <div class="client-info">
-                        <div class="client-img">
-                            <img src="https://randomuser.me/api/portraits/women/65.jpg" alt="Sarah Müller">
-                        </div>
-                        <div class="client-name">
-                            <h4>Sarah Müller</h4>
-                            <p>Verlobungsring</p>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="testimonial-card">
-                    <i class="fas fa-quote-left"></i>
-                    <p class="testimonial-text">"Ich habe die Perlenohrringe meiner Mutter zum 60. Geburtstag geschenkt. Die Qualität und Verarbeitung sind außergewöhnlich. Sie trägt sie jeden Tag mit Stolz."</p>
-                    <div class="client-info">
-                        <div class="client-img">
-                            <img src="https://randomuser.me/api/portraits/women/32.jpg" alt="Julia Hoffmann">
-                        </div>
-                        <div class="client-name">
-                            <h4>Julia Hoffmann</h4>
-                            <p>Perlen Ohrringe</p>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="testimonial-card">
-                    <i class="fas fa-quote-left"></i>
-                    <p class="testimonial-text">"Die Halskette war ein Geschenk für meine Frau zum Jubiläum. Der Kundenservice hat mir bei der Auswahl geholfen und eine persönliche Gravur angebracht. Sie war überwältigt!"</p>
-                    <div class="client-info">
-                        <div class="client-img">
-                            <img src="https://randomuser.me/api/portraits/men/54.jpg" alt="Thomas Weber">
-                        </div>
-                        <div class="client-name">
-                            <h4>Thomas Weber</h4>
-                            <p>Gold Halskette</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Newsletter -->
-    <section class="newsletter">
-        <div class="container">
-            <h2>Exklusive Einladungen & Angebote</h2>
-            <p>Abonnieren Sie unseren Newsletter und verpassen Sie keine neuen Kollektionen, Sonderangebote und exklusiven Veranstaltungen.</p>
-            
-            <form class="newsletter-form">
-                <input type="email" placeholder="Ihre E-Mail Adresse" required>
-                <button type="submit">Abonnieren</button>
-            </form>
-        </div>
-    </section>
-
-    <!-- Footer -->
-    <footer>
-        <div class="container">
-            <div class="footer-grid">
-                <div class="footer-col">
-                    <h3>Edelsteine</h3>
-                    <p>Luxusschmuck von höchster Handwerkskunst und zeitloser Eleganz. Tradition seit 1895.</p>
-                    <div class="social-links">
-                        <a href="#"><i class="fab fa-facebook-f"></i></a>
-                        <a href="#"><i class="fab fa-instagram"></i></a>
-                        <a href="#"><i class="fab fa-pinterest-p"></i></a>
-                        <a href="#"><i class="fab fa-youtube"></i></a>
-                    </div>
-                </div>
-                
-                <div class="footer-col">
-                    <h3>Kollektionen</h3>
-                    <ul>
-                        <li><a href="#">Verlobungsringe</a></li>
-                        <li><a href="#">Eheringe</a></li>
-                        <li><a href="#">Diamantschmuck</a></li>
-                        <li><a href="#">Goldschmuck</a></li>
-                        <li><a href="#">Limitierte Editionen</a></li>
-                    </ul>
-                </div>
-                
-                <div class="footer-col">
-                    <h3>Unternehmen</h3>
-                    <ul>
-                        <li><a href="#">Über uns</a></li>
-                        <li><a href="#">Nachhaltigkeit</a></li>
-                        <li><a href="#">Karriere</a></li>
-                        <li><a href="#">Boutiquen</a></li>
-                        <li><a href="#">Presse</a></li>
-                    </ul>
-                </div>
-                
-                <div class="footer-col">
-                    <h3>Kundenservice</h3>
-                    <ul>
-                        <li><a href="#">Kontakt</a></li>
-                        <li><a href="#">Beratungstermin</a></li>
-                        <li><a href="#">Versand & Rückgabe</a></li>
-                        <li><a href="#">Pflegehinweise</a></li>
-                        <li><a href="#">FAQ</a></li>
-                    </ul>
-                </div>
-            </div>
-            
-            <div class="copyright">
-                <p>&copy; 2023 Edelsteine GmbH. Alle Rechte vorbehalten.</p>
-            </div>
-        </div>
-    </footer>
-</body>
-</html>
+</body></html>
