@@ -1,0 +1,90 @@
+# wZYS: Wrapped ZYS White Paper
+
+## Abstract
+wZYS introduces a wrapped version of the Zephyr Protocol’s ZYS token, enabling its use on EVM-compatible blockchains such as Ethereum, Solana, and Hyperliquid.  
+This solution addresses two long-standing challenges that have historically prevented Monero or Monero-derived assets from being securely wrapped:  
+1. Lack of a verifiable locked collateral proof model.  
+2. The complexity of Monero’s modular storage and transaction management.  
+
+wZYS establishes a transparent, auditable, and secure bridge architecture that preserves Monero’s privacy guarantees while enabling interoperability with smart contract ecosystems.
+
+---
+
+## Motivation
+No stable or widely adopted wrapped Monero token exists. This is due to Monero’s privacy-preserving architecture, which makes supply audits and secure wrapping inherently complex.  
+wZYS solves these issues by introducing **whZYS**, a dedicated bridging asset that enables transparent supply verification and a carefully orchestrated wallet architecture that respects Monero’s design.
+
+---
+
+## Core Challenges
+
+### 1. Proof of Locked Collateral
+- Monero cannot natively separate wallets reserved for wrapping operations, making it difficult to prove that wrapped token supply equals on-chain collateral.
+- **Solution:** Introduce **whZYS** as a parallel asset to ZYS.  
+  - All wrapped token issuance is based solely on whZYS locked on the Zephyr main chain.
+  - wZYS supply is always directly auditable against whZYS reserves.
+
+### 2. Wallet & Transaction Management
+- Monero’s modular storage requires unique wallets and subaddresses for every transaction to maintain privacy and prevent mixing.
+- **Solution:** Deploy a scalable Docker-based wallet orchestration system to ensure that every swap is processed in isolation and with maximum security.
+
+---
+
+## System Architecture
+
+### 0. whZYS as a Bridge Asset
+- Users must swap **ZYS → whZYS** on Zephyr before wrapping.
+- Only whZYS is accepted by the bridge module, making supply tracking simple and auditable.
+
+### 1. Swap Initialization
+- The swap process begins only if a **Docker instance** (running `zephyrd` + CLI wallet) is empty and ready.
+- Each swap session is assigned a **unique session ID**.
+
+### 2. Wallet Assignment
+- The system assigns a Docker instance (e.g., Instance #7) and generates a **new subaddress** for the deposit.
+
+### 3. Deposit & Confirmation
+- User sends ZYS to the designated subaddress.
+- Funds are locked with a **15-block confirmation period** to guarantee finality.
+
+### 4. Processing & Minting
+- After confirmation, ZYS is transferred to a **main wallet**.
+- The user is issued the equivalent amount of **wZYS** on the chosen EVM network.
+
+### 5. Cold vs. Hot Storage
+- **90% of collateral** is stored in cold wallets, divided into **10% segments** for redundancy.
+- **10% of collateral** remains in hot wallets for active wrapping operations.
+
+### 6. Security Priority
+- All operations follow Monero’s slow, deliberate settlement model to ensure maximal safety.
+
+---
+
+## Session Management & Scaling
+
+| Parameter             | Value/Description                     |
+|----------------------|-------------------------------------|
+| Session Timeout       | 5 minutes (industry standard)       |
+| Docker Instances      | 10                                  |
+| CLI Wallets per Instance | 100                             |
+| Max Concurrent Sessions | 1,000                           |
+
+- A swap session is created only when a **clean Docker wallet** is ready to receive deposits.
+- Sessions automatically close after 5 minutes if no deposit is made.
+
+---
+
+## Key Benefits
+- **Supply Transparency:** Auditable whZYS collateral model ensures that wZYS is always fully backed.  
+- **Privacy Preservation:** Adheres to Monero’s privacy design, using subaddresses and isolated wallets.  
+- **Interoperability:** Unlocks Monero-derived assets for use in EVM ecosystems.  
+- **Scalability:** Dockerized wallet orchestration supports 1,000+ simultaneous secure sessions.
+
+---
+
+## Roadmap
+- ✅ Define bridging logic and collateral proof-of-reserve model.  
+- 🔄 Implement Docker-based wallet orchestration system.  
+- 🔜 Deploy wZYS on Ethereum, Solana, and Hyperliquid.  
+
+---
