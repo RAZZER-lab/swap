@@ -1,66 +1,439 @@
-<script>
-    const connectButton = document.getElementById('connectButton');
-    const statusDiv = document.getElementById('status');
-
-    // Enhanced check for MetaMask with debugging
-    function checkMetaMask() {
-        console.log('Current URL:', window.location.href); // Logs if it's file:// or http://
-        console.log('window.ethereum:', typeof window.ethereum); // Debug log
-        
-        if (typeof window.ethereum !== 'undefined') {
-            console.log('MetaMask detected!');
-            statusDiv.textContent = 'MetaMask ready. Click to connect.';
-            connectButton.disabled = false;
-            return true;
-        } else if (window.location.protocol === 'file:') {
-            statusDiv.innerHTML = 'MetaMask blocked on local files in Firefox. <a href="#" onclick="openLocalServerGuide()">Serve via local server</a>.';
-            connectButton.disabled = true;
-            return false;
-        } else {
-            statusDiv.textContent = 'MetaMask not detected. Check extension and reload.';
-            connectButton.disabled = true;
-            return false;
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YRS Staking Interface - Sepolia Testnet</title>
+    <script src="https://cdn.ethers.io/lib/ethers-5.7.umd.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+            color: #333;
         }
-    }
+        h1, h2 {
+            color: #2c3e50;
+        }
+        .section {
+            background: white;
+            margin: 20px 0;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        button {
+            background-color: #3498db;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        button:disabled {
+            background-color: #bdc3c7;
+            cursor: not-allowed;
+        }
+        input {
+            padding: 8px;
+            margin: 5px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            width: 200px;
+        }
+        .status {
+            font-weight: bold;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .connected { background-color: #d4edda; color: #155724; }
+        .disconnected { background-color: #f8d7da; color: #721c24; }
+        .loading { background-color: #fff3cd; color: #856404; }
+        .balance { font-size: 1.1em; margin: 5px 0; }
+        .error { color: red; }
+        .success { color: green; }
+    </style>
+</head>
+<body>
+    <h1>YRS Staking Interface</h1>
+    <p>Interact with the YRSStaking contract on Sepolia Testnet (Chain ID: 11155111)</p>
+    <p>Contract Address: <code>0x0eba64eA7d1055Cb87654EC554360741C31650E6</code></p>
 
-    // Simple guide popup (optional)
-    function openLocalServerGuide() {
-        alert('Serve via local server:\n1. Save as index.html\n2. Terminal: python -m http.server 8000\n3. Visit http://localhost:8000');
-    }
+    <div id="connection-section" class="section">
+        <h2>Wallet Connection</h2>
+        <button id="connectButton">Connect MetaMask</button>
+        <div id="status" class="status disconnected">Not connected</div>
+        <div id="address"></div>
+    </div>
 
-    // Request account access (unchanged)
-    async function connectWallet() {
-        if (typeof window.ethereum !== 'undefined') {
-            try {
-                const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-                if (accounts.length > 0) {
-                    const account = accounts[0];
-                    statusDiv.textContent = `Connected: ${account.slice(0, 6)}...${account.slice(-4)}`;
-                    connectButton.textContent = 'Connected';
-                    connectButton.disabled = true;
-                    console.log('Connected account:', account);
-                }
-            } catch (error) {
-                console.error('User denied account access:', error);
-                statusDiv.textContent = 'Connection rejected.';
+    <div id="info-section" class="section" style="display: none;">
+        <h2>Contract Info</h2>
+        <div id="wZYS-address"></div>
+        <div id="YRS-address"></div>
+        <div id="total-shares" class="balance"></div>
+        <div id="total-deposited" class="balance"></div>
+    </div>
+
+    <div id="balances-section" class="section" style="display: none;">
+        <h2>Your Balances</h2>
+        <button id="refreshBalances">Refresh Balances</button>
+        <div id="user-wZYS" class="balance"></div>
+        <div id="user-YRS" class="balance"></div>
+        <div id="contract-wZYS" class="balance"></div>
+        <div id="contract-YRS" class="balance"></div>
+    </div>
+
+    <div id="approve-section" class="section" style="display: none;">
+        <h2>Approvals</h2>
+        <p>Approve tokens for the staking contract (Max amount: 1000000000000000000000000)</p>
+        <button id="approveW">Approve wZYS</button>
+        <button id="approveY">Approve YRS</button>
+        <div id="approve-status"></div>
+    </div>
+
+    <div id="buy-section" class="section" style="display: none;">
+        <h2>Buy YRS (with 10% bonus)</h2>
+        <p>Expected YRS = wZYS Amount * 1.1</p>
+        <label>wZYS Amount:</label><input type="number" id="buyAmount" step="0.000000000000000001" placeholder="e.g., 1.0">
+        <label>Min YRS Out:</label><input type="number" id="minYRS" step="0.000000000000000001" placeholder="Auto-filled">
+        <button id="buyButton">Buy YRS</button>
+        <div id="buy-status"></div>
+    </div>
+
+    <div id="sell-section" class="section" style="display: none;">
+        <h2>Sell YRS (with 10% penalty)</h2>
+        <p>Expected wZYS = YRS Amount * 0.9</p>
+        <label>YRS Amount:</label><input type="number" id="sellAmount" step="0.000000000000000001" placeholder="e.g., 1.0">
+        <label>Min wZYS Out:</label><input type="number" id="minWZYS" step="0.000000000000000001" placeholder="Auto-filled">
+        <button id="sellButton">Sell YRS</button>
+        <div id="sell-status"></div>
+    </div>
+
+    <div id="burn-section" class="section" style="display: none;">
+        <h2>Burn YRS</h2>
+        <label>YRS Amount:</label><input type="number" id="burnAmount" step="0.000000000000000001" placeholder="e.g., 1.0">
+        <button id="burnButton">Burn YRS</button>
+        <div id="burn-status"></div>
+    </div>
+
+    <script>
+        const CONTRACT_ADDRESS = '0x0eba64eA7d1055Cb87654EC554360741C31650E6';
+        const SEPOLIA_CHAIN_ID = '0xaa36a7'; // 11155111 in hex
+
+        // ABI based on provided contract code
+        const STAKING_ABI = [
+            {
+                "inputs": [
+                    {"internalType": "uint256", "name": "wZYSAmount", "type": "uint256"},
+                    {"internalType": "uint256", "name": "minYRSOut", "type": "uint256"}
+                ],
+                "name": "buy1",
+                "outputs": [],
+                "stateMutability": "nonpayable",
+                "type": "function"
+            },
+            {
+                "inputs": [
+                    {"internalType": "uint256", "name": "YRSAmount", "type": "uint256"},
+                    {"internalType": "uint256", "name": "minWZYSOut", "type": "uint256"}
+                ],
+                "name": "sell1",
+                "outputs": [],
+                "stateMutability": "nonpayable",
+                "type": "function"
+            },
+            {
+                "inputs": [
+                    {"internalType": "uint256", "name": "amount", "type": "uint256"}
+                ],
+                "name": "burn",
+                "outputs": [],
+                "stateMutability": "nonpayable",
+                "type": "function"
+            },
+            {
+                "inputs": [
+                    {"internalType": "address", "name": "tokenAddress", "type": "address"},
+                    {"internalType": "uint256", "name": "amount", "type": "uint256"}
+                ],
+                "name": "recoverERC20",
+                "outputs": [],
+                "stateMutability": "nonpayable",
+                "type": "function"
+            },
+            {
+                "inputs": [],
+                "name": "wZYS",
+                "outputs": [{"internalType": "contract IERC20", "name": "", "type": "address"}],
+                "stateMutability": "view",
+                "type": "function"
+            },
+            {
+                "inputs": [],
+                "name": "YRS",
+                "outputs": [{"internalType": "contract IERC20", "name": "", "type": "address"}],
+                "stateMutability": "view",
+                "type": "function"
+            },
+            {
+                "inputs": [],
+                "name": "totalYieldReserveShares",
+                "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
+                "stateMutability": "view",
+                "type": "function"
+            },
+            {
+                "inputs": [],
+                "name": "totalWZYSDeposited",
+                "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
+                "stateMutability": "view",
+                "type": "function"
+            }
+        ];
+
+        const ERC20_ABI = [
+            {
+                "constant": true,
+                "inputs": [{"name": "_owner", "type": "address"}],
+                "name": "balanceOf",
+                "outputs": [{"name": "balance", "type": "uint256"}],
+                "type": "function"
+            },
+            {
+                "constant": false,
+                "inputs": [
+                    {"name": "_spender", "type": "address"},
+                    {"name": "_value", "type": "uint256"}
+                ],
+                "name": "approve",
+                "outputs": [{"name": "", "type": "bool"}],
+                "type": "function"
+            },
+            {
+                "constant": true,
+                "inputs": [
+                    {"name": "_owner", "type": "address"},
+                    {"name": "_spender", "type": "address"}
+                ],
+                "name": "allowance",
+                "outputs": [{"name": "", "type": "uint256"}],
+                "type": "function"
+            }
+        ];
+
+        let provider, signer, contract, wZYSContract, YRSContract, userAddress;
+
+        async function init() {
+            if (typeof window.ethereum !== 'undefined') {
+                provider = new ethers.providers.Web3Provider(window.ethereum);
+                document.getElementById('connectButton').addEventListener('click', connectWallet);
+                document.getElementById('refreshBalances').addEventListener('click', refreshBalances);
+                document.getElementById('approveW').addEventListener('click', () => approveToken(wZYSContract, CONTRACT_ADDRESS, true));
+                document.getElementById('approveY').addEventListener('click', () => approveToken(YRSContract, CONTRACT_ADDRESS, false));
+                document.getElementById('buyButton').addEventListener('click', buyYRS);
+                document.getElementById('sellButton').addEventListener('click', sellYRS);
+                document.getElementById('burnButton').addEventListener('click', burnYRS);
+                // Auto-connect if possible
+                try {
+                    await provider.send("eth_requestAccounts", []);
+                    await connectWallet();
+                } catch (e) {}
+            } else {
+                document.getElementById('status').innerHTML = 'MetaMask not detected!';
+                document.getElementById('status').className = 'status error';
             }
         }
-    }
 
-    // Event listeners (unchanged)
-    connectButton.addEventListener('click', connectWallet);
-    checkMetaMask();
+        async function connectWallet() {
+            try {
+                const accounts = await provider.send("eth_requestAccounts", []);
+                signer = provider.getSigner();
+                userAddress = accounts[0];
+                contract = new ethers.Contract(CONTRACT_ADDRESS, STAKING_ABI, signer);
 
-    if (window.ethereum) {
-        window.ethereum.on('accountsChanged', (accounts) => {
-            if (accounts.length === 0) {
-                statusDiv.textContent = 'Disconnected';
-                connectButton.textContent = 'Connect to MetaMask';
-                connectButton.disabled = false;
-            } else {
-                const account = accounts[0];
-                statusDiv.textContent = `Connected: ${account.slice(0, 6)}...${account.slice(-4)}`;
+                // Switch to Sepolia
+                try {
+                    await provider.send("wallet_switchEthereumChain", [{ chainId: SEPOLIA_CHAIN_ID }]);
+                } catch (switchError) {
+                    if (switchError.code === 4902) {
+                        // Add chain if not exists, but for simplicity, assume added
+                        alert('Please add Sepolia network to MetaMask if not present.');
+                    }
+                }
+
+                document.getElementById('status').innerHTML = 'Connected!';
+                document.getElementById('status').className = 'status connected';
+                document.getElementById('address').innerHTML = `Address: <code>${userAddress}</code>`;
+
+                // Show sections
+                document.getElementById('info-section').style.display = 'block';
+                document.getElementById('balances-section').style.display = 'block';
+                document.getElementById('approve-section').style.display = 'block';
+                document.getElementById('buy-section').style.display = 'block';
+                document.getElementById('sell-section').style.display = 'block';
+                document.getElementById('burn-section').style.display = 'block';
+
+                await loadContractInfo();
+                await refreshBalances();
+            } catch (error) {
+                document.getElementById('status').innerHTML = `Error: ${error.message}`;
+                document.getElementById('status').className = 'status error';
+            }
+        }
+
+        async function loadContractInfo() {
+            try {
+                const wZYSAddr = await contract.wZYS();
+                const YRSAddr = await contract.YRS();
+                wZYSContract = new ethers.Contract(wZYSAddr, ERC20_ABI, signer);
+                YRSContract = new ethers.Contract(YRSAddr, ERC20_ABI, signer);
+
+                document.getElementById('wZYS-address').innerHTML = `wZYS Token: <code>${wZYSAddr}</code>`;
+                document.getElementById('YRS-address').innerHTML = `YRS Token: <code>${YRSAddr}</code>`;
+
+                const shares = await contract.totalYieldReserveShares();
+                const deposited = await contract.totalWZYSDeposited();
+                document.getElementById('total-shares').innerHTML = `Total YRS Shares: ${ethers.utils.formatUnits(shares, 18)}`;
+                document.getElementById('total-deposited').innerHTML = `Total wZYS Deposited: ${ethers.utils.formatUnits(deposited, 18)}`;
+            } catch (error) {
+                console.error('Error loading contract info:', error);
+            }
+        }
+
+        async function refreshBalances() {
+            if (!userAddress || !wZYSContract || !YRSContract) return;
+
+            try {
+                document.getElementById('user-wZYS').innerHTML = `Your wZYS: <span id="user-wZYS-val">Loading...</span>`;
+                document.getElementById('user-YRS').innerHTML = `Your YRS: <span id="user-YRS-val">Loading...</span>`;
+                document.getElementById('contract-wZYS').innerHTML = `Contract wZYS: <span id="contract-wZYS-val">Loading...</span>`;
+                document.getElementById('contract-YRS').innerHTML = `Contract YRS: <span id="contract-YRS-val">Loading...</span>`;
+
+                const userWBalance = await wZYSContract.balanceOf(userAddress);
+                const userYBalance = await YRSContract.balanceOf(userAddress);
+                const contractWBalance = await wZYSContract.balanceOf(CONTRACT_ADDRESS);
+                const contractYBalance = await YRSContract.balanceOf(CONTRACT_ADDRESS);
+
+                document.getElementById('user-wZYS-val').innerHTML = `${ethers.utils.formatUnits(userWBalance, 18)}`;
+                document.getElementById('user-YRS-val').innerHTML = `${ethers.utils.formatUnits(userYBalance, 18)}`;
+                document.getElementById('contract-wZYS-val').innerHTML = `${ethers.utils.formatUnits(contractWBalance, 18)}`;
+                document.getElementById('contract-YRS-val').innerHTML = `${ethers.utils.formatUnits(contractYBalance, 18)}`;
+            } catch (error) {
+                console.error('Error refreshing balances:', error);
+            }
+        }
+
+        async function approveToken(tokenContract, spender, isWZYS) {
+            const statusEl = document.getElementById('approve-status');
+            try {
+                statusEl.innerHTML = 'Approving...';
+                statusEl.className = 'status loading';
+                const maxAmount = ethers.utils.parseUnits('1000000', 18); // Large max
+                const tx = await tokenContract.approve(spender, maxAmount);
+                await tx.wait();
+                statusEl.innerHTML = `${isWZYS ? 'wZYS' : 'YRS'} approved successfully!`;
+                statusEl.className = 'status success';
+            } catch (error) {
+                statusEl.innerHTML = `Approval failed: ${error.message}`;
+                statusEl.className = 'status error';
+            }
+        }
+
+        async function buyYRS() {
+            const amountStr = document.getElementById('buyAmount').value;
+            const minStr = document.getElementById('minYRS').value;
+            if (!amountStr || !minStr) {
+                alert('Please enter amounts');
+                return;
+            }
+            const amount = ethers.utils.parseUnits(amountStr, 18);
+            const minOut = ethers.utils.parseUnits(minStr, 18);
+            const statusEl = document.getElementById('buy-status');
+            try {
+                statusEl.innerHTML = 'Buying...';
+                statusEl.className = 'status loading';
+                const tx = await contract.buy1(amount, minOut);
+                await tx.wait();
+                statusEl.innerHTML = 'Buy successful!';
+                statusEl.className = 'status success';
+                await refreshBalances();
+            } catch (error) {
+                statusEl.innerHTML = `Buy failed: ${error.message}`;
+                statusEl.className = 'status error';
+            }
+        }
+
+        async function sellYRS() {
+            const amountStr = document.getElementById('sellAmount').value;
+            const minStr = document.getElementById('minWZYS').value;
+            if (!amountStr || !minStr) {
+                alert('Please enter amounts');
+                return;
+            }
+            const amount = ethers.utils.parseUnits(amountStr, 18);
+            const minOut = ethers.utils.parseUnits(minStr, 18);
+            const statusEl = document.getElementById('sell-status');
+            try {
+                statusEl.innerHTML = 'Selling...';
+                statusEl.className = 'status loading';
+                const tx = await contract.sell1(amount, minOut);
+                await tx.wait();
+                statusEl.innerHTML = 'Sell successful!';
+                statusEl.className = 'status success';
+                await refreshBalances();
+            } catch (error) {
+                statusEl.innerHTML = `Sell failed: ${error.message}`;
+                statusEl.className = 'status error';
+            }
+        }
+
+        async function burnYRS() {
+            const amountStr = document.getElementById('burnAmount').value;
+            if (!amountStr) {
+                alert('Please enter amount');
+                return;
+            }
+            const amount = ethers.utils.parseUnits(amountStr, 18);
+            const statusEl = document.getElementById('burn-status');
+            try {
+                statusEl.innerHTML = 'Burning...';
+                statusEl.className = 'status loading';
+                const tx = await contract.burn(amount);
+                await tx.wait();
+                statusEl.innerHTML = 'Burn successful!';
+                statusEl.className = 'status success';
+                await refreshBalances();
+            } catch (error) {
+                statusEl.innerHTML = `Burn failed: ${error.message}`;
+                statusEl.className = 'status error';
+            }
+        }
+
+        // Auto-fill min out based on calculation
+        document.getElementById('buyAmount').addEventListener('input', (e) => {
+            const val = parseFloat(e.target.value);
+            if (val) {
+                const min = (val * 1.1).toFixed(18);
+                document.getElementById('minYRS').value = min;
             }
         });
-    }
-</script>
+
+        document.getElementById('sellAmount').addEventListener('input', (e) => {
+            const val = parseFloat(e.target.value);
+            if (val) {
+                const min = (val * 0.9).toFixed(18);
+                document.getElementById('minWZYS').value = min;
+            }
+        });
+
+        init();
+    </script>
+</body>
+</html>
