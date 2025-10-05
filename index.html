@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Zephyr Yield Reserve - Token Swap</title>
-    <script src="https://cdn.ethers.io/lib/ethers-5.7.2.umd.min.js" type="application/javascript"></script>
+    <title>Zephyr Yield Reserve - YRS Staking</title>
+    <script src="https://cdn.jsdelivr.net/npm/web3@latest/dist/web3.min.js"></script>
     <style>
         body { 
             font-family: Arial, sans-serif; 
@@ -61,12 +61,11 @@
             border-radius: 5px; 
             margin-bottom: 15px;
         }
-        .hidden { display: none; }
     </style>
 </head>
 <body>
     <h1>🎯 Zephyr Yield Reserve</h1>
-    <p>Swap between wZYS and YRS tokens</p>
+    <p>Swap between wZYS and YRS tokens with 10% bonus/penalty</p>
 
     <div class="container">
         <div class="wallet-info">
@@ -75,57 +74,115 @@
             <div id="walletBalances"></div>
         </div>
 
-        <div id="statusMessage" class="status hidden"></div>
+        <div id="statusMessage" class="status" style="display:none;"></div>
 
-        <!-- Contract Interaction Sections (shown only when connected) -->
-        <div id="contractInterface" class="hidden">
-            <!-- Buy YRS Section -->
-            <div class="section">
-                <h3>💰 Buy YRS (10% Bonus)</h3>
-                <p>Swap wZYS for YRS tokens with 10% bonus</p>
-                <input type="number" id="buyAmount" placeholder="wZYS amount" min="0" step="any">
-                <input type="number" id="minYRSOut" placeholder="Min YRS expected" min="0" step="any">
-                <button id="buyButton" onclick="buyYRS()">Buy YRS</button>
-                <button onclick="approveWZYS()">Approve wZYS</button>
-            </div>
+        <!-- Buy YRS Section -->
+        <div class="section">
+            <h3>💰 Buy YRS (10% Bonus)</h3>
+            <p>Swap wZYS for YRS tokens with 10% bonus</p>
+            <input type="number" id="buyAmount" placeholder="wZYS amount" min="0" step="any">
+            <input type="number" id="minYRSOut" placeholder="Min YRS expected" min="0" step="any">
+            <button id="buyButton" onclick="buyYRS()">Buy YRS</button>
+            <button onclick="approveWZYS()">Approve wZYS</button>
+        </div>
 
-            <!-- Sell YRS Section -->
-            <div class="section">
-                <h3>💸 Sell YRS (10% Penalty)</h3>
-                <p>Swap YRS back to wZYS with 10% reduction</p>
-                <input type="number" id="sellAmount" placeholder="YRS amount" min="0" step="any">
-                <input type="number" id="minWZYSOut" placeholder="Min wZYS expected" min="0" step="any">
-                <button id="sellButton" onclick="sellYRS()">Sell YRS</button>
-                <button onclick="approveYRS()">Approve YRS</button>
-            </div>
+        <!-- Sell YRS Section -->
+        <div class="section">
+            <h3>💸 Sell YRS (10% Penalty)</h3>
+            <p>Swap YRS back to wZYS with 10% reduction</p>
+            <input type="number" id="sellAmount" placeholder="YRS amount" min="0" step="any">
+            <input type="number" id="minWZYSOut" placeholder="Min wZYS expected" min="0" step="any">
+            <button id="sellButton" onclick="sellYRS()">Sell YRS</button>
+            <button onclick="approveYRS()">Approve YRS</button>
+        </div>
 
-            <!-- Burn YRS Section -->
-            <div class="section">
-                <h3>🔥 Burn YRS</h3>
-                <p>Permanently remove YRS tokens from circulation</p>
-                <input type="number" id="burnAmount" placeholder="YRS amount to burn" min="0" step="any">
-                <button id="burnButton" onclick="burnYRS()">Burn YRS</button>
-            </div>
+        <!-- Burn YRS Section -->
+        <div class="section">
+            <h3>🔥 Burn YRS</h3>
+            <p>Permanently remove YRS tokens from circulation</p>
+            <input type="number" id="burnAmount" placeholder="YRS amount to burn" min="0" step="any">
+            <button id="burnButton" onclick="burnYRS()">Burn YRS</button>
+        </div>
 
-            <!-- Contract Info Section -->
-            <div class="section">
-                <h3>📊 Contract Information</h3>
-                <button onclick="loadContractInfo()">Refresh Info</button>
-                <div id="contractInfo"></div>
-            </div>
+        <!-- Contract Info Section -->
+        <div class="section">
+            <h3>📊 Contract Information</h3>
+            <button onclick="loadContractInfo()">Refresh Info</button>
+            <div id="contractInfo"></div>
         </div>
     </div>
 
     <script>
         // Contract configuration
         const CONTRACT_ADDRESS = '0x0eba64eA7d1055Cb87654EC554360741C31650E6';
-        const WZYS_ADDRESS = '0x7eb81e6a8e1686de83e232c876ad2bf5e01728a4';
-        const YRS_ADDRESS = '0x175c9497d14059710417935ba4817c6863ccdb55';
+        
+        // Update these addresses with your actual token addresses
+        const WZYS_ADDRESS = '0x7eb81e6a8e1686de83e232c876ad2bf5e01728a4'; // Your wZYS address
+        const YRS_ADDRESS = '0x175c9497d14059710417935ba4817c6863ccdb55'; // Your YRS address
 
-        // Contract ABI - You'll need to replace this with your actual ABI
+        // Contract ABI - Simplified version including your functions
         const CONTRACT_ABI = [
-            // Add your contract ABI here
-            // This should include buy1, sell1, burn functions
+            // Buy function
+            {
+                "inputs": [
+                    {"internalType": "uint256","name": "wZYSAmount","type": "uint256"},
+                    {"internalType": "uint256","name": "minYRSOut","type": "uint256"}
+                ],
+                "name": "buy1",
+                "outputs": [],
+                "stateMutability": "nonpayable",
+                "type": "function"
+            },
+            // Sell function
+            {
+                "inputs": [
+                    {"internalType": "uint256","name": "YRSAmount","type": "uint256"},
+                    {"internalType": "uint256","name": "minWZYSOut","type": "uint256"}
+                ],
+                "name": "sell1",
+                "outputs": [],
+                "stateMutability": "nonpayable",
+                "type": "function"
+            },
+            // Burn function
+            {
+                "inputs": [
+                    {"internalType": "uint256","name": "amount","type": "uint256"}
+                ],
+                "name": "burn",
+                "outputs": [],
+                "stateMutability": "nonpayable",
+                "type": "function"
+            },
+            // Read-only functions
+            {
+                "inputs": [],
+                "name": "totalWZYSDeposited",
+                "outputs": [{"internalType": "uint256","name": "","type": "uint256"}],
+                "stateMutability": "view",
+                "type": "function"
+            },
+            {
+                "inputs": [],
+                "name": "totalYieldReserveShares",
+                "outputs": [{"internalType": "uint256","name": "","type": "uint256"}],
+                "stateMutability": "view",
+                "type": "function"
+            },
+            {
+                "inputs": [],
+                "name": "YRS",
+                "outputs": [{"internalType": "contract IERC20","name": "","type": "address"}],
+                "stateMutability": "view",
+                "type": "function"
+            },
+            {
+                "inputs": [],
+                "name": "wZYS",
+                "outputs": [{"internalType": "contract IERC20","name": "","type": "address"}],
+                "stateMutability": "view",
+                "type": "function"
+            }
         ];
 
         // ERC20 ABI for token interactions
@@ -146,109 +203,106 @@
                 "outputs": [{"internalType": "bool","name": "","type": "bool"}],
                 "stateMutability": "nonpayable",
                 "type": "function"
+            },
+            {
+                "inputs": [
+                    {"internalType": "address","name": "owner","type": "address"},
+                    {"internalType": "address","name": "spender","type": "address"}
+                ],
+                "name": "allowance",
+                "outputs": [{"internalType": "uint256","name": "","type": "uint256"}],
+                "stateMutability": "view",
+                "type": "function"
+            },
+            {
+                "inputs": [],
+                "name": "decimals",
+                "outputs": [{"internalType": "uint8","name": "","type": "uint8"}],
+                "stateMutability": "view",
+                "type": "function"
             }
         ];
 
-        let web3Provider;
-        let accounts = [];
+        let web3;
+        let accounts;
         let stakingContract;
         let wzysToken;
         let yrsToken;
 
-        // Check if MetaMask is installed
-        function isMetaMaskInstalled() {
-            return typeof window.ethereum !== 'undefined' && window.ethereum.isMetaMask;
-        }
-
-        // Connect to MetaMask wallet
-        async function connectWallet() {
-            if (!isMetaMaskInstalled()) {
+        // Initialize the dApp
+        window.addEventListener('load', async () => {
+            if (typeof window.ethereum === 'undefined') {
                 showStatus('MetaMask is not installed! Please install MetaMask to use this dApp.', 'error');
                 return;
             }
 
             try {
-                // Request account access
+                web3 = new Web3(window.ethereum);
+                
+                // Initialize contract instances
+                stakingContract = new web3.eth.Contract(CONTRACT_ABI, CONTRACT_ADDRESS);
+                wzysToken = new web3.eth.Contract(ERC20_ABI, WZYS_ADDRESS);
+                yrsToken = new web3.eth.Contract(ERC20_ABI, YRS_ADDRESS);
+
+                // Check if already connected
+                const connectedAccounts = await web3.eth.getAccounts();
+                if (connectedAccounts.length > 0) {
+                    accounts = connectedAccounts;
+                    updateWalletDisplay();
+                    await loadBalances();
+                    await loadContractInfo();
+                }
+
+                // Listen for account changes
+                window.ethereum.on('accountsChanged', (newAccounts) => {
+                    accounts = newAccounts;
+                    updateWalletDisplay();
+                    loadBalances();
+                    loadContractInfo();
+                });
+
+            } catch (error) {
+                showStatus('Error initializing Web3: ' + error.message, 'error');
+            }
+        });
+
+        // Connect MetaMask wallet:cite[10]
+        async function connectWallet() {
+            try {
                 accounts = await window.ethereum.request({ 
                     method: 'eth_requestAccounts' 
                 });
-                
-                // Initialize ethers provider
-                web3Provider = new ethers.providers.Web3Provider(window.ethereum);
-                const signer = web3Provider.getSigner();
-                
-                // Initialize contract instances
-                stakingContract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
-                wzysToken = new ethers.Contract(WZYS_ADDRESS, ERC20_ABI, signer);
-                yrsToken = new ethers.Contract(YRS_ADDRESS, ERC20_ABI, signer);
-                
                 updateWalletDisplay();
-                showContractInterface();
                 await loadBalances();
                 await loadContractInfo();
-                
                 showStatus('Wallet connected successfully!', 'success');
-                
-                // Set up event listeners for account changes
-                window.ethereum.on('accountsChanged', handleAccountsChanged);
-                window.ethereum.on('chainChanged', handleChainChanged);
-                
             } catch (error) {
-                if (error.code === 4001) {
-                    showStatus('User rejected connection request.', 'error');
-                } else {
-                    showStatus('Error connecting to wallet: ' + error.message, 'error');
-                }
+                showStatus('Error connecting wallet: ' + error.message, 'error');
             }
-        }
-
-        // Handle account changes
-        function handleAccountsChanged(newAccounts) {
-            accounts = newAccounts;
-            if (accounts.length === 0) {
-                showStatus('Please connect to MetaMask.', 'error');
-                hideContractInterface();
-            } else {
-                updateWalletDisplay();
-                loadBalances();
-                loadContractInfo();
-            }
-        }
-
-        // Handle chain changes
-        function handleChainChanged(chainId) {
-            // Reload the page when network changes
-            window.location.reload();
         }
 
         // Update wallet display
         function updateWalletDisplay() {
-            if (accounts.length > 0) {
+            if (accounts && accounts.length > 0) {
                 const shortAddress = accounts[0].substring(0, 6) + '...' + accounts[0].substring(38);
                 document.getElementById('walletAddress').textContent = 'Connected: ' + shortAddress;
             }
         }
 
-        // Show contract interface after connection
-        function showContractInterface() {
-            document.getElementById('contractInterface').classList.remove('hidden');
-        }
-
-        function hideContractInterface() {
-            document.getElementById('contractInterface').classList.add('hidden');
-        }
-
-        // Load token balances
+        // Load token balances:cite[10]
         async function loadBalances() {
-            if (accounts.length === 0) return;
+            if (!accounts || accounts.length === 0) return;
 
             try {
                 const userAddress = accounts[0];
-                const wzysBalance = await wzysToken.balanceOf(userAddress);
-                const yrsBalance = await yrsToken.balanceOf(userAddress);
+                
+                const wzysBalance = await wzysToken.methods.balanceOf(userAddress).call();
+                const yrsBalance = await yrsToken.methods.balanceOf(userAddress).call();
+                const wzysDecimals = await wzysToken.methods.decimals().call();
+                const yrsDecimals = await yrsToken.methods.decimals().call();
 
-                const formattedWZYS = ethers.utils.formatUnits(wzysBalance, 18);
-                const formattedYRS = ethers.utils.formatUnits(yrsBalance, 18);
+                const formattedWZYS = web3.utils.fromWei(wzysBalance, 'ether');
+                const formattedYRS = web3.utils.fromWei(yrsBalance, 'ether');
 
                 document.getElementById('walletBalances').innerHTML = 
                     `wZYS Balance: ${formattedWZYS} | YRS Balance: ${formattedYRS}`;
@@ -258,27 +312,45 @@
             }
         }
 
-        // Load contract information
+        // Load contract information:cite[6]
         async function loadContractInfo() {
             if (!stakingContract) return;
 
             try {
-                // Add your contract info loading logic here
+                const totalWZYS = await stakingContract.methods.totalWZYSDeposited().call();
+                const totalShares = await stakingContract.methods.totalYieldReserveShares().call();
+                
+                const contractYRSBalance = await yrsToken.methods.balanceOf(CONTRACT_ADDRESS).call();
+                const contractWZYSBalance = await wzysToken.methods.balanceOf(CONTRACT_ADDRESS).call();
+
+                const formattedContractYRS = web3.utils.fromWei(contractYRSBalance, 'ether');
+                const formattedContractWZYS = web3.utils.fromWei(contractWZYSBalance, 'ether');
+                const formattedTotalWZYS = web3.utils.fromWei(totalWZYS, 'ether');
+                const formattedTotalShares = web3.utils.fromWei(totalShares, 'ether');
+
                 document.getElementById('contractInfo').innerHTML = `
-                    <p>Contract loaded successfully</p>
-                    <p>Address: ${CONTRACT_ADDRESS}</p>
+                    <p><strong>Contract YRS Reserve:</strong> ${formattedContractYRS} YRS</p>
+                    <p><strong>Contract wZYS Reserve:</strong> ${formattedContractWZYS} wZYS</p>
+                    <p><strong>Total wZYS Deposited:</strong> ${formattedTotalWZYS} wZYS</p>
+                    <p><strong>Total YRS Shares:</strong> ${formattedTotalShares} YRS</p>
                 `;
+
             } catch (error) {
                 console.error('Error loading contract info:', error);
             }
         }
 
-        // Token approval functions
+        // Token approval functions:cite[10]
         async function approveWZYS() {
+            if (!accounts) {
+                showStatus('Please connect your wallet first', 'error');
+                return;
+            }
+
             try {
-                const amount = ethers.utils.parseUnits('1000000', 18);
-                const tx = await wzysToken.approve(CONTRACT_ADDRESS, amount);
-                await tx.wait();
+                // Approve a large amount for the contract
+                const amount = web3.utils.toWei('1000000', 'ether');
+                await wzysToken.methods.approve(CONTRACT_ADDRESS, amount).send({ from: accounts[0] });
                 showStatus('wZYS approval successful!', 'success');
             } catch (error) {
                 showStatus('wZYS approval failed: ' + error.message, 'error');
@@ -286,54 +358,119 @@
         }
 
         async function approveYRS() {
+            if (!accounts) {
+                showStatus('Please connect your wallet first', 'error');
+                return;
+            }
+
             try {
-                const amount = ethers.utils.parseUnits('1000000', 18);
-                const tx = await yrsToken.approve(CONTRACT_ADDRESS, amount);
-                await tx.wait();
+                const amount = web3.utils.toWei('1000000', 'ether');
+                await yrsToken.methods.approve(CONTRACT_ADDRESS, amount).send({ from: accounts[0] });
                 showStatus('YRS approval successful!', 'success');
             } catch (error) {
                 showStatus('YRS approval failed: ' + error.message, 'error');
             }
         }
 
-        // Contract interaction functions
+        // Main contract functions
         async function buyYRS() {
-            // Implement buyYRS function
-            showStatus('Buy function - implement your logic here', 'info');
+            if (!accounts) {
+                showStatus('Please connect your wallet first', 'error');
+                return;
+            }
+
+            const wZYSAmount = document.getElementById('buyAmount').value;
+            const minYRSOut = document.getElementById('minYRSOut').value;
+
+            if (!wZYSAmount || !minYRSOut) {
+                showStatus('Please enter both amount and minimum output', 'error');
+                return;
+            }
+
+            try {
+                const amountWei = web3.utils.toWei(wZYSAmount, 'ether');
+                const minOutWei = web3.utils.toWei(minYRSOut, 'ether');
+
+                await stakingContract.methods.buy1(amountWei, minOutWei).send({ from: accounts[0] });
+                showStatus('Successfully bought YRS tokens!', 'success');
+                
+                // Refresh balances and info
+                await loadBalances();
+                await loadContractInfo();
+                
+            } catch (error) {
+                showStatus('Buy failed: ' + error.message, 'error');
+            }
         }
 
         async function sellYRS() {
-            // Implement sellYRS function
-            showStatus('Sell function - implement your logic here', 'info');
+            if (!accounts) {
+                showStatus('Please connect your wallet first', 'error');
+                return;
+            }
+
+            const YRSAmount = document.getElementById('sellAmount').value;
+            const minWZYSOut = document.getElementById('minWZYSOut').value;
+
+            if (!YRSAmount || !minWZYSOut) {
+                showStatus('Please enter both amount and minimum output', 'error');
+                return;
+            }
+
+            try {
+                const amountWei = web3.utils.toWei(YRSAmount, 'ether');
+                const minOutWei = web3.utils.toWei(minWZYSOut, 'ether');
+
+                await stakingContract.methods.sell1(amountWei, minOutWei).send({ from: accounts[0] });
+                showStatus('Successfully sold YRS tokens!', 'success');
+                
+                await loadBalances();
+                await loadContractInfo();
+                
+            } catch (error) {
+                showStatus('Sell failed: ' + error.message, 'error');
+            }
         }
 
         async function burnYRS() {
-            // Implement burnYRS function
-            showStatus('Burn function - implement your logic here', 'info');
+            if (!accounts) {
+                showStatus('Please connect your wallet first', 'error');
+                return;
+            }
+
+            const amount = document.getElementById('burnAmount').value;
+            if (!amount) {
+                showStatus('Please enter amount to burn', 'error');
+                return;
+            }
+
+            try {
+                const amountWei = web3.utils.toWei(amount, 'ether');
+                await stakingContract.methods.burn(amountWei).send({ from: accounts[0] });
+                showStatus('Successfully burned YRS tokens!', 'success');
+                
+                await loadBalances();
+                await loadContractInfo();
+                
+            } catch (error) {
+                showStatus('Burn failed: ' + error.message, 'error');
+            }
         }
 
         // Utility function to show status messages
         function showStatus(message, type) {
             const statusElement = document.getElementById('statusMessage');
             statusElement.textContent = message;
-            statusElement.className = `status ${type}`;
-            statusElement.classList.remove('hidden');
+            statusElement.className = 'status ' + type;
+            statusElement.style.display = 'block';
             
             setTimeout(() => {
-                statusElement.classList.add('hidden');
+                statusElement.style.display = 'none';
             }, 5000);
         }
 
-        // Initialize when page loads
-        window.addEventListener('load', function() {
-            document.getElementById('connectWallet').addEventListener('click', connectWallet);
-            
-            if (isMetaMaskInstalled()) {
-                showStatus('MetaMask detected! Click connect to continue.', 'info');
-            } else {
-                showStatus('MetaMask not found. Please install MetaMask.', 'error');
-            }
-        });
+        // Connect wallet when button clicked
+        document.getElementById('connectWallet').addEventListener('click', connectWallet);
     </script>
 </body>
 </html>
