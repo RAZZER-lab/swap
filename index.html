@@ -1,418 +1,66 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>YRS Staking Contract Interface - Sepolia</title>
-    <script src="https://cdn.ethers.io/lib/ethers-5.7.umd.min.js" type="application/javascript"></script>
-    <style>
-        body { font-family: Arial, sans-serif; margin: 20px; }
-        input, button { margin: 5px; padding: 8px; }
-        div { margin: 20px 0; }
-        #connect { font-weight: bold; }
-    </style>
-</head>
-<body>
-    <h1>YRS Staking Contract Interaction</h1>
-    <p>Contract Address: <code>0x0eba64eA7d1055Cb87654EC554360741C31650E6</code> (Sepolia Testnet)</p>
-    <p><strong>Note:</strong> Ensure you are connected to Sepolia testnet. Owner should transfer YRS tokens to the contract address for liquidity to make buy/sell functional.</p>
+<script>
+    const connectButton = document.getElementById('connectButton');
+    const statusDiv = document.getElementById('status');
 
-    <div id="connect">
-        <button onclick="connectWallet()">Connect MetaMask</button>
-    </div>
+    // Enhanced check for MetaMask with debugging
+    function checkMetaMask() {
+        console.log('Current URL:', window.location.href); // Logs if it's file:// or http://
+        console.log('window.ethereum:', typeof window.ethereum); // Debug log
+        
+        if (typeof window.ethereum !== 'undefined') {
+            console.log('MetaMask detected!');
+            statusDiv.textContent = 'MetaMask ready. Click to connect.';
+            connectButton.disabled = false;
+            return true;
+        } else if (window.location.protocol === 'file:') {
+            statusDiv.innerHTML = 'MetaMask blocked on local files in Firefox. <a href="#" onclick="openLocalServerGuide()">Serve via local server</a>.';
+            connectButton.disabled = true;
+            return false;
+        } else {
+            statusDiv.textContent = 'MetaMask not detected. Check extension and reload.';
+            connectButton.disabled = true;
+            return false;
+        }
+    }
 
-    <div id="info"></div>
+    // Simple guide popup (optional)
+    function openLocalServerGuide() {
+        alert('Serve via local server:\n1. Save as index.html\n2. Terminal: python -m http.server 8000\n3. Visit http://localhost:8000');
+    }
 
-    <h2>Contract Information</h2>
-    <div id="contractInfo"></div>
-
-    <h2>Buy YRS with wZYS (10% Bonus)</h2>
-    <input id="wZYSAmount" placeholder="wZYS Amount (e.g., 1)" type="number" step="0.000000000000000001">
-    <input id="minYRSOut" placeholder="Min YRS Out (e.g., 1.1)" type="number" step="0.000000000000000001">
-    <button onclick="buyYRS()">Approve & Buy</button>
-
-    <h2>Sell YRS for wZYS (10% Penalty)</h2>
-    <input id="YRSAmount" placeholder="YRS Amount (e.g., 1)" type="number" step="0.000000000000000001">
-    <input id="minWZYSOut" placeholder="Min wZYS Out (e.g., 0.9)" type="number" step="0.000000000000000001">
-    <button onclick="sellYRS()">Approve & Sell</button>
-
-    <h2>Burn YRS Tokens</h2>
-    <input id="burnAmount" placeholder="Burn Amount (e.g., 1)" type="number" step="0.000000000000000001">
-    <button onclick="burnYRS()">Approve & Burn</button>
-
-    <h2>Recover ERC20 (Owner Only)</h2>
-    <input id="tokenAddr" placeholder="Token Address" type="text">
-    <input id="recoverAmt" placeholder="Amount (e.g., 1)" type="number" step="0.000000000000000001">
-    <button onclick="recoverERC20()">Recover</button>
-
-    <h2>Ownership Functions (Owner/Pending Only)</h2>
-    <button onclick="renounceOwnership()">Renounce Ownership</button>
-    <button onclick="transferOwnershipPrompt()">Transfer Ownership</button>
-    <input id="newOwnerAddr" placeholder="New Owner Address" type="text" style="display: none;">
-    <button id="confirmTransfer" onclick="transferOwnership()" style="display: none;">Confirm Transfer</button>
-    <button onclick="acceptOwnership()">Accept Ownership</button>
-
-    <script>
-        const CONTRACT_ADDRESS = '0x0eba64eA7d1055Cb87654EC554360741C31650E6';
-        const SEPOLIA_CHAIN_ID = '0xaa36a7'; // 11155111
-
-        const ABI = [
-            {
-                "inputs": [
-                    {"internalType": "address", "name": "_wZYSAddress", "type": "address"},
-                    {"internalType": "address", "name": "_YRSAddress", "type": "address"}
-                ],
-                "stateMutability": "nonpayable",
-                "type": "constructor"
-            },
-            {
-                "anonymous": false,
-                "inputs": [
-                    {"indexed": true, "internalType": "address", "name": "buyer", "type": "address"},
-                    {"internalType": "uint256", "name": "wZYSAmount", "type": "uint256"},
-                    {"internalType": "uint256", "name": "YRSAmount", "type": "uint256"}
-                ],
-                "name": "TokensBought",
-                "type": "event"
-            },
-            {
-                "anonymous": false,
-                "inputs": [
-                    {"indexed": true, "internalType": "address", "name": "seller", "type": "address"},
-                    {"internalType": "uint256", "name": "YRSAmount", "type": "uint256"},
-                    {"internalType": "uint256", "name": "wZYSAmount", "type": "uint256"}
-                ],
-                "name": "TokensSold",
-                "type": "event"
-            },
-            {
-                "anonymous": false,
-                "inputs": [
-                    {"indexed": true, "internalType": "address", "name": "burner", "type": "address"},
-                    {"internalType": "uint256", "name": "amount", "type": "uint256"}
-                ],
-                "name": "TokensBurned",
-                "type": "event"
-            },
-            {
-                "inputs": [
-                    {"internalType": "uint256", "name": "wZYSAmount", "type": "uint256"},
-                    {"internalType": "uint256", "name": "minYRSOut", "type": "uint256"}
-                ],
-                "name": "buy1",
-                "outputs": [],
-                "stateMutability": "nonpayable",
-                "type": "function"
-            },
-            {
-                "inputs": [
-                    {"internalType": "uint256", "name": "YRSAmount", "type": "uint256"},
-                    {"internalType": "uint256", "name": "minWZYSOut", "type": "uint256"}
-                ],
-                "name": "sell1",
-                "outputs": [],
-                "stateMutability": "nonpayable",
-                "type": "function"
-            },
-            {
-                "inputs": [
-                    {"internalType": "uint256", "name": "amount", "type": "uint256"}
-                ],
-                "name": "burn",
-                "outputs": [],
-                "stateMutability": "nonpayable",
-                "type": "function"
-            },
-            {
-                "inputs": [
-                    {"internalType": "address", "name": "tokenAddress", "type": "address"},
-                    {"internalType": "uint256", "name": "amount", "type": "uint256"}
-                ],
-                "name": "recoverERC20",
-                "outputs": [],
-                "stateMutability": "nonpayable",
-                "type": "function"
-            },
-            {
-                "inputs": [],
-                "name": "wZYS",
-                "outputs": [{"internalType": "contract IERC20", "name": "", "type": "address"}],
-                "stateMutability": "view",
-                "type": "function"
-            },
-            {
-                "inputs": [],
-                "name": "YRS",
-                "outputs": [{"internalType": "contract IERC20", "name": "", "type": "address"}],
-                "stateMutability": "view",
-                "type": "function"
-            },
-            {
-                "inputs": [],
-                "name": "totalYieldReserveShares",
-                "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
-                "stateMutability": "view",
-                "type": "function"
-            },
-            {
-                "inputs": [],
-                "name": "totalWZYSDeposited",
-                "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
-                "stateMutability": "view",
-                "type": "function"
-            },
-            {
-                "inputs": [],
-                "name": "owner",
-                "outputs": [{"internalType": "address", "name": "", "type": "address"}],
-                "stateMutability": "view",
-                "type": "function"
-            },
-            {
-                "inputs": [],
-                "name": "renounceOwnership",
-                "outputs": [],
-                "stateMutability": "nonpayable",
-                "type": "function"
-            },
-            {
-                "inputs": [{"internalType": "address", "name": "newOwner", "type": "address"}],
-                "name": "transferOwnership",
-                "outputs": [],
-                "stateMutability": "nonpayable",
-                "type": "function"
-            },
-            {
-                "inputs": [],
-                "name": "pendingOwner",
-                "outputs": [{"internalType": "address", "name": "", "type": "address"}],
-                "stateMutability": "view",
-                "type": "function"
-            },
-            {
-                "inputs": [],
-                "name": "acceptOwnership",
-                "outputs": [],
-                "stateMutability": "nonpayable",
-                "type": "function"
-            }
-        ];
-
-        const ERC20_ABI = [
-            "function approve(address spender, uint256 amount) external returns (bool)"
-        ];
-
-        let provider;
-        let signer;
-        let contract;
-        let userAddress;
-        let isOwner = false;
-
-        async function connectWallet() {
-            if (typeof window.ethereum === 'undefined') {
-                alert('MetaMask not detected!');
-                return;
-            }
-
-            provider = new ethers.providers.Web3Provider(window.ethereum);
-            await provider.send("eth_requestAccounts", []);
-
+    // Request account access (unchanged)
+    async function connectWallet() {
+        if (typeof window.ethereum !== 'undefined') {
             try {
-                await window.ethereum.request({
-                    method: 'wallet_switchEthereumChain',
-                    params: [{ chainId: SEPOLIA_CHAIN_ID }],
-                });
-            } catch (switchError) {
-                if (switchError.code === 4902) {
-                    try {
-                        await window.ethereum.request({
-                            method: 'wallet_addEthereumChain',
-                            params: [{
-                                chainId: SEPOLIA_CHAIN_ID,
-                                chainName: 'Sepolia Testnet',
-                                rpcUrls: ['https://rpc.sepolia.org'],
-                                nativeCurrency: { name: 'ETH', symbol: 'ETH', decimals: 18 },
-                                blockExplorerUrls: ['https://sepolia.etherscan.io']
-                            }],
-                        });
-                    } catch (addError) {
-                        alert('Failed to add Sepolia chain: ' + addError.message);
-                        return;
-                    }
-                } else {
-                    alert('Failed to switch to Sepolia: ' + switchError.message);
-                    return;
+                const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+                if (accounts.length > 0) {
+                    const account = accounts[0];
+                    statusDiv.textContent = `Connected: ${account.slice(0, 6)}...${account.slice(-4)}`;
+                    connectButton.textContent = 'Connected';
+                    connectButton.disabled = true;
+                    console.log('Connected account:', account);
                 }
-            }
-
-            signer = provider.getSigner();
-            userAddress = await signer.getAddress();
-            contract = new ethers.Contract(CONTRACT_ADDRESS, ABI, signer);
-
-            document.getElementById('connect').innerHTML = `Connected: ${userAddress.slice(0,6)}...${userAddress.slice(-4)}`;
-
-            await loadContractInfo();
-            checkOwnership();
-        }
-
-        async function loadContractInfo() {
-            try {
-                const wZYS = await contract.wZYS();
-                const YRS = await contract.YRS();
-                const shares = ethers.utils.formatUnits(await contract.totalYieldReserveShares(), 18);
-                const deposited = ethers.utils.formatUnits(await contract.totalWZYSDeposited(), 18);
-                const owner = await contract.owner();
-
-                document.getElementById('contractInfo').innerHTML = `
-                    <p><strong>wZYS Token:</strong> <a href="https://sepolia.etherscan.io/address/${wZYS}" target="_blank">${wZYS}</a></p>
-                    <p><strong>YRS Token:</strong> <a href="https://sepolia.etherscan.io/address/${YRS}" target="_blank">${YRS}</a></p>
-                    <p><strong>Total Yield Reserve Shares:</strong> ${shares}</p>
-                    <p><strong>Total wZYS Deposited:</strong> ${deposited}</p>
-                    <p><strong>Owner:</strong> <a href="https://sepolia.etherscan.io/address/${owner}" target="_blank">${owner}</a></p>
-                `;
             } catch (error) {
-                alert('Error loading contract info: ' + error.message);
+                console.error('User denied account access:', error);
+                statusDiv.textContent = 'Connection rejected.';
             }
         }
+    }
 
-        async function checkOwnership() {
-            try {
-                const owner = await contract.owner();
-                isOwner = userAddress.toLowerCase() === owner.toLowerCase();
-                document.getElementById('info').innerHTML = isOwner ? '<p style="color: green;">You are the owner.</p>' : '<p style="color: orange;">You are not the owner.</p>';
-            } catch (error) {
-                console.error(error);
-            }
-        }
+    // Event listeners (unchanged)
+    connectButton.addEventListener('click', connectWallet);
+    checkMetaMask();
 
-        async function approveAndCall(tokenAddress, amount, contractCall) {
-            const tokenContract = new ethers.Contract(tokenAddress, ERC20_ABI, signer);
-            const approveTx = await tokenContract.approve(CONTRACT_ADDRESS, amount);
-            await approveTx.wait();
-            return await contractCall();
-        }
-
-        async function buyYRS() {
-            try {
-                const wZYSAmountStr = document.getElementById('wZYSAmount').value;
-                const minYRSOutStr = document.getElementById('minYRSOut').value;
-                if (!wZYSAmountStr || !minYRSOutStr) return alert('Please fill both amounts.');
-
-                const wZYSAmount = ethers.utils.parseUnits(wZYSAmountStr, 18);
-                const minYRSOut = ethers.utils.parseUnits(minYRSOutStr, 18);
-
-                const wZYSAddr = await contract.wZYS();
-                await approveAndCall(wZYSAddr, wZYSAmount, () => contract.buy1(wZYSAmount, minYRSOut));
-                await loadContractInfo();
-                alert('Buy successful!');
-            } catch (error) {
-                alert('Buy failed: ' + error.message);
-            }
-        }
-
-        async function sellYRS() {
-            try {
-                const YRSAmountStr = document.getElementById('YRSAmount').value;
-                const minWZYSOutStr = document.getElementById('minWZYSOut').value;
-                if (!YRSAmountStr || !minWZYSOutStr) return alert('Please fill both amounts.');
-
-                const YRSAmount = ethers.utils.parseUnits(YRSAmountStr, 18);
-                const minWZYSOut = ethers.utils.parseUnits(minWZYSOutStr, 18);
-
-                const YRSAddr = await contract.YRS();
-                await approveAndCall(YRSAddr, YRSAmount, () => contract.sell1(YRSAmount, minWZYSOut));
-                await loadContractInfo();
-                alert('Sell successful!');
-            } catch (error) {
-                alert('Sell failed: ' + error.message);
-            }
-        }
-
-        async function burnYRS() {
-            try {
-                const burnAmountStr = document.getElementById('burnAmount').value;
-                if (!burnAmountStr) return alert('Please fill burn amount.');
-
-                const burnAmount = ethers.utils.parseUnits(burnAmountStr, 18);
-                const YRSAddr = await contract.YRS();
-                await approveAndCall(YRSAddr, burnAmount, () => contract.burn(burnAmount));
-                await loadContractInfo();
-                alert('Burn successful!');
-            } catch (error) {
-                alert('Burn failed: ' + error.message);
-            }
-        }
-
-        async function recoverERC20() {
-            if (!isOwner) return alert('Owner only!');
-            try {
-                const tokenAddr = document.getElementById('tokenAddr').value;
-                const recoverAmtStr = document.getElementById('recoverAmt').value;
-                if (!tokenAddr || !recoverAmtStr) return alert('Please fill token address and amount.');
-
-                const recoverAmt = ethers.utils.parseUnits(recoverAmtStr, 18);
-                const tx = await contract.recoverERC20(tokenAddr, recoverAmt);
-                await tx.wait();
-                alert('Recover successful!');
-            } catch (error) {
-                alert('Recover failed: ' + error.message);
-            }
-        }
-
-        async function renounceOwnership() {
-            if (!isOwner) return alert('Owner only!');
-            try {
-                const tx = await contract.renounceOwnership();
-                await tx.wait();
-                alert('Ownership renounced!');
-                checkOwnership();
-            } catch (error) {
-                alert('Renounce failed: ' + error.message);
-            }
-        }
-
-        function transferOwnershipPrompt() {
-            if (!isOwner) return alert('Owner only!');
-            const addr = document.getElementById('newOwnerAddr');
-            const btn = document.getElementById('confirmTransfer');
-            if (addr.style.display === 'none') {
-                addr.style.display = 'inline';
-                btn.style.display = 'inline';
+    if (window.ethereum) {
+        window.ethereum.on('accountsChanged', (accounts) => {
+            if (accounts.length === 0) {
+                statusDiv.textContent = 'Disconnected';
+                connectButton.textContent = 'Connect to MetaMask';
+                connectButton.disabled = false;
             } else {
-                addr.style.display = 'none';
-                btn.style.display = 'none';
+                const account = accounts[0];
+                statusDiv.textContent = `Connected: ${account.slice(0, 6)}...${account.slice(-4)}`;
             }
-        }
-
-        async function transferOwnership() {
-            if (!isOwner) return alert('Owner only!');
-            try {
-                const newOwner = document.getElementById('newOwnerAddr').value;
-                if (!ethers.utils.isAddress(newOwner)) return alert('Invalid address!');
-                const tx = await contract.transferOwnership(newOwner);
-                await tx.wait();
-                alert('Ownership transfer initiated!');
-                document.getElementById('newOwnerAddr').value = '';
-                document.getElementById('newOwnerAddr').style.display = 'none';
-                document.getElementById('confirmTransfer').style.display = 'none';
-                checkOwnership();
-            } catch (error) {
-                alert('Transfer failed: ' + error.message);
-            }
-        }
-
-        async function acceptOwnership() {
-            try {
-                const pending = await contract.pendingOwner();
-                if (pending.toLowerCase() !== userAddress.toLowerCase()) return alert('Not pending owner!');
-                const tx = await contract.acceptOwnership();
-                await tx.wait();
-                alert('Ownership accepted!');
-                checkOwnership();
-            } catch (error) {
-                alert('Accept failed: ' + error.message);
-            }
-        }
-    </script>
-</body>
-</html>
+        });
+    }
+</script>
