@@ -17,7 +17,6 @@
         .info { background-color: #e7f3ff; padding: 10px; border-radius: 4px; margin: 10px 0; }
         #connect-status { font-weight: bold; margin: 10px 0; }
         h2 { color: #333; }
-        .checking { color: blue; font-style: italic; }
     </style>
 </head>
 <body>
@@ -31,9 +30,8 @@
         <div id="connect-section">
             <button id="connect-btn" onclick="connectWallet()">Connect MetaMask</button>
             <div id="connect-status"></div>
-            <div id="metamask-install">
+            <div id="metamask-install" style="display: none;">
                 <p class="error">MetaMask is not detected! Please <a href="https://metamask.io/download/" target="_blank">install MetaMask</a> and refresh the page.</p>
-                <p id="checking-status" class="checking" style="display: none;">Checking for MetaMask... (retrying in 1 second)</p>
             </div>
         </div>
 
@@ -230,39 +228,16 @@
         let userAddress;
         let isOwner = false;
         let isConnected = false;
-        let metamaskCheckInterval;
 
-        // Function to check for MetaMask with retry
-        function checkMetaMask(retryCount = 0, maxRetries = 3) {
-            const installDiv = document.getElementById('metamask-install');
-            const checkingP = document.getElementById('checking-status');
-            const connectBtn = document.getElementById('connect-btn');
-
-            if (typeof window.ethereum !== 'undefined') {
-                clearInterval(metamaskCheckInterval);
-                installDiv.style.display = 'none';
-                checkingP.style.display = 'none';
-                connectBtn.disabled = false;
-                console.log('MetaMask detected!');
-                return;
-            }
-
-            if (retryCount >= maxRetries) {
-                clearInterval(metamaskCheckInterval);
-                checkingP.style.display = 'none';
-                connectBtn.disabled = true;
-                console.log('MetaMask not detected after retries.');
-                return;
-            }
-
-            checkingP.style.display = 'block';
-            checkingP.textContent = `Checking for MetaMask... (retry ${retryCount + 1}/${maxRetries} in 1 second)`;
-        }
-
-        // Start MetaMask detection on load with retries every second for up to 3 seconds
+        // Check for MetaMask on load
         window.addEventListener('load', () => {
-            checkMetaMask(0);
-            metamaskCheckInterval = setInterval(() => checkMetaMask(1), 1000);
+            if (typeof window.ethereum !== 'undefined') {
+                document.getElementById('metamask-install').style.display = 'none';
+                console.log('MetaMask is installed!');
+            } else {
+                document.getElementById('metamask-install').style.display = 'block';
+                document.getElementById('connect-btn').disabled = true;
+            }
         });
 
         // Listen for account and chain changes
@@ -293,7 +268,6 @@
             signer = null;
             provider = null;
             document.getElementById('connect-btn').textContent = 'Connect MetaMask';
-            document.getElementById('connect-btn').style.backgroundColor = '#007bff';
             document.getElementById('connect-status').innerHTML = '';
             document.getElementById('wallet-info').style.display = 'none';
             document.getElementById('contractInfo').style.display = 'none';
@@ -368,7 +342,6 @@
                 status.innerHTML = `<p class="error">Connection failed: ${error.message}. Please ensure MetaMask is unlocked and try again.</p>`;
                 connectBtn.disabled = false;
                 connectBtn.textContent = 'Connect MetaMask';
-                connectBtn.style.backgroundColor = '#007bff';
             }
         }
 
