@@ -6,75 +6,55 @@
     <title>YRS Staking Contract Interface - Sepolia</title>
     <script src="https://cdn.ethers.io/lib/ethers-5.7.umd.min.js" type="application/javascript"></script>
     <style>
-        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f5f5f5; }
-        .container { max-width: 800px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        input, button { margin: 5px; padding: 8px; border: 1px solid #ddd; border-radius: 4px; }
-        button { background-color: #007bff; color: white; cursor: pointer; }
-        button:hover { background-color: #0056b3; }
-        button:disabled { background-color: #ccc; cursor: not-allowed; }
-        .error { color: red; font-weight: bold; }
-        .success { color: green; font-weight: bold; }
-        .info { background-color: #e7f3ff; padding: 10px; border-radius: 4px; margin: 10px 0; }
-        #connect-status { font-weight: bold; margin: 10px 0; }
-        h2 { color: #333; }
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        input, button { margin: 5px; padding: 8px; }
+        div { margin: 20px 0; }
+        #connect { font-weight: bold; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>YRS Staking Contract Interaction</h1>
-        <p>Contract Address: <code>0x0eba64eA7d1055Cb87654EC554360741C31650E6</code> (Sepolia Testnet)</p>
-        <div class="info">
-            <strong>Note:</strong> Ensure you have MetaMask installed and are connected to Sepolia testnet. Owner should transfer YRS tokens to the contract address for liquidity to make buy/sell functional.
-        </div>
+    <h1>YRS Staking Contract Interaction</h1>
+    <p>Contract Address: <code>0x0eba64eA7d1055Cb87654EC554360741C31650E6</code> (Sepolia Testnet)</p>
+    <p><strong>Note:</strong> Ensure you are connected to Sepolia testnet. Owner should transfer YRS tokens to the contract address for liquidity to make buy/sell functional.</p>
 
-        <div id="connect-section">
-            <button id="connect-btn" onclick="connectWallet()">Connect MetaMask</button>
-            <div id="connect-status"></div>
-            <div id="metamask-install" style="display: none;">
-                <p class="error">MetaMask is not detected! Please <a href="https://metamask.io/download/" target="_blank">install MetaMask</a> and refresh the page.</p>
-            </div>
-        </div>
-
-        <div id="wallet-info" style="display: none;">
-            <p id="user-address"></p>
-            <p id="ownership-status"></p>
-        </div>
-
-        <div id="info"></div>
-
-        <h2>Contract Information</h2>
-        <div id="contractInfo" style="display: none;"></div>
-
-        <h2>Buy YRS with wZYS (10% Bonus)</h2>
-        <input id="wZYSAmount" placeholder="wZYS Amount (e.g., 1)" type="number" step="0.000000000000000001">
-        <input id="minYRSOut" placeholder="Min YRS Out (e.g., 1.1)" type="number" step="0.000000000000000001">
-        <button id="buy-btn" onclick="buyYRS()" disabled>Approve & Buy</button>
-
-        <h2>Sell YRS for wZYS (10% Penalty)</h2>
-        <input id="YRSAmount" placeholder="YRS Amount (e.g., 1)" type="number" step="0.000000000000000001">
-        <input id="minWZYSOut" placeholder="Min wZYS Out (e.g., 0.9)" type="number" step="0.000000000000000001">
-        <button id="sell-btn" onclick="sellYRS()" disabled>Approve & Sell</button>
-
-        <h2>Burn YRS Tokens</h2>
-        <input id="burnAmount" placeholder="Burn Amount (e.g., 1)" type="number" step="0.000000000000000001">
-        <button id="burn-btn" onclick="burnYRS()" disabled>Approve & Burn</button>
-
-        <h2>Recover ERC20 (Owner Only)</h2>
-        <input id="tokenAddr" placeholder="Token Address" type="text">
-        <input id="recoverAmt" placeholder="Amount (e.g., 1)" type="number" step="0.000000000000000001">
-        <button id="recover-btn" onclick="recoverERC20()" disabled>Recover</button>
-
-        <h2>Ownership Functions (Owner/Pending Only)</h2>
-        <button id="renounce-btn" onclick="renounceOwnership()" disabled>Renounce Ownership</button>
-        <button onclick="transferOwnershipPrompt()">Transfer Ownership</button>
-        <input id="newOwnerAddr" placeholder="New Owner Address" type="text" style="display: none;">
-        <button id="confirmTransfer" onclick="transferOwnership()" style="display: none;" disabled>Confirm Transfer</button>
-        <button id="accept-btn" onclick="acceptOwnership()" disabled>Accept Ownership</button>
+    <div id="connect">
+        <button onclick="connectWallet()">Connect MetaMask</button>
     </div>
+
+    <div id="info"></div>
+
+    <h2>Contract Information</h2>
+    <div id="contractInfo"></div>
+
+    <h2>Buy YRS with wZYS (10% Bonus)</h2>
+    <input id="wZYSAmount" placeholder="wZYS Amount (e.g., 1)" type="number" step="0.000000000000000001">
+    <input id="minYRSOut" placeholder="Min YRS Out (e.g., 1.1)" type="number" step="0.000000000000000001">
+    <button onclick="buyYRS()">Approve & Buy</button>
+
+    <h2>Sell YRS for wZYS (10% Penalty)</h2>
+    <input id="YRSAmount" placeholder="YRS Amount (e.g., 1)" type="number" step="0.000000000000000001">
+    <input id="minWZYSOut" placeholder="Min wZYS Out (e.g., 0.9)" type="number" step="0.000000000000000001">
+    <button onclick="sellYRS()">Approve & Sell</button>
+
+    <h2>Burn YRS Tokens</h2>
+    <input id="burnAmount" placeholder="Burn Amount (e.g., 1)" type="number" step="0.000000000000000001">
+    <button onclick="burnYRS()">Approve & Burn</button>
+
+    <h2>Recover ERC20 (Owner Only)</h2>
+    <input id="tokenAddr" placeholder="Token Address" type="text">
+    <input id="recoverAmt" placeholder="Amount (e.g., 1)" type="number" step="0.000000000000000001">
+    <button onclick="recoverERC20()">Recover</button>
+
+    <h2>Ownership Functions (Owner/Pending Only)</h2>
+    <button onclick="renounceOwnership()">Renounce Ownership</button>
+    <button onclick="transferOwnershipPrompt()">Transfer Ownership</button>
+    <input id="newOwnerAddr" placeholder="New Owner Address" type="text" style="display: none;">
+    <button id="confirmTransfer" onclick="transferOwnership()" style="display: none;">Confirm Transfer</button>
+    <button onclick="acceptOwnership()">Accept Ownership</button>
 
     <script>
         const CONTRACT_ADDRESS = '0x0eba64eA7d1055Cb87654EC554360741C31650E6';
-        const SEPOLIA_CHAIN_ID = '0xaa36a7'; // 11155111 in hex
+        const SEPOLIA_CHAIN_ID = '0xaa36a7'; // 11155111
 
         const ABI = [
             {
@@ -227,129 +207,52 @@
         let contract;
         let userAddress;
         let isOwner = false;
-        let isConnected = false;
-
-        // Check for MetaMask on load
-        window.addEventListener('load', () => {
-            if (typeof window.ethereum !== 'undefined') {
-                document.getElementById('metamask-install').style.display = 'none';
-                console.log('MetaMask is installed!');
-            } else {
-                document.getElementById('metamask-install').style.display = 'block';
-                document.getElementById('connect-btn').disabled = true;
-            }
-        });
-
-        // Listen for account and chain changes
-        if (typeof window.ethereum !== 'undefined') {
-            window.ethereum.on('accountsChanged', handleAccountsChanged);
-            window.ethereum.on('chainChanged', handleChainChanged);
-        }
-
-        function handleAccountsChanged(accounts) {
-            if (accounts.length === 0) {
-                // MetaMask is locked or the user has signed out
-                disconnectWallet();
-            } else {
-                connectWallet(); // Reconnect with new account
-            }
-        }
-
-        function handleChainChanged(chainId) {
-            if (chainId !== SEPOLIA_CHAIN_ID) {
-                window.location.reload();
-            }
-        }
-
-        function disconnectWallet() {
-            isConnected = false;
-            userAddress = null;
-            contract = null;
-            signer = null;
-            provider = null;
-            document.getElementById('connect-btn').textContent = 'Connect MetaMask';
-            document.getElementById('connect-status').innerHTML = '';
-            document.getElementById('wallet-info').style.display = 'none';
-            document.getElementById('contractInfo').style.display = 'none';
-            enableButtons(false);
-        }
 
         async function connectWallet() {
-            const connectBtn = document.getElementById('connect-btn');
-            const status = document.getElementById('connect-status');
-
             if (typeof window.ethereum === 'undefined') {
-                status.innerHTML = '<p class="error">MetaMask is required to connect. <a href="https://metamask.io/download/" target="_blank">Install MetaMask</a> and refresh the page.</p>';
+                alert('MetaMask not detected!');
                 return;
             }
 
-            connectBtn.disabled = true;
-            connectBtn.textContent = 'Connecting...';
-            status.innerHTML = '<p>Initializing...</p>';
+            provider = new ethers.providers.Web3Provider(window.ethereum);
+            await provider.send("eth_requestAccounts", []);
 
             try {
-                // Request account access
-                await window.ethereum.request({ method: 'eth_requestAccounts' });
-
-                // Set up provider and signer
-                provider = new ethers.providers.Web3Provider(window.ethereum);
-                signer = provider.getSigner();
-                userAddress = await signer.getAddress();
-
-                // Check and switch to Sepolia
-                const currentChainId = await provider.getNetwork().then(n => '0x' + n.chainId.toString(16));
-                if (currentChainId !== SEPOLIA_CHAIN_ID) {
+                await window.ethereum.request({
+                    method: 'wallet_switchEthereumChain',
+                    params: [{ chainId: SEPOLIA_CHAIN_ID }],
+                });
+            } catch (switchError) {
+                if (switchError.code === 4902) {
                     try {
                         await window.ethereum.request({
-                            method: 'wallet_switchEthereumChain',
-                            params: [{ chainId: SEPOLIA_CHAIN_ID }],
+                            method: 'wallet_addEthereumChain',
+                            params: [{
+                                chainId: SEPOLIA_CHAIN_ID,
+                                chainName: 'Sepolia Testnet',
+                                rpcUrls: ['https://rpc.sepolia.org'],
+                                nativeCurrency: { name: 'ETH', symbol: 'ETH', decimals: 18 },
+                                blockExplorerUrls: ['https://sepolia.etherscan.io']
+                            }],
                         });
-                    } catch (switchError) {
-                        if (switchError.code === 4902) { // Chain not added
-                            await window.ethereum.request({
-                                method: 'wallet_addEthereumChain',
-                                params: [{
-                                    chainId: SEPOLIA_CHAIN_ID,
-                                    chainName: 'Sepolia Testnet',
-                                    rpcUrls: ['https://rpc.sepolia.org'],
-                                    nativeCurrency: { name: 'ETH', symbol: 'ETH', decimals: 18 },
-                                    blockExplorerUrls: ['https://sepolia.etherscan.io']
-                                }],
-                            });
-                        } else {
-                            throw switchError;
-                        }
+                    } catch (addError) {
+                        alert('Failed to add Sepolia chain: ' + addError.message);
+                        return;
                     }
+                } else {
+                    alert('Failed to switch to Sepolia: ' + switchError.message);
+                    return;
                 }
-
-                // Initialize contract
-                contract = new ethers.Contract(CONTRACT_ADDRESS, ABI, signer);
-
-                isConnected = true;
-                connectBtn.textContent = 'Connected';
-                connectBtn.style.backgroundColor = '#28a745';
-                status.innerHTML = `<p class="success">Connected to: ${userAddress.slice(0,6)}...${userAddress.slice(-4)}</p>`;
-
-                document.getElementById('user-address').textContent = `Address: ${userAddress}`;
-                document.getElementById('wallet-info').style.display = 'block';
-
-                await loadContractInfo();
-                await checkOwnership();
-                enableButtons(true);
-
-            } catch (error) {
-                console.error(error);
-                status.innerHTML = `<p class="error">Connection failed: ${error.message}. Please ensure MetaMask is unlocked and try again.</p>`;
-                connectBtn.disabled = false;
-                connectBtn.textContent = 'Connect MetaMask';
             }
-        }
 
-        function enableButtons(enabled) {
-            const buttons = ['buy-btn', 'sell-btn', 'burn-btn', 'recover-btn', 'renounce-btn', 'accept-btn', 'confirmTransfer'];
-            buttons.forEach(id => {
-                document.getElementById(id).disabled = !enabled;
-            });
+            signer = provider.getSigner();
+            userAddress = await signer.getAddress();
+            contract = new ethers.Contract(CONTRACT_ADDRESS, ABI, signer);
+
+            document.getElementById('connect').innerHTML = `Connected: ${userAddress.slice(0,6)}...${userAddress.slice(-4)}`;
+
+            await loadContractInfo();
+            checkOwnership();
         }
 
         async function loadContractInfo() {
@@ -367,148 +270,114 @@
                     <p><strong>Total wZYS Deposited:</strong> ${deposited}</p>
                     <p><strong>Owner:</strong> <a href="https://sepolia.etherscan.io/address/${owner}" target="_blank">${owner}</a></p>
                 `;
-                document.getElementById('contractInfo').style.display = 'block';
             } catch (error) {
-                document.getElementById('connect-status').innerHTML += `<p class="error">Error loading contract info: ${error.message}</p>`;
+                alert('Error loading contract info: ' + error.message);
             }
         }
 
         async function checkOwnership() {
             try {
                 const owner = await contract.owner();
-                const pendingOwner = await contract.pendingOwner();
                 isOwner = userAddress.toLowerCase() === owner.toLowerCase();
-
-                let status = isOwner ? '<p class="success">You are the owner.</p>' : '<p style="color: orange;">You are not the owner.</p>';
-                if (pendingOwner && userAddress.toLowerCase() === pendingOwner.toLowerCase()) {
-                    status += '<p class="success">You are the pending owner. You can accept ownership.</p>';
-                    document.getElementById('accept-btn').disabled = false;
-                }
-                document.getElementById('ownership-status').innerHTML = status;
-
-                // Enable owner-only buttons
-                document.getElementById('recover-btn').disabled = !isOwner || !isConnected;
-                document.getElementById('renounce-btn').disabled = !isOwner || !isConnected;
-                document.getElementById('confirmTransfer').disabled = !isOwner || !isConnected;
+                document.getElementById('info').innerHTML = isOwner ? '<p style="color: green;">You are the owner.</p>' : '<p style="color: orange;">You are not the owner.</p>';
             } catch (error) {
                 console.error(error);
             }
         }
 
         async function approveAndCall(tokenAddress, amount, contractCall) {
-            try {
-                const tokenContract = new ethers.Contract(tokenAddress, ERC20_ABI, signer);
-                const approveTx = await tokenContract.approve(CONTRACT_ADDRESS, amount);
-                statusUpdate('Approving tokens... Waiting for confirmation.', 'info');
-                await approveTx.wait();
-                statusUpdate('Approval confirmed. Executing transaction...', 'info');
-                return await contractCall();
-            } catch (error) {
-                throw new Error(`Approval failed: ${error.message}`);
-            }
-        }
-
-        function statusUpdate(message, type = 'info') {
-            document.getElementById('connect-status').innerHTML += `<p class="${type}">${message}</p>`;
+            const tokenContract = new ethers.Contract(tokenAddress, ERC20_ABI, signer);
+            const approveTx = await tokenContract.approve(CONTRACT_ADDRESS, amount);
+            await approveTx.wait();
+            return await contractCall();
         }
 
         async function buyYRS() {
-            if (!isConnected) return statusUpdate('Please connect your wallet first.', 'error');
             try {
                 const wZYSAmountStr = document.getElementById('wZYSAmount').value;
                 const minYRSOutStr = document.getElementById('minYRSOut').value;
-                if (!wZYSAmountStr || !minYRSOutStr) return statusUpdate('Please fill both amounts.', 'error');
+                if (!wZYSAmountStr || !minYRSOutStr) return alert('Please fill both amounts.');
 
                 const wZYSAmount = ethers.utils.parseUnits(wZYSAmountStr, 18);
                 const minYRSOut = ethers.utils.parseUnits(minYRSOutStr, 18);
 
                 const wZYSAddr = await contract.wZYS();
-                const tx = await approveAndCall(wZYSAddr, wZYSAmount, () => contract.buy1(wZYSAmount, minYRSOut));
-                statusUpdate('Transaction sent. Waiting for confirmation...', 'info');
-                await tx.wait();
+                await approveAndCall(wZYSAddr, wZYSAmount, () => contract.buy1(wZYSAmount, minYRSOut));
                 await loadContractInfo();
-                statusUpdate('Buy successful!', 'success');
+                alert('Buy successful!');
             } catch (error) {
-                statusUpdate(`Buy failed: ${error.message}`, 'error');
+                alert('Buy failed: ' + error.message);
             }
         }
 
         async function sellYRS() {
-            if (!isConnected) return statusUpdate('Please connect your wallet first.', 'error');
             try {
                 const YRSAmountStr = document.getElementById('YRSAmount').value;
                 const minWZYSOutStr = document.getElementById('minWZYSOut').value;
-                if (!YRSAmountStr || !minWZYSOutStr) return statusUpdate('Please fill both amounts.', 'error');
+                if (!YRSAmountStr || !minWZYSOutStr) return alert('Please fill both amounts.');
 
                 const YRSAmount = ethers.utils.parseUnits(YRSAmountStr, 18);
                 const minWZYSOut = ethers.utils.parseUnits(minWZYSOutStr, 18);
 
                 const YRSAddr = await contract.YRS();
-                const tx = await approveAndCall(YRSAddr, YRSAmount, () => contract.sell1(YRSAmount, minWZYSOut));
-                statusUpdate('Transaction sent. Waiting for confirmation...', 'info');
-                await tx.wait();
+                await approveAndCall(YRSAddr, YRSAmount, () => contract.sell1(YRSAmount, minWZYSOut));
                 await loadContractInfo();
-                statusUpdate('Sell successful!', 'success');
+                alert('Sell successful!');
             } catch (error) {
-                statusUpdate(`Sell failed: ${error.message}`, 'error');
+                alert('Sell failed: ' + error.message);
             }
         }
 
         async function burnYRS() {
-            if (!isConnected) return statusUpdate('Please connect your wallet first.', 'error');
             try {
                 const burnAmountStr = document.getElementById('burnAmount').value;
-                if (!burnAmountStr) return statusUpdate('Please fill burn amount.', 'error');
+                if (!burnAmountStr) return alert('Please fill burn amount.');
 
                 const burnAmount = ethers.utils.parseUnits(burnAmountStr, 18);
                 const YRSAddr = await contract.YRS();
-                const tx = await approveAndCall(YRSAddr, burnAmount, () => contract.burn(burnAmount));
-                statusUpdate('Transaction sent. Waiting for confirmation...', 'info');
-                await tx.wait();
+                await approveAndCall(YRSAddr, burnAmount, () => contract.burn(burnAmount));
                 await loadContractInfo();
-                statusUpdate('Burn successful!', 'success');
+                alert('Burn successful!');
             } catch (error) {
-                statusUpdate(`Burn failed: ${error.message}`, 'error');
+                alert('Burn failed: ' + error.message);
             }
         }
 
         async function recoverERC20() {
-            if (!isConnected || !isOwner) return statusUpdate('Owner only! Please connect as owner.', 'error');
+            if (!isOwner) return alert('Owner only!');
             try {
                 const tokenAddr = document.getElementById('tokenAddr').value;
                 const recoverAmtStr = document.getElementById('recoverAmt').value;
-                if (!tokenAddr || !recoverAmtStr) return statusUpdate('Please fill token address and amount.', 'error');
+                if (!tokenAddr || !recoverAmtStr) return alert('Please fill token address and amount.');
 
                 const recoverAmt = ethers.utils.parseUnits(recoverAmtStr, 18);
                 const tx = await contract.recoverERC20(tokenAddr, recoverAmt);
-                statusUpdate('Transaction sent. Waiting for confirmation...', 'info');
                 await tx.wait();
-                statusUpdate('Recover successful!', 'success');
+                alert('Recover successful!');
             } catch (error) {
-                statusUpdate(`Recover failed: ${error.message}`, 'error');
+                alert('Recover failed: ' + error.message);
             }
         }
 
         async function renounceOwnership() {
-            if (!isConnected || !isOwner) return statusUpdate('Owner only! Please connect as owner.', 'error');
+            if (!isOwner) return alert('Owner only!');
             try {
                 const tx = await contract.renounceOwnership();
-                statusUpdate('Transaction sent. Waiting for confirmation...', 'info');
                 await tx.wait();
-                statusUpdate('Ownership renounced!', 'success');
-                await checkOwnership();
+                alert('Ownership renounced!');
+                checkOwnership();
             } catch (error) {
-                statusUpdate(`Renounce failed: ${error.message}`, 'error');
+                alert('Renounce failed: ' + error.message);
             }
         }
 
         function transferOwnershipPrompt() {
-            if (!isConnected || !isOwner) return statusUpdate('Owner only! Please connect as owner.', 'error');
+            if (!isOwner) return alert('Owner only!');
             const addr = document.getElementById('newOwnerAddr');
             const btn = document.getElementById('confirmTransfer');
             if (addr.style.display === 'none') {
-                addr.style.display = 'inline-block';
-                btn.style.display = 'inline-block';
+                addr.style.display = 'inline';
+                btn.style.display = 'inline';
             } else {
                 addr.style.display = 'none';
                 btn.style.display = 'none';
@@ -516,35 +385,32 @@
         }
 
         async function transferOwnership() {
-            if (!isConnected || !isOwner) return statusUpdate('Owner only! Please connect as owner.', 'error');
+            if (!isOwner) return alert('Owner only!');
             try {
                 const newOwner = document.getElementById('newOwnerAddr').value;
-                if (!ethers.utils.isAddress(newOwner)) return statusUpdate('Invalid address!', 'error');
+                if (!ethers.utils.isAddress(newOwner)) return alert('Invalid address!');
                 const tx = await contract.transferOwnership(newOwner);
-                statusUpdate('Transaction sent. Waiting for confirmation...', 'info');
                 await tx.wait();
-                statusUpdate('Ownership transfer initiated!', 'success');
+                alert('Ownership transfer initiated!');
                 document.getElementById('newOwnerAddr').value = '';
                 document.getElementById('newOwnerAddr').style.display = 'none';
                 document.getElementById('confirmTransfer').style.display = 'none';
-                await checkOwnership();
+                checkOwnership();
             } catch (error) {
-                statusUpdate(`Transfer failed: ${error.message}`, 'error');
+                alert('Transfer failed: ' + error.message);
             }
         }
 
         async function acceptOwnership() {
-            if (!isConnected) return statusUpdate('Please connect your wallet first.', 'error');
             try {
                 const pending = await contract.pendingOwner();
-                if (pending.toLowerCase() !== userAddress.toLowerCase()) return statusUpdate('Not pending owner!', 'error');
+                if (pending.toLowerCase() !== userAddress.toLowerCase()) return alert('Not pending owner!');
                 const tx = await contract.acceptOwnership();
-                statusUpdate('Transaction sent. Waiting for confirmation...', 'info');
                 await tx.wait();
-                statusUpdate('Ownership accepted!', 'success');
-                await checkOwnership();
+                alert('Ownership accepted!');
+                checkOwnership();
             } catch (error) {
-                statusUpdate(`Accept failed: ${error.message}`, 'error');
+                alert('Accept failed: ' + error.message);
             }
         }
     </script>
