@@ -497,6 +497,30 @@
             background: var(--secondary-color);
         }
 
+        /* Transaction details section */
+        .transaction-details {
+            background: var(--surface-light);
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 15px;
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .detail-label {
+            font-weight: 500;
+        }
+
+        .detail-value {
+            color: var(--text-primary);
+        }
+
         /* Responsive design */
         @media (max-width: 768px) {
             .dashboard, .trading-section {
@@ -624,6 +648,17 @@
                         </div>
                     </div>
                     
+                    <div class="transaction-details" id="buyTransactionDetails" style="display: none;">
+                        <div class="detail-row">
+                            <span class="detail-label">wZYS Amount (wei):</span>
+                            <span class="detail-value" id="buyWZYSWei">-</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Min YRS Out (wei):</span>
+                            <span class="detail-value" id="buyYRSWei">-</span>
+                        </div>
+                    </div>
+                    
                     <button id="buyBtn" class="trade-btn buy-btn" disabled>
                         <i class="fas fa-arrow-down"></i> Buy YRS
                     </button>
@@ -660,6 +695,17 @@
                         <div class="input-group">
                             <input type="number" id="minWZYSOut" class="form-input" placeholder="0.0" min="0" step="0.01">
                             <span class="input-suffix">wZYS</span>
+                        </div>
+                    </div>
+                    
+                    <div class="transaction-details" id="sellTransactionDetails" style="display: none;">
+                        <div class="detail-row">
+                            <span class="detail-label">YRS Amount (wei):</span>
+                            <span class="detail-value" id="sellYRSWei">-</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Min wZYS Out (wei):</span>
+                            <span class="detail-value" id="sellWZYSWei">-</span>
                         </div>
                     </div>
                     
@@ -765,6 +811,14 @@
             const sellBtn = document.getElementById('sellBtn');
             const loadingOverlay = document.getElementById('loadingOverlay');
             
+            // Transaction details elements
+            const buyTransactionDetails = document.getElementById('buyTransactionDetails');
+            const sellTransactionDetails = document.getElementById('sellTransactionDetails');
+            const buyWZYSWeiElement = document.getElementById('buyWZYSWei');
+            const buyYRSWeiElement = document.getElementById('buyYRSWei');
+            const sellYRSWeiElement = document.getElementById('sellYRSWei');
+            const sellWZYSWeiElement = document.getElementById('sellWZYSWei');
+            
             // Initialize
             await checkConnection();
             setupEventListeners();
@@ -852,10 +906,12 @@
                 // Buy form inputs
                 buyWZYSAmountInput.addEventListener('input', calculateExpectedYRS);
                 buyWZYSAmountInput.addEventListener('input', setMinYRSOut);
+                buyWZYSAmountInput.addEventListener('input', updateBuyTransactionDetails);
                 
                 // Sell form inputs
                 sellYRSAmountInput.addEventListener('input', calculateExpectedWZYS);
                 sellYRSAmountInput.addEventListener('input', setMinWZYSOut);
+                sellYRSAmountInput.addEventListener('input', updateSellTransactionDetails);
                 
                 // Trade buttons
                 buyBtn.addEventListener('click', handleBuy);
@@ -868,6 +924,7 @@
                     buyWZYSAmountInput.value = balance;
                     calculateExpectedYRS();
                     setMinYRSOut();
+                    updateBuyTransactionDetails();
                 });
                 
                 userYRSBalanceElement.addEventListener('click', () => {
@@ -876,6 +933,7 @@
                     sellYRSAmountInput.value = balance;
                     calculateExpectedWZYS();
                     setMinWZYSOut();
+                    updateSellTransactionDetails();
                 });
                 
                 // Handle account changes
@@ -995,6 +1053,10 @@
                 userWZYSBalanceElement.textContent = '0 wZYS';
                 userYRSBalanceElement.textContent = '0 YRS';
                 
+                // Hide transaction details
+                buyTransactionDetails.style.display = 'none';
+                sellTransactionDetails.style.display = 'none';
+                
                 showToast('info', 'Wallet Disconnected', 'Your wallet has been disconnected');
             }
             
@@ -1090,6 +1152,46 @@
                 minWZYSOutInput.value = minWZYS.toFixed(6);
             }
             
+            // Update buy transaction details
+            function updateBuyTransactionDetails() {
+                const wZYSAmount = parseFloat(buyWZYSAmountInput.value) || 0;
+                const minYRSOut = parseFloat(minYRSOutInput.value) || 0;
+                
+                if (wZYSAmount > 0 && minYRSOut > 0) {
+                    buyTransactionDetails.style.display = 'block';
+                    
+                    // Convert to wei with correct decimals
+                    const wZYSAmountWei = ethers.utils.parseUnits(wZYSAmount.toString(), wZYSDecimals);
+                    const minYRSOutWei = ethers.utils.parseUnits(minYRSOut.toString(), YRSDecimals);
+                    
+                    // Display wei values
+                    buyWZYSWeiElement.textContent = wZYSAmountWei.toString();
+                    buyYRSWeiElement.textContent = minYRSOutWei.toString();
+                } else {
+                    buyTransactionDetails.style.display = 'none';
+                }
+            }
+            
+            // Update sell transaction details
+            function updateSellTransactionDetails() {
+                const YRSAmount = parseFloat(sellYRSAmountInput.value) || 0;
+                const minWZYSOut = parseFloat(minWZYSOutInput.value) || 0;
+                
+                if (YRSAmount > 0 && minWZYSOut > 0) {
+                    sellTransactionDetails.style.display = 'block';
+                    
+                    // Convert to wei with correct decimals
+                    const YRSAmountWei = ethers.utils.parseUnits(YRSAmount.toString(), YRSDecimals);
+                    const minWZYSOutWei = ethers.utils.parseUnits(minWZYSOut.toString(), wZYSDecimals);
+                    
+                    // Display wei values
+                    sellYRSWeiElement.textContent = YRSAmountWei.toString();
+                    sellWZYSWeiElement.textContent = minWZYSOutWei.toString();
+                } else {
+                    sellTransactionDetails.style.display = 'none';
+                }
+            }
+            
             // Handle buy transaction
             async function handleBuy() {
                 if (!isConnected || !isConfigured) {
@@ -1140,6 +1242,7 @@
                     buyWZYSAmountInput.value = '';
                     expectedYRSInput.value = '';
                     minYRSOutInput.value = '';
+                    buyTransactionDetails.style.display = 'none';
                     
                     showToast('success', 'Purchase Successful', `You bought ${expectedYRSInput.value} YRS tokens`);
                 } catch (error) {
@@ -1151,6 +1254,15 @@
                         errorMessage = error.data.message;
                     } else if (error.message) {
                         errorMessage = error.message;
+                    }
+                    
+                    // Check for specific error cases
+                    if (errorMessage.includes('Insufficient YRS output')) {
+                        errorMessage = 'Insufficient YRS output. The contract does not have enough YRS tokens for this transaction.';
+                    } else if (errorMessage.includes('Insufficient YRS in reserve')) {
+                        errorMessage = 'Insufficient YRS in reserve. The contract does not have enough YRS tokens.';
+                    } else if (errorMessage.includes('insufficient funds')) {
+                        errorMessage = 'Insufficient funds. You do not have enough wZYS tokens.';
                     }
                     
                     showToast('error', 'Transaction Failed', errorMessage);
@@ -1211,6 +1323,7 @@
                     sellYRSAmountInput.value = '';
                     expectedWZYSInput.value = '';
                     minWZYSOutInput.value = '';
+                    sellTransactionDetails.style.display = 'none';
                     
                     showToast('success', 'Sale Successful', `You sold ${YRSAmount} YRS tokens`);
                 } catch (error) {
@@ -1222,6 +1335,15 @@
                         errorMessage = error.data.message;
                     } else if (error.message) {
                         errorMessage = error.message;
+                    }
+                    
+                    // Check for specific error cases
+                    if (errorMessage.includes('Insufficient wZYS output')) {
+                        errorMessage = 'Insufficient wZYS output. The contract does not have enough wZYS tokens for this transaction.';
+                    } else if (errorMessage.includes('Insufficient wZYS in reserve')) {
+                        errorMessage = 'Insufficient wZYS in reserve. The contract does not have enough wZYS tokens.';
+                    } else if (errorMessage.includes('Insufficient YRS balance')) {
+                        errorMessage = 'Insufficient YRS balance. You do not have enough YRS tokens.';
                     }
                     
                     showToast('error', 'Transaction Failed', errorMessage);
