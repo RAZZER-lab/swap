@@ -542,20 +542,6 @@
             gap: 8px;
         }
 
-        /* Visual multiplier indicator */
-        .multiplier-indicator {
-            background: rgba(245, 158, 11, 0.1);
-            border: 1px solid rgba(245, 158, 11, 0.2);
-            border-radius: 8px;
-            padding: 8px 12px;
-            margin-bottom: 15px;
-            font-size: 13px;
-            color: var(--accent-color);
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
         /* Responsive design */
         @media (max-width: 768px) {
             .dashboard, .trading-section {
@@ -612,11 +598,11 @@
                         <input type="text" id="contractAddress" class="config-input" placeholder="0x...">
                     </div>
                     <div class="config-group">
-                        <label class="config-label">wZYS Token (12 decimals)</label>
+                        <label class="config-label">wZYS Token</label>
                         <input type="text" id="wZYSAddress" class="config-input" placeholder="0x...">
                     </div>
                     <div class="config-group">
-                        <label class="config-label">YRS Token (18 decimals)</label>
+                        <label class="config-label">YRS Token</label>
                         <input type="text" id="YRSAddress" class="config-input" placeholder="0x...">
                     </div>
                     <button id="saveConfig" class="config-btn">Save</button>
@@ -639,7 +625,7 @@
                         Total YRS Reserve
                     </div>
                     <div class="stat-value" id="totalYRS">-</div>
-                    <div class="stat-label">YRS tokens in reserve (×10⁶ for display)</div>
+                    <div class="stat-label">YRS tokens in reserve</div>
                 </div>
                 
                 <div class="card ratio-card">
@@ -679,15 +665,7 @@
                         <label class="form-label">Expected YRS (with 10% bonus)</label>
                         <div class="input-group">
                             <input type="text" id="expectedYRS" class="form-input" placeholder="0.0" readonly>
-                            <span class="input-suffix">YRS (×10⁶)</span>
-                        </div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label class="form-label">Minimum YRS expected (slippage protection)</label>
-                        <div class="input-group">
-                            <input type="number" id="minYRSOut" class="form-input" placeholder="0.0" min="0" step="0.01">
-                            <span class="input-suffix">YRS (×10⁶)</span>
+                            <span class="input-suffix">YRS</span>
                         </div>
                     </div>
                     
@@ -695,10 +673,6 @@
                         <div class="detail-row">
                             <span class="detail-label">wZYS Amount (wei):</span>
                             <span class="detail-value" id="buyWZYSWei">-</span>
-                        </div>
-                        <div class="detail-row">
-                            <span class="detail-label">Min YRS Out (wei):</span>
-                            <span class="detail-value" id="buyYRSWei">-</span>
                         </div>
                         <div class="detail-row">
                             <span class="detail-label">Sent to contract:</span>
@@ -717,11 +691,6 @@
                         <div class="trade-type sell-type">-10% Penalty</div>
                     </div>
                     
-                    <div class="multiplier-indicator">
-                        <i class="fas fa-exclamation-triangle"></i>
-                        <span>YRS values displayed ×10⁶ for visual clarity</span>
-                    </div>
-                    
                     <div class="info-box">
                         <div class="info-box-title">
                             <i class="fas fa-info-circle"></i>
@@ -734,7 +703,7 @@
                         <label class="form-label">Amount of YRS to sell</label>
                         <div class="input-group">
                             <input type="number" id="sellYRSAmount" class="form-input" placeholder="0.0" min="0" step="0.01">
-                            <span class="input-suffix">YRS (×10⁶)</span>
+                            <span class="input-suffix">YRS</span>
                         </div>
                         <div class="balance-info">
                             <span>Balance:</span>
@@ -750,22 +719,10 @@
                         </div>
                     </div>
                     
-                    <div class="form-group">
-                        <label class="form-label">Minimum wZYS expected (slippage protection)</label>
-                        <div class="input-group">
-                            <input type="number" id="minWZYSOut" class="form-input" placeholder="0.0" min="0" step="0.01">
-                            <span class="input-suffix">wZYS</span>
-                        </div>
-                    </div>
-                    
                     <div class="transaction-details" id="sellTransactionDetails" style="display: none;">
                         <div class="detail-row">
                             <span class="detail-label">YRS Amount (wei):</span>
                             <span class="detail-value" id="sellYRSWei">-</span>
-                        </div>
-                        <div class="detail-row">
-                            <span class="detail-label">Min wZYS Out (wei):</span>
-                            <span class="detail-value" id="sellWZYSWei">-</span>
                         </div>
                         <div class="detail-row">
                             <span class="detail-label">Sent to contract:</span>
@@ -813,6 +770,23 @@
             document.getElementById('wZYSAddress').value = WZYS_ADDRESS;
             document.getElementById('YRSAddress').value = YRS_ADDRESS;
             
+            // Pre-fill with provided addresses if empty
+            if (!CONTRACT_ADDRESS) {
+                // This would be the deployed contract address
+                // CONTRACT_ADDRESS = "0x..."; // You would need to provide this
+                // document.getElementById('contractAddress').value = CONTRACT_ADDRESS;
+            }
+            
+            if (!WZYS_ADDRESS) {
+                WZYS_ADDRESS = "0x7Eb81e6a8E1686DE83E232c876ad2bf5E01728a4";
+                document.getElementById('wZYSAddress').value = WZYS_ADDRESS;
+            }
+            
+            if (!YRS_ADDRESS) {
+                YRS_ADDRESS = "0x1e45324f51F82533F3bb324E54a8FBda8eb315E3";
+                document.getElementById('YRSAddress').value = YRS_ADDRESS;
+            }
+            
             // Complete ABI for the YRSStaking contract
             const CONTRACT_ABI = [
                 // Public state variables as view functions
@@ -820,10 +794,11 @@
                 "function totalYieldReserveShares() view returns (uint256)",
                 "function wZYS() view returns (address)",
                 "function YRS() view returns (address)",
+                "function getTotals() view returns (uint256 totalWZYSDeposited, uint256 totalYieldReserveShares)",
                 
                 // Contract functions
-                "function buy1(uint256 wZYSAmount, uint256 minYRSOut)",
-                "function sell1(uint256 YRSAmount, uint256 minWZYSOut)",
+                "function buy1(uint256 wZYSAmount)",
+                "function sell1(uint256 YRSAmount)",
                 "function burn(uint256 amount)",
                 "function recoverERC20(address tokenAddress, uint256 amount)",
                 
@@ -854,11 +829,8 @@
             let userAddress;
             let isConnected = false;
             let isConfigured = false;
-            let wZYSDecimals = 12; // wZYS uses 12 decimals
-            let YRSDecimals = 18; // YRS uses 18 decimals
-            
-            // Visual multiplier for YRS display (10^6)
-            const YRS_VISUAL_MULTIPLIER = 1000000;
+            let wZYSDecimals = 18; // Default to 18 decimals
+            let YRSDecimals = 18; // Default to 18 decimals
             
             // DOM elements
             const connectWalletBtn = document.getElementById('connectWallet');
@@ -870,10 +842,8 @@
             const userYRSBalanceElement = document.getElementById('userYRSBalance');
             const buyWZYSAmountInput = document.getElementById('buyWZYSAmount');
             const expectedYRSInput = document.getElementById('expectedYRS');
-            const minYRSOutInput = document.getElementById('minYRSOut');
             const sellYRSAmountInput = document.getElementById('sellYRSAmount');
             const expectedWZYSInput = document.getElementById('expectedWZYS');
-            const minWZYSOutInput = document.getElementById('minWZYSOut');
             const buyBtn = document.getElementById('buyBtn');
             const sellBtn = document.getElementById('sellBtn');
             const loadingOverlay = document.getElementById('loadingOverlay');
@@ -882,9 +852,7 @@
             const buyTransactionDetails = document.getElementById('buyTransactionDetails');
             const sellTransactionDetails = document.getElementById('sellTransactionDetails');
             const buyWZYSWeiElement = document.getElementById('buyWZYSWei');
-            const buyYRSWeiElement = document.getElementById('buyYRSWei');
             const sellYRSWeiElement = document.getElementById('sellYRSWei');
-            const sellWZYSWeiElement = document.getElementById('sellWZYSWei');
             const sentToContractElement = document.getElementById('sentToContract');
             const sentToContractSellElement = document.getElementById('sentToContractSell');
             
@@ -950,8 +918,8 @@
                         wZYSDecimals = await wZYSContract.decimals();
                         console.log(`wZYS decimals: ${wZYSDecimals}`);
                     } catch (e) {
-                        console.log("Could not fetch wZYS decimals, using default 12");
-                        wZYSDecimals = 12;
+                        console.log("Could not fetch wZYS decimals, using default 18");
+                        wZYSDecimals = 18;
                     }
                     
                     try {
@@ -974,12 +942,10 @@
                 
                 // Buy form inputs
                 buyWZYSAmountInput.addEventListener('input', calculateExpectedYRS);
-                buyWZYSAmountInput.addEventListener('input', setMinYRSOut);
                 buyWZYSAmountInput.addEventListener('input', updateBuyTransactionDetails);
                 
                 // Sell form inputs
                 sellYRSAmountInput.addEventListener('input', calculateExpectedWZYS);
-                sellYRSAmountInput.addEventListener('input', setMinWZYSOut);
                 sellYRSAmountInput.addEventListener('input', updateSellTransactionDetails);
                 
                 // Trade buttons
@@ -992,7 +958,6 @@
                     const balance = parseFloat(balanceText.replace(/,/g, ''));
                     buyWZYSAmountInput.value = balance;
                     calculateExpectedYRS();
-                    setMinYRSOut();
                     updateBuyTransactionDetails();
                 });
                 
@@ -1001,7 +966,6 @@
                     const balance = parseFloat(balanceText.replace(/,/g, ''));
                     sellYRSAmountInput.value = balance;
                     calculateExpectedWZYS();
-                    setMinWZYSOut();
                     updateSellTransactionDetails();
                 });
                 
@@ -1134,22 +1098,17 @@
                 if (!isConnected || !isConfigured || !contract) return;
                 
                 try {
-                    // Get contract data
-                    const totalWZYS = await contract.totalWZYSDeposited();
-                    const totalYRS = await contract.totalYieldReserveShares();
+                    // Get contract data using getTotals function
+                    const totals = await contract.getTotals();
+                    const totalWZYS = totals.totalWZYSDeposited;
+                    const totalYRS = totals.totalYieldReserveShares;
                     
                     // Format and display with correct decimals
                     const formattedWZYS = ethers.utils.formatUnits(totalWZYS, wZYSDecimals);
                     const formattedYRS = ethers.utils.formatUnits(totalYRS, YRSDecimals);
                     
                     totalWZYSElement.textContent = parseFloat(formattedWZYS).toLocaleString();
-                    
-                    // Display YRS with visual multiplier (×10^6)
-                    const visualYRS = parseFloat(formattedYRS) * YRS_VISUAL_MULTIPLIER;
-                    totalYRSElement.textContent = visualYRS.toLocaleString(undefined, {
-                        minimumFractionDigits: 0,
-                        maximumFractionDigits: 6
-                    });
+                    totalYRSElement.textContent = parseFloat(formattedYRS).toLocaleString();
                     
                     // Calculate and display ratio
                     const ratio = parseFloat(formattedWZYS) / parseFloat(formattedYRS);
@@ -1190,13 +1149,7 @@
                     const formattedYRS = ethers.utils.formatUnits(YRSBalance, YRSDecimals);
                     
                     userWZYSBalanceElement.textContent = `${parseFloat(formattedWZYS).toLocaleString()} ${wZYSSymbol}`;
-                    
-                    // Display YRS with visual multiplier (×10^6)
-                    const visualYRS = parseFloat(formattedYRS) * YRS_VISUAL_MULTIPLIER;
-                    userYRSBalanceElement.textContent = `${visualYRS.toLocaleString(undefined, {
-                        minimumFractionDigits: 0,
-                        maximumFractionDigits: 6
-                    })} ${YRSSymbol}`;
+                    userYRSBalanceElement.textContent = `${parseFloat(formattedYRS).toLocaleString()} ${YRSSymbol}`;
                 } catch (error) {
                     console.error('Error updating user balances:', error);
                     showToast('error', 'Balance Error', 'Failed to fetch token balances. Check token addresses.');
@@ -1208,60 +1161,30 @@
                 const wZYSAmount = parseFloat(buyWZYSAmountInput.value) || 0;
                 // Contract treats both as same unit, so 1 wZYS = 1 YRS
                 const expectedYRS = wZYSAmount * 1.1; // 10% bonus
-                // Display with visual multiplier (×10^6)
-                expectedYRSInput.value = (expectedYRS * YRS_VISUAL_MULTIPLIER).toFixed(6);
-            }
-            
-            // Set minimum YRS output (slippage protection)
-            function setMinYRSOut() {
-                const expectedYRS = parseFloat(expectedYRSInput.value) || 0;
-                const slippage = 0.05; // 5% slippage
-                const minYRS = expectedYRS * (1 - slippage);
-                minYRSOutInput.value = minYRS.toFixed(6);
+                expectedYRSInput.value = expectedYRS.toFixed(6);
             }
             
             // Calculate expected wZYS with penalty
             function calculateExpectedWZYS() {
-                // Convert from visual YRS to actual YRS
-                const visualYRSAmount = parseFloat(sellYRSAmountInput.value) || 0;
-                const actualYRSAmount = visualYRSAmount / YRS_VISUAL_MULTIPLIER;
-                
+                const YRSAmount = parseFloat(sellYRSAmountInput.value) || 0;
                 // Contract treats both as same unit, so 1 YRS = 1 wZYS
-                const expectedWZYS = actualYRSAmount * 0.9; // 10% penalty
+                const expectedWZYS = YRSAmount * 0.9; // 10% penalty
                 expectedWZYSInput.value = expectedWZYS.toFixed(6);
-            }
-            
-            // Set minimum wZYS output (slippage protection)
-            function setMinWZYSOut() {
-                const expectedWZYS = parseFloat(expectedWZYSInput.value) || 0;
-                const slippage = 0.05; // 5% slippage
-                const minWZYS = expectedWZYS * (1 - slippage);
-                minWZYSOutInput.value = minWZYS.toFixed(6);
             }
             
             // Update buy transaction details
             function updateBuyTransactionDetails() {
                 const wZYSAmount = parseFloat(buyWZYSAmountInput.value) || 0;
-                const minYRSOut = parseFloat(minYRSOutInput.value) || 0;
                 
-                if (wZYSAmount > 0 && minYRSOut > 0) {
+                if (wZYSAmount > 0) {
                     buyTransactionDetails.style.display = 'block';
                     
                     // Convert to wei with correct decimals
                     const wZYSAmountWei = ethers.utils.parseUnits(wZYSAmount.toString(), wZYSDecimals);
                     
-                    // Convert from visual YRS to actual YRS
-                    const actualMinYRSOut = minYRSOut / YRS_VISUAL_MULTIPLIER;
-                    
-                    // For the contract, we need to convert YRS from 18 decimals to 12 decimals
-                    // by dividing by 10^(YRSDecimals - wZYSDecimals) = 10^6
-                    const decimalDifference = YRSDecimals - wZYSDecimals;
-                    const minYRSOutForContract = ethers.utils.parseUnits(actualMinYRSOut.toString(), YRSDecimals).div(ethers.BigNumber.from(10).pow(decimalDifference));
-                    
                     // Display wei values
                     buyWZYSWeiElement.textContent = wZYSAmountWei.toString();
-                    buyYRSWeiElement.textContent = ethers.utils.parseUnits(actualMinYRSOut.toString(), YRSDecimals).toString();
-                    sentToContractElement.textContent = `wZYS: ${wZYSAmountWei.toString()}, MinYRS: ${minYRSOutForContract.toString()}`;
+                    sentToContractElement.textContent = `wZYS: ${wZYSAmountWei.toString()}`;
                 } else {
                     buyTransactionDetails.style.display = 'none';
                 }
@@ -1269,23 +1192,17 @@
             
             // Update sell transaction details
             function updateSellTransactionDetails() {
-                const visualYRSAmount = parseFloat(sellYRSAmountInput.value) || 0;
-                const minWZYSOut = parseFloat(minWZYSOutInput.value) || 0;
+                const YRSAmount = parseFloat(sellYRSAmountInput.value) || 0;
                 
-                if (visualYRSAmount > 0 && minWZYSOut > 0) {
+                if (YRSAmount > 0) {
                     sellTransactionDetails.style.display = 'block';
                     
-                    // Convert from visual YRS to actual YRS
-                    const actualYRSAmount = visualYRSAmount / YRS_VISUAL_MULTIPLIER;
-                    
                     // Convert to wei with correct decimals
-                    const YRSAmountWei = ethers.utils.parseUnits(actualYRSAmount.toString(), YRSDecimals);
-                    const minWZYSOutWei = ethers.utils.parseUnits(minWZYSOut.toString(), wZYSDecimals);
+                    const YRSAmountWei = ethers.utils.parseUnits(YRSAmount.toString(), YRSDecimals);
                     
                     // Display wei values
                     sellYRSWeiElement.textContent = YRSAmountWei.toString();
-                    sellWZYSWeiElement.textContent = minWZYSOutWei.toString();
-                    sentToContractSellElement.textContent = `YRS: ${YRSAmountWei.toString()}, MinWZYS: ${minWZYSOutWei.toString()}`;
+                    sentToContractSellElement.textContent = `YRS: ${YRSAmountWei.toString()}`;
                 } else {
                     sellTransactionDetails.style.display = 'none';
                 }
@@ -1299,15 +1216,9 @@
                 }
                 
                 const wZYSAmount = buyWZYSAmountInput.value;
-                const minYRSOut = minYRSOutInput.value;
                 
                 if (!wZYSAmount || parseFloat(wZYSAmount) <= 0) {
                     showToast('error', 'Invalid Amount', 'Please enter a valid wZYS amount');
-                    return;
-                }
-                
-                if (!minYRSOut || parseFloat(minYRSOut) <= 0) {
-                    showToast('error', 'Invalid Minimum', 'Please enter a valid minimum YRS amount');
                     return;
                 }
                 
@@ -1319,14 +1230,6 @@
                     // Convert to wei with correct decimals
                     const wZYSAmountWei = ethers.utils.parseUnits(wZYSAmount, wZYSDecimals);
                     
-                    // Convert from visual YRS to actual YRS
-                    const actualMinYRSOut = parseFloat(minYRSOut) / YRS_VISUAL_MULTIPLIER;
-                    
-                    // For the contract, we need to convert YRS from 18 decimals to 12 decimals
-                    // by dividing by 10^(YRSDecimals - wZYSDecimals) = 10^6
-                    const decimalDifference = YRSDecimals - wZYSDecimals;
-                    const minYRSOutForContract = ethers.utils.parseUnits(actualMinYRSOut.toString(), YRSDecimals).div(ethers.BigNumber.from(10).pow(decimalDifference));
-                    
                     // Check allowance
                     const allowance = await wZYSContract.allowance(userAddress, CONTRACT_ADDRESS);
                     if (allowance.lt(wZYSAmountWei)) {
@@ -1336,8 +1239,8 @@
                         showToast('info', 'Approval Confirmed', 'Transaction approved. Proceeding with purchase...');
                     }
                     
-                    // Execute buy transaction with converted YRS amount
-                    const tx = await contract.buy1(wZYSAmountWei, minYRSOutForContract);
+                    // Execute buy transaction
+                    const tx = await contract.buy1(wZYSAmountWei);
                     await tx.wait();
                     
                     // Update UI
@@ -1347,7 +1250,6 @@
                     // Reset form
                     buyWZYSAmountInput.value = '';
                     expectedYRSInput.value = '';
-                    minYRSOutInput.value = '';
                     buyTransactionDetails.style.display = 'none';
                     
                     showToast('success', 'Purchase Successful', `You bought ${expectedYRSInput.value} YRS tokens`);
@@ -1386,16 +1288,10 @@
                     return;
                 }
                 
-                const visualYRSAmount = sellYRSAmountInput.value;
-                const minWZYSOut = minWZYSOutInput.value;
+                const YRSAmount = sellYRSAmountInput.value;
                 
-                if (!visualYRSAmount || parseFloat(visualYRSAmount) <= 0) {
+                if (!YRSAmount || parseFloat(YRSAmount) <= 0) {
                     showToast('error', 'Invalid Amount', 'Please enter a valid YRS amount');
-                    return;
-                }
-                
-                if (!minWZYSOut || parseFloat(minWZYSOut) <= 0) {
-                    showToast('error', 'Invalid Minimum', 'Please enter a valid minimum wZYS amount');
                     return;
                 }
                 
@@ -1404,12 +1300,8 @@
                     sellBtn.disabled = true;
                     sellBtn.innerHTML = '<span class="spinner"></span> Processing...';
                     
-                    // Convert from visual YRS to actual YRS
-                    const actualYRSAmount = parseFloat(visualYRSAmount) / YRS_VISUAL_MULTIPLIER;
-                    
                     // Convert to wei with correct decimals
-                    const YRSAmountWei = ethers.utils.parseUnits(actualYRSAmount.toString(), YRSDecimals);
-                    const minWZYSOutWei = ethers.utils.parseUnits(minWZYSOut, wZYSDecimals);
+                    const YRSAmountWei = ethers.utils.parseUnits(YRSAmount, YRSDecimals);
                     
                     // Check allowance
                     const allowance = await YRSContract.allowance(userAddress, CONTRACT_ADDRESS);
@@ -1421,7 +1313,7 @@
                     }
                     
                     // Execute sell transaction
-                    const tx = await contract.sell1(YRSAmountWei, minWZYSOutWei);
+                    const tx = await contract.sell1(YRSAmountWei);
                     await tx.wait();
                     
                     // Update UI
@@ -1431,10 +1323,9 @@
                     // Reset form
                     sellYRSAmountInput.value = '';
                     expectedWZYSInput.value = '';
-                    minWZYSOutInput.value = '';
                     sellTransactionDetails.style.display = 'none';
                     
-                    showToast('success', 'Sale Successful', `You sold ${visualYRSAmount} YRS tokens`);
+                    showToast('success', 'Sale Successful', `You sold ${YRSAmount} YRS tokens`);
                 } catch (error) {
                     console.error('Error selling tokens:', error);
                     let errorMessage = 'Failed to sell YRS tokens';
