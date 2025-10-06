@@ -150,24 +150,92 @@
         // Contract address and ABI
         const contractAddress = '0x0eba64eA7d1055Cb87654EC554360741C31650E6';
         
-        // ABI for the YRSStaking contract - manually extracted from your Solidity code
+        // Proper ABI for the YRSStaking contract (inferred from function signatures)
         const contractABI = [
-            "function buy1(uint256 wZYSAmount, uint256 minYRSOut) external nonReentrant",
-            "function sell1(uint256 YRSAmount, uint256 minWZYSOut) external nonReentrant",
-            "function burn(uint256 amount) external nonReentrant",
-            "function recoverERC20(address tokenAddress, uint256 amount) external onlyOwner",
-            "function totalYieldReserveShares() public view returns (uint256)",
-            "function totalWZYSDeposited() public view returns (uint256)",
-            "function wZYS() public view returns (address)",
-            "function YRS() public view returns (address)",
-            "function BONUS_PERCENT() public view returns (uint256)",
-            "function PENALTY_PERCENT() public view returns (uint256)",
-            "event TokensBought(address indexed buyer, uint256 wZYSAmount, uint256 YRSAmount)",
-            "event TokensSold(address indexed seller, uint256 YRSAmount, uint256 wZYSAmount)",
-            "event TokensBurned(address indexed burner, uint256 amount)"
+            {
+                "inputs": [
+                    {"internalType": "uint256", "name": "wZYSAmount", "type": "uint256"},
+                    {"internalType": "uint256", "name": "minYRSOut", "type": "uint256"}
+                ],
+                "name": "buy1",
+                "outputs": [],
+                "stateMutability": "nonpayable",
+                "type": "function"
+            },
+            {
+                "inputs": [
+                    {"internalType": "uint256", "name": "YRSAmount", "type": "uint256"},
+                    {"internalType": "uint256", "name": "minWZYSOut", "type": "uint256"}
+                ],
+                "name": "sell1",
+                "outputs": [],
+                "stateMutability": "nonpayable",
+                "type": "function"
+            },
+            {
+                "inputs": [
+                    {"internalType": "uint256", "name": "amount", "type": "uint256"}
+                ],
+                "name": "burn",
+                "outputs": [],
+                "stateMutability": "nonpayable",
+                "type": "function"
+            },
+            {
+                "inputs": [
+                    {"internalType": "address", "name": "tokenAddress", "type": "address"},
+                    {"internalType": "uint256", "name": "amount", "type": "uint256"}
+                ],
+                "name": "recoverERC20",
+                "outputs": [],
+                "stateMutability": "nonpayable",
+                "type": "function"
+            },
+            {
+                "inputs": [],
+                "name": "totalYieldReserveShares",
+                "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
+                "stateMutability": "view",
+                "type": "function"
+            },
+            {
+                "inputs": [],
+                "name": "totalWZYSDeposited",
+                "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
+                "stateMutability": "view",
+                "type": "function"
+            },
+            {
+                "inputs": [],
+                "name": "wZYS",
+                "outputs": [{"internalType": "address", "name": "", "type": "address"}],
+                "stateMutability": "view",
+                "type": "function"
+            },
+            {
+                "inputs": [],
+                "name": "YRS",
+                "outputs": [{"internalType": "address", "name": "", "type": "address"}],
+                "stateMutability": "view",
+                "type": "function"
+            },
+            {
+                "inputs": [],
+                "name": "BONUS_PERCENT",
+                "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
+                "stateMutability": "view",
+                "type": "function"
+            },
+            {
+                "inputs": [],
+                "name": "PENALTY_PERCENT",
+                "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
+                "stateMutability": "view",
+                "type": "function"
+            }
         ];
 
-        // Standard ERC20 ABI for token interactions :cite[3]
+        // Standard ERC20 ABI for token interactions
         const erc20ABI = [
             {
                 "constant": true,
@@ -225,7 +293,13 @@
             provider = new ethers.providers.Web3Provider(window.ethereum);
             
             // Initialize contract object (read-only until signer is connected)
-            contract = new ethers.Contract(contractAddress, contractABI, provider);
+            try {
+                contract = new ethers.Contract(contractAddress, contractABI, provider);
+            } catch (error) {
+                console.error('Error initializing contract:', error);
+                alert('Error initializing contract. Please check the console for details.');
+                return;
+            }
 
             // Set up event listeners
             document.getElementById('connectButton').addEventListener('click', connectWallet);
@@ -259,11 +333,11 @@
         async function connectWallet() {
             try {
                 // Request account access
-                await window.ethereum.request({ method: 'eth_requestAccounts' });
+                const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
                 
                 // Get the signer
                 signer = provider.getSigner();
-                userAddress = await signer.getAddress();
+                userAddress = accounts[0];
                 
                 // Update contract instance with signer for write operations
                 contract = contract.connect(signer);
@@ -331,6 +405,7 @@
                 }
             } catch (error) {
                 console.error('Error initializing token contracts:', error);
+                throw error; // Re-throw to handle in caller
             }
         }
 
