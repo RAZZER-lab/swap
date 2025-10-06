@@ -3,926 +3,683 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>YRS Staking DApp</title>
-    <!-- Bootstrap CSS for styling -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Ethers.js library for blockchain interaction -->
-    <script src="https://unpkg.com/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+    <title>YRS Staking Platform</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.min.js"></script>
     <style>
-        .card { margin-bottom: 1.5rem; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        .status-connected { color: #198754; font-weight: bold; }
-        .status-disconnected { color: #dc3545; font-weight: bold; }
-        .function-section { border-left: 4px solid #0d6efd; padding-left: 1rem; margin-bottom: 2rem; }
-        .wallet-info { background-color: #f8f9fa; padding: 1rem; border-radius: 0.375rem; }
-        .error-message { color: #dc3545; font-size: 0.9em; }
-        .retry-btn { margin-top: 0.5rem; }
+        :root {
+            --primary-color: #4a6cf7;
+            --secondary-color: #6c757d;
+            --success-color: #28a745;
+            --danger-color: #dc3545;
+            --dark-color: #212529;
+            --light-color: #f8f9fa;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f7fa;
+            color: var(--dark-color);
+        }
+        
+        .navbar {
+            background-color: white;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .navbar-brand {
+            font-weight: 700;
+            color: var(--primary-color) !important;
+        }
+        
+        .hero-section {
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            color: white;
+            padding: 4rem 0;
+            margin-bottom: 2rem;
+        }
+        
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            margin-bottom: 1.5rem;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+        
+        .card-header {
+            background-color: white;
+            border-bottom: 1px solid #eee;
+            font-weight: 600;
+            padding: 1rem 1.5rem;
+            border-radius: 15px 15px 0 0 !important;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+            border-radius: 8px;
+            padding: 0.6rem 1.5rem;
+            font-weight: 500;
+        }
+        
+        .btn-primary:hover {
+            background-color: #3a5bd9;
+            border-color: #3a5bd9;
+        }
+        
+        .btn-success {
+            background-color: var(--success-color);
+            border-color: var(--success-color);
+            border-radius: 8px;
+            padding: 0.6rem 1.5rem;
+            font-weight: 500;
+        }
+        
+        .btn-danger {
+            background-color: var(--danger-color);
+            border-color: var(--danger-color);
+            border-radius: 8px;
+            padding: 0.6rem 1.5rem;
+            font-weight: 500;
+        }
+        
+        .wallet-address {
+            font-family: monospace;
+            background-color: #f0f0f0;
+            padding: 0.3rem 0.8rem;
+            border-radius: 5px;
+            font-size: 0.9rem;
+        }
+        
+        .ratio-display {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+        
+        .token-balance {
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+        
+        .form-control, .form-select {
+            border-radius: 8px;
+            padding: 0.7rem;
+            border: 1px solid #ddd;
+        }
+        
+        .form-control:focus, .form-select:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.25rem rgba(74, 108, 247, 0.25);
+        }
+        
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1050;
+        }
+        
+        .custom-toast {
+            min-width: 300px;
+        }
+        
+        .loading-spinner {
+            display: none;
+            width: 1.5rem;
+            height: 1.5rem;
+        }
+        
+        .loading .loading-spinner {
+            display: inline-block;
+        }
+        
+        .loading .btn-text {
+            display: none;
+        }
+        
+        .tab-content {
+            padding-top: 1.5rem;
+        }
+        
+        .nav-tabs .nav-link {
+            border-radius: 8px 8px 0 0;
+            font-weight: 500;
+        }
+        
+        .nav-tabs .nav-link.active {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+            color: white;
+        }
+        
+        .stats-card {
+            text-align: center;
+            padding: 1.5rem;
+        }
+        
+        .stats-label {
+            font-size: 0.9rem;
+            color: var(--secondary-color);
+            margin-bottom: 0.5rem;
+        }
+        
+        .stats-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+        }
+        
+        footer {
+            background-color: var(--dark-color);
+            color: white;
+            padding: 2rem 0;
+            margin-top: 3rem;
+        }
     </style>
 </head>
 <body>
-    <div class="container mt-4 mb-5">
-        <h1 class="text-center mb-4">YRS Staking Interface</h1>
-        
-        <!-- Connection Status and Wallet Info -->
-        <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0">Wallet Connection</h5>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-light">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <i class="bi bi-currency-bitcoin"></i> YRS Staking Platform
+            </a>
+            <div class="d-flex align-items-center">
+                <div id="walletInfo" class="me-3 d-none">
+                    <span class="wallet-address" id="walletAddress"></span>
+                </div>
+                <button id="connectWalletBtn" class="btn btn-primary">
+                    <i class="bi bi-wallet2"></i> Connect Wallet
+                </button>
             </div>
-            <div class="card-body">
-                <div class="row">
-                    <div class="col-md-6">
-                        <p>Connection Status: <span id="connectionStatus" class="status-disconnected">Not Connected</span></p>
-                        <div id="connectionError" class="alert alert-danger" style="display: none;">
-                            <strong>⚠️ Connection Error</strong>
-                            <p class="mb-1">Failed to connect to MetaMask. Please ensure:</p>
-                            <ul class="small mb-2">
-                                <li>MetaMask is installed and unlocked</li>
-                                <li>You're connected to the Sepolia testnet</li>
-                                <li>Try refreshing the page</li>
-                            </ul>
-                            <button id="retryConnectionBtn" class="btn btn-sm btn-outline-primary retry-btn">Retry Connection</button>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero-section">
+        <div class="container text-center">
+            <h1 class="display-4 fw-bold mb-4">YRS Staking Platform</h1>
+            <p class="lead">Stake your wZYS tokens and earn YRS with bonuses</p>
+        </div>
+    </section>
+
+    <!-- Main Content -->
+    <div class="container mb-5">
+        <!-- Stats Section -->
+        <div class="row mb-4">
+            <div class="col-md-4">
+                <div class="card stats-card">
+                    <div class="stats-label">wZYS Deposited</div>
+                    <div class="stats-value" id="totalWZYS">0</div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card stats-card">
+                    <div class="stats-label">YRS Reserve Shares</div>
+                    <div class="stats-value" id="totalYRS">0</div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card stats-card">
+                    <div class="stats-label">wZYS/YRS Ratio</div>
+                    <div class="ratio-display" id="ratio">0</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- User Balances Section -->
+        <div class="row mb-4" id="userBalancesSection" style="display: none;">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <i class="bi bi-wallet2"></i> Your wZYS Balance
+                    </div>
+                    <div class="card-body">
+                        <div class="token-balance" id="userWZYSBalance">0</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <i class="bi bi-wallet2"></i> Your YRS Balance
+                    </div>
+                    <div class="card-body">
+                        <div class="token-balance" id="userYRSBalance">0</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Buy/Sell Section -->
+        <div class="row" id="tradeSection" style="display: none;">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header">
+                        <i class="bi bi-arrow-left-right"></i> Trade Tokens
+                    </div>
+                    <div class="card-body">
+                        <ul class="nav nav-tabs" id="tradeTabs" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" id="buy-tab" data-bs-toggle="tab" data-bs-target="#buy" type="button" role="tab" aria-controls="buy" aria-selected="true">Buy YRS</button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="sell-tab" data-bs-toggle="tab" data-bs-target="#sell" type="button" role="tab" aria-controls="sell" aria-selected="false">Sell YRS</button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="burn-tab" data-bs-toggle="tab" data-bs-target="#burn" type="button" role="tab" aria-controls="burn" aria-selected="false">Burn YRS</button>
+                            </li>
+                        </ul>
+                        <div class="tab-content" id="tradeTabContent">
+                            <!-- Buy Tab -->
+                            <div class="tab-pane fade show active" id="buy" role="tabpanel" aria-labelledby="buy-tab">
+                                <form id="buyForm">
+                                    <div class="mb-3">
+                                        <label for="buyWZYSAmount" class="form-label">wZYS Amount</label>
+                                        <input type="number" class="form-control" id="buyWZYSAmount" placeholder="Amount of wZYS to spend" min="0" step="0.0001" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="buyMinYRSOut" class="form-label">Minimum YRS Expected (Slippage Protection)</label>
+                                        <input type="number" class="form-control" id="buyMinYRSOut" placeholder="Minimum YRS you expect to receive" min="0" step="0.0001" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <div class="alert alert-info">
+                                            <i class="bi bi-info-circle"></i> You will receive a 10% bonus on your purchase.
+                                        </div>
+                                    </div>
+                                    <button type="submit" class="btn btn-success">
+                                        <span class="btn-text">Buy YRS</span>
+                                        <span class="spinner-border spinner-border-sm loading-spinner" role="status" aria-hidden="true"></span>
+                                    </button>
+                                </form>
+                            </div>
+                            <!-- Sell Tab -->
+                            <div class="tab-pane fade" id="sell" role="tabpanel" aria-labelledby="sell-tab">
+                                <form id="sellForm">
+                                    <div class="mb-3">
+                                        <label for="sellYRSAmount" class="form-label">YRS Amount</label>
+                                        <input type="number" class="form-control" id="sellYRSAmount" placeholder="Amount of YRS to sell" min="0" step="0.0001" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="sellMinWZYSOut" class="form-label">Minimum wZYS Expected (Slippage Protection)</label>
+                                        <input type="number" class="form-control" id="sellMinWZYSOut" placeholder="Minimum wZYS you expect to receive" min="0" step="0.0001" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <div class="alert alert-warning">
+                                            <i class="bi bi-exclamation-triangle"></i> There is a 10% reduction when selling YRS.
+                                        </div>
+                                    </div>
+                                    <button type="submit" class="btn btn-danger">
+                                        <span class="btn-text">Sell YRS</span>
+                                        <span class="spinner-border spinner-border-sm loading-spinner" role="status" aria-hidden="true"></span>
+                                    </button>
+                                </form>
+                            </div>
+                            <!-- Burn Tab -->
+                            <div class="tab-pane fade" id="burn" role="tabpanel" aria-labelledby="burn-tab">
+                                <form id="burnForm">
+                                    <div class="mb-3">
+                                        <label for="burnAmount" class="form-label">YRS Amount to Burn</label>
+                                        <input type="number" class="form-control" id="burnAmount" placeholder="Amount of YRS to burn" min="0" step="0.0001" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <div class="alert alert-danger">
+                                            <i class="bi bi-exclamation-triangle"></i> Burning will permanently remove YRS tokens from circulation. This action cannot be undone.
+                                        </div>
+                                    </div>
+                                    <button type="submit" class="btn btn-danger">
+                                        <span class="btn-text">Burn YRS</span>
+                                        <span class="spinner-border spinner-border-sm loading-spinner" role="status" aria-hidden="true"></span>
+                                    </button>
+                                </form>
+                            </div>
                         </div>
-                        <div id="networkAlert" class="alert network-alert" style="display: none;">
-                            <strong>🌐 Network Change Required</strong>
-                            <p class="mb-1">You need to switch to the Sepolia testnet to use this DApp.</p>
-                            <button id="switchNetworkBtn" class="btn btn-sm btn-warning mt-1">Switch to Sepolia</button>
-                        </div>
-                        <button id="connectButton" class="btn btn-primary">Connect MetaMask</button>
-                        <button id="disconnectButton" class="btn btn-secondary" style="display: none;">Disconnect</button>
                     </div>
-                    <div class="col-md-6">
-                        <div id="walletInfo" style="display: none;">
-                            <p>Connected Address: <strong id="connectedAddress"></strong></p>
-                            <p>Network: <strong id="networkInfo"></strong></p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Token Balances -->
-        <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">Token Balances</h5>
-                <button id="refreshBalances" class="btn btn-sm btn-outline-secondary" disabled>Refresh</button>
-            </div>
-            <div class="card-body">
-                <div class="row">
-                    <div class="col-md-4">
-                        <p>wZYS Balance: <strong id="wZYSBalance">0</strong></p>
-                    </div>
-                    <div class="col-md-4">
-                        <p>YRS Balance: <strong id="YRSBalance">0</strong></p>
-                    </div>
-                    <div class="col-md-4">
-                        <p>Contract YRS Reserve: <strong id="contractYRSBalance">0</strong></p>
-                    </div>
-                </div>
-                <p id="balanceError" class="error-message" style="display: none;">Failed to load balances. Please check your connection.</p>
-            </div>
-        </div>
-
-        <!-- Contract Interaction Sections -->
-        
-        <!-- Buy YRS Tokens -->
-        <div class="function-section">
-            <h3>Buy YRS Tokens (10% Bonus)</h3>
-            <p class="text-muted">Exchange your wZYS for YRS tokens and receive a 10% bonus.</p>
-            <div class="row">
-                <div class="col-md-8">
-                    <div class="mb-3">
-                        <label for="buyWZYSAmount" class="form-label">wZYS Amount to Spend</label>
-                        <input type="number" class="form-control" id="buyWZYSAmount" placeholder="Enter wZYS amount" step="0.000000000001">
-                    </div>
-                    <div class="mb-3">
-                        <label for="minYRSOut" class="form-label">Minimum YRS to Receive (Slippage Protection)</label>
-                        <input type="number" class="form-control" id="minYRSOut" placeholder="Enter minimum YRS expected" step="0.000000000000000001">
-                    </div>
-                    <button id="buyButton" class="btn btn-success" disabled>Buy YRS</button>
-                    <div id="buyOutput" class="mt-2"></div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Sell YRS Tokens -->
-        <div class="function-section">
-            <h3>Sell YRS Tokens (10% Penalty)</h3>
-            <p class="text-muted">Exchange your YRS tokens back to wZYS with a 10% reduction.</p>
-            <div class="row">
-                <div class="col-md-8">
-                    <div class="mb-3">
-                        <label for="sellYRSAmount" class="form-label">YRS Amount to Sell</label>
-                        <input type="number" class="form-control" id="sellYRSAmount" placeholder="Enter YRS amount" step="0.000000000000000001">
-                    </div>
-                    <div class="mb-3">
-                        <label for="minWZYSOut" class="form-label">Minimum wZYS to Receive (Slippage Protection)</label>
-                        <input type="number" class="form-control" id="minWZYSOut" placeholder="Enter minimum wZYS expected" step="0.000000000001">
-                    </div>
-                    <button id="sellButton" class="btn btn-warning" disabled>Sell YRS</button>
-                    <div id="sellOutput" class="mt-2"></div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Burn YRS Tokens -->
-        <div class="function-section">
-            <h3>Burn YRS Tokens</h3>
-            <p class="text-muted">Permanently remove YRS tokens from circulation.</p>
-            <div class="row">
-                <div class="col-md-8">
-                    <div class="mb-3">
-                        <label for="burnAmount" class="form-label">YRS Amount to Burn</label>
-                        <input type="number" class="form-control" id="burnAmount" placeholder="Enter YRS amount to burn" step="0.000000000000000001">
-                    </div>
-                    <button id="burnButton" class="btn btn-danger" disabled>Burn YRS</button>
-                    <div id="burnOutput" class="mt-2"></div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Admin Functions (Only for Contract Owner) -->
-        <div class="function-section">
-            <h3>Admin Functions</h3>
-            <p class="text-muted">These functions are only available to the contract owner.</p>
-            <div class="row">
-                <div class="col-md-8">
-                    <div class="mb-3">
-                        <label for="recoverTokenAddress" class="form-label">Token Address to Recover</label>
-                        <input type="text" class="form-control" id="recoverTokenAddress" placeholder="Enter token address">
-                    </div>
-                    <div class="mb-3">
-                        <label for="recoverAmount" class="form-label">Amount to Recover</label>
-                        <input type="number" class="form-control" id="recoverAmount" placeholder="Enter amount to recover" step="0.000000000000000001">
-                    </div>
-                    <button id="recoverButton" class="btn btn-info" disabled>Recover ERC20 Tokens</button>
-                    <div id="recoverOutput" class="mt-2"></div>
                 </div>
             </div>
         </div>
     </div>
 
+    <!-- Footer -->
+    <footer>
+        <div class="container text-center">
+            <p>&copy; 2023 YRS Staking Platform. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <!-- Toast Container -->
+    <div class="toast-container"></div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+
     <script>
-        // =============================================
-        // Configuration and Contract Setup
-        // =============================================
-        
-        // Contract address and ABI
-        const contractAddress = '0x0eba64eA7d1055Cb87654EC554360741C31650E6';
-        const EXPECTED_CHAIN_ID = 11155111; // Sepolia testnet
-        const SEPOLIA_HEX_CHAIN_ID = '0xaa36a7'; // Sepolia chain ID in hexadecimal
-        
-        // Proper ABI for the YRSStaking contract
+        // Contract ABI - simplified version with only the functions we need
         const contractABI = [
-            {
-                "inputs": [
-                    {"internalType": "uint256", "name": "wZYSAmount", "type": "uint256"},
-                    {"internalType": "uint256", "name": "minYRSOut", "type": "uint256"}
-                ],
-                "name": "buy1",
-                "outputs": [],
-                "stateMutability": "nonpayable",
-                "type": "function"
-            },
-            {
-                "inputs": [
-                    {"internalType": "uint256", "name": "YRSAmount", "type": "uint256"},
-                    {"internalType": "uint256", "name": "minWZYSOut", "type": "uint256"}
-                ],
-                "name": "sell1",
-                "outputs": [],
-                "stateMutability": "nonpayable",
-                "type": "function"
-            },
-            {
-                "inputs": [
-                    {"internalType": "uint256", "name": "amount", "type": "uint256"}
-                ],
-                "name": "burn",
-                "outputs": [],
-                "stateMutability": "nonpayable",
-                "type": "function"
-            },
-            {
-                "inputs": [
-                    {"internalType": "address", "name": "tokenAddress", "type": "address"},
-                    {"internalType": "uint256", "name": "amount", "type": "uint256"}
-                ],
-                "name": "recoverERC20",
-                "outputs": [],
-                "stateMutability": "nonpayable",
-                "type": "function"
-            },
-            {
-                "inputs": [],
-                "name": "totalYieldReserveShares",
-                "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
-                "stateMutability": "view",
-                "type": "function"
-            },
-            {
-                "inputs": [],
-                "name": "totalWZYSDeposited",
-                "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
-                "stateMutability": "view",
-                "type": "function"
-            },
-            {
-                "inputs": [],
-                "name": "wZYS",
-                "outputs": [{"internalType": "address", "name": "", "type": "address"}],
-                "stateMutability": "view",
-                "type": "function"
-            },
-            {
-                "inputs": [],
-                "name": "YRS",
-                "outputs": [{"internalType": "address", "name": "", "type": "address"}],
-                "stateMutability": "view",
-                "type": "function"
-            },
-            {
-                "inputs": [],
-                "name": "BONUS_PERCENT",
-                "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
-                "stateMutability": "view",
-                "type": "function"
-            },
-            {
-                "inputs": [],
-                "name": "PENALTY_PERCENT",
-                "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
-                "stateMutability": "view",
-                "type": "function"
-            }
+            "function totalWZYSDeposited() view returns (uint256)",
+            "function totalYieldReserveShares() view returns (uint256)",
+            "function buy1(uint256 wZYSAmount, uint256 minYRSOut)",
+            "function sell1(uint256 YRSAmount, uint256 minWZYSOut)",
+            "function burn(uint256 amount)",
+            "event TokensBought(address indexed buyer, uint256 wZYSAmount, uint256 YRSAmount)",
+            "event TokensSold(address indexed seller, uint256 YRSAmount, uint256 wZYSAmount)",
+            "event TokensBurned(address indexed burner, uint256 amount)"
         ];
 
-        // Standard ERC20 ABI for token interactions
+        // ERC20 ABI - simplified version
         const erc20ABI = [
-            {
-                "constant": true,
-                "inputs": [{"name": "_owner", "type": "address"}],
-                "name": "balanceOf",
-                "outputs": [{"name": "balance", "type": "uint256"}],
-                "type": "function"
-            },
-            {
-                "constant": false,
-                "inputs": [
-                    {"name": "_spender", "type": "address"},
-                    {"name": "_value", "type": "uint256"}
-                ],
-                "name": "approve",
-                "outputs": [{"name": "", "type": "bool"}],
-                "type": "function"
-            },
-            {
-                "constant": true,
-                "inputs": [],
-                "name": "decimals",
-                "outputs": [{"name": "", "type": "uint8"}],
-                "type": "function"
-            },
-            {
-                "constant": true,
-                "inputs": [],
-                "name": "symbol",
-                "outputs": [{"name": "", "type": "string"}],
-                "type": "function"
-            },
-            {
-                "constant": false,
-                "inputs": [
-                    {"name": "_spender", "type": "address"},
-                    {"name": "_subtractedValue", "type": "uint256"}
-                ],
-                "name": "decreaseAllowance",
-                "outputs": [{"name": "", "type": "bool"}],
-                "type": "function"
-            },
-            {
-                "constant": false,
-                "inputs": [
-                    {"name": "_spender", "type": "address"},
-                    {"name": "_addedValue", "type": "uint256"}
-                ],
-                "name": "increaseAllowance",
-                "outputs": [{"name": "", "type": "bool"}],
-                "type": "function"
-            },
-            {
-                "constant": true,
-                "inputs": [
-                    {"name": "_owner", "type": "address"},
-                    {"name": "_spender", "type": "address"}
-                ],
-                "name": "allowance",
-                "outputs": [{"name": "", "type": "uint256"}],
-                "type": "function"
-            }
+            "function balanceOf(address account) view returns (uint256)",
+            "function decimals() view returns (uint8)",
+            "function approve(address spender, uint256 amount) returns (bool)",
+            "function allowance(address owner, address spender) view returns (uint256)"
         ];
 
-        // Global variables
+        // Contract addresses - replace with actual addresses
+        const CONTRACT_ADDRESS = "0x1234567890123456789012345678901234567890"; // Replace with actual contract address
+        const WZYS_ADDRESS = "0x1234567890123456789012345678901234567891"; // Replace with actual wZYS token address
+        const YRS_ADDRESS = "0x1234567890123456789012345678901234567892"; // Replace with actual YRS token address
+
         let provider;
         let signer;
         let contract;
-        let userAddress;
-        let wZYSToken;
-        let YRSToken;
-        let wZYSDecimals = 12; // wZYS has 12 decimals
-        let YRSDecimals = 18; // YRS has 18 decimals
+        let wZYSContract;
+        let YRSContract;
+        let wZYSDecimals = 18;
+        let YRSDecimals = 18;
 
-        // =============================================
-        // Network Switching Functions
-        // =============================================
-        
-        async function switchToSepoliaNetwork() {
-            try {
-                await window.ethereum.request({
-                    method: 'wallet_switchEthereumChain',
-                    params: [{ chainId: SEPOLIA_HEX_CHAIN_ID }],
-                });
-                return true;
-            } catch (switchError) {
-                if (switchError.code === 4902) {
-                    try {
-                        await window.ethereum.request({
-                            method: 'wallet_addEthereumChain',
-                            params: [
-                                {
-                                    chainId: SEPOLIA_HEX_CHAIN_ID,
-                                    chainName: 'Sepolia Test Network',
-                                    rpcUrls: ['https://rpc.sepolia.org/', 'https://sepolia.infura.io/v3/'],
-                                    blockExplorerUrls: ['https://sepolia.etherscan.io/'],
-                                    nativeCurrency: {
-                                        name: 'Sepolia Ether',
-                                        symbol: 'ETH',
-                                        decimals: 18
-                                    },
-                                },
-                            ],
-                        });
-                        return true;
-                    } catch (addError) {
-                        console.error('Error adding Sepolia network:', addError);
-                        alert('Failed to add Sepolia network to MetaMask. Please add it manually.');
-                        return false;
-                    }
-                } else if (switchError.code === 4001) {
-                    console.log('User rejected network switch');
-                    return false;
-                } else {
-                    console.error('Error switching to Sepolia:', switchError);
-                    return false;
+        // DOM Elements
+        const connectWalletBtn = document.getElementById('connectWalletBtn');
+        const walletInfo = document.getElementById('walletInfo');
+        const walletAddress = document.getElementById('walletAddress');
+        const userBalancesSection = document.getElementById('userBalancesSection');
+        const tradeSection = document.getElementById('tradeSection');
+        const totalWZYSDisplay = document.getElementById('totalWZYS');
+        const totalYRSDisplay = document.getElementById('totalYRS');
+        const ratioDisplay = document.getElementById('ratio');
+        const userWZYSBalance = document.getElementById('userWZYSBalance');
+        const userYRSBalance = document.getElementById('userYRSBalance');
+        const buyForm = document.getElementById('buyForm');
+        const sellForm = document.getElementById('sellForm');
+        const burnForm = document.getElementById('burnForm');
+
+        // Connect to MetaMask
+        connectWalletBtn.addEventListener('click', async () => {
+            if (typeof window.ethereum !== 'undefined') {
+                try {
+                    // Request account access
+                    await window.ethereum.request({ method: 'eth_requestAccounts' });
+                    
+                    // Create provider and signer
+                    provider = new ethers.providers.Web3Provider(window.ethereum);
+                    signer = provider.getSigner();
+                    
+                    // Initialize contracts
+                    contract = new ethers.Contract(CONTRACT_ADDRESS, contractABI, signer);
+                    wZYSContract = new ethers.Contract(WZYS_ADDRESS, erc20ABI, signer);
+                    YRSContract = new ethers.Contract(YRS_ADDRESS, erc20ABI, signer);
+                    
+                    // Get token decimals
+                    wZYSDecimals = await wZYSContract.decimals();
+                    YRSDecimals = await YRSContract.decimals();
+                    
+                    // Update UI
+                    const address = await signer.getAddress();
+                    walletAddress.textContent = `${address.substring(0, 6)}...${address.substring(address.length - 4)}`;
+                    connectWalletBtn.classList.add('d-none');
+                    walletInfo.classList.remove('d-none');
+                    userBalancesSection.style.display = 'block';
+                    tradeSection.style.display = 'block';
+                    
+                    // Load initial data
+                    await loadContractData();
+                    await loadUserBalances();
+                    
+                    showToast('Wallet connected successfully!', 'success');
+                } catch (error) {
+                    console.error('Error connecting wallet:', error);
+                    showToast('Failed to connect wallet. Please try again.', 'danger');
                 }
-            }
-        }
-
-        // =============================================
-        // DOM Content Loaded Event Listener
-        // =============================================
-        
-        document.addEventListener('DOMContentLoaded', async function() {
-            // Check if MetaMask is installed
-            if (!window.ethereum) {
-                alert('Please install MetaMask to use this dApp!');
-                return;
-            }
-
-            try {
-                // Initialize the provider
-                provider = new ethers.providers.Web3Provider(window.ethereum, "any");
-                
-                // Initialize contract object (read-only until signer is connected)
-                contract = new ethers.Contract(contractAddress, contractABI, provider);
-            } catch (error) {
-                console.error('Error initializing contract:', error);
-                alert('Error initializing contract. Please check the console for details.');
-                return;
-            }
-
-            // Set up event listeners
-            document.getElementById('connectButton').addEventListener('click', connectWallet);
-            document.getElementById('disconnectButton').addEventListener('click', disconnectWallet);
-            document.getElementById('buyButton').addEventListener('click', buyYRS);
-            document.getElementById('sellButton').addEventListener('click', sellYRS);
-            document.getElementById('burnButton').addEventListener('click', burnYRS);
-            document.getElementById('recoverButton').addEventListener('click', recoverTokens);
-            document.getElementById('refreshBalances').addEventListener('click', refreshAllBalances);
-            document.getElementById('retryConnectionBtn').addEventListener('click', retryConnection);
-            document.getElementById('switchNetworkBtn').addEventListener('click', switchToSepoliaNetwork);
-
-            // Event listeners for account and chain changes
-            window.ethereum.on('accountsChanged', async function(accounts) {
-                if (accounts.length === 0) {
-                    disconnectWallet();
-                } else {
-                    await connectWallet(accounts[0]);
-                }
-            });
-
-            window.ethereum.on('chainChanged', async function(chainId) {
-                await checkNetwork();
-                if (userAddress) {
-                    await refreshAllBalances();
-                }
-            });
-
-            // Initial check for existing connection
-            try {
-                const accounts = await provider.listAccounts();
-                if (accounts.length > 0) {
-                    await connectWallet(accounts[0]);
-                }
-            } catch (error) {
-                console.log('No accounts found or error listing accounts:', error);
+            } else {
+                showToast('MetaMask is not installed. Please install it to use this dApp.', 'danger');
             }
         });
 
-        // =============================================
-        // Wallet Connection Functions
-        // =============================================
-        
-        async function connectWallet(overrideAddress = null) {
+        // Load contract data
+        async function loadContractData() {
             try {
-                if (!window.ethereum) {
-                    throw new Error('No Ethereum provider found. Please install MetaMask.');
-                }
-
-                let accounts;
-                if (overrideAddress) {
-                    accounts = [overrideAddress];
-                } else {
-                    accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-                }
+                const totalWZYS = await contract.totalWZYSDeposited();
+                const totalYRS = await contract.totalYieldReserveShares();
                 
-                if (accounts.length === 0) {
-                    throw new Error('No accounts available');
-                }
-
-                // Re-initialize provider with current context
-                provider = new ethers.providers.Web3Provider(window.ethereum, "any");
+                const formattedWZYS = ethers.utils.formatUnits(totalWZYS, wZYSDecimals);
+                const formattedYRS = ethers.utils.formatUnits(totalYRS, YRSDecimals);
                 
-                // Get the signer
-                signer = provider.getSigner();
-                userAddress = accounts[0];
+                totalWZYSDisplay.textContent = parseFloat(formattedWZYS).toFixed(4);
+                totalYRSDisplay.textContent = parseFloat(formattedYRS).toFixed(4);
                 
-                // Update contract instance with signer for write operations
-                contract = contract.connect(signer);
-                
-                // Check network first
-                const isCorrectNetwork = await checkNetwork();
-                if (!isCorrectNetwork) {
-                    document.getElementById('networkAlert').style.display = 'block';
-                } else {
-                    document.getElementById('networkAlert').style.display = 'none';
-                }
-                
-                // Update UI
-                updateWalletInfo();
-                
-                // Initialize token contracts
-                try {
-                    await initializeTokenContracts();
-                    document.getElementById('connectionError').style.display = 'none';
-                } catch (error) {
-                    console.error('Failed to initialize token contracts:', error);
-                    document.getElementById('connectionError').style.display = 'block';
-                }
-                
-                // Refresh balances
-                await refreshAllBalances();
-                
-                document.getElementById('connectionStatus').textContent = 'Connected';
-                document.getElementById('connectionStatus').className = 'status-connected';
-                document.getElementById('connectButton').style.display = 'none';
-                document.getElementById('disconnectButton').style.display = 'inline-block';
-                
-                // Enable interactions if we're on the correct network
-                toggleInteractionButtons(isCorrectNetwork);
-                
+                // Calculate ratio
+                const ratio = totalYRS.gt(0) ? totalWZYS.mul(ethers.BigNumber.from(10).pow(18)).div(totalYRS) : ethers.BigNumber.from(0);
+                const formattedRatio = ethers.utils.formatUnits(ratio, 18);
+                ratioDisplay.textContent = parseFloat(formattedRatio).toFixed(6);
             } catch (error) {
-                console.error('Error connecting to wallet:', error);
-                if (error.code !== 4001) {
-                    document.getElementById('connectionError').style.display = 'block';
-                }
+                console.error('Error loading contract data:', error);
+                showToast('Failed to load contract data.', 'danger');
             }
         }
 
-        async function retryConnection() {
-            if (!userAddress) return;
+        // Load user balances
+        async function loadUserBalances() {
             try {
-                document.getElementById('connectionError').style.display = 'none';
+                const userAddress = await signer.getAddress();
+                const wZYSBalance = await wZYSContract.balanceOf(userAddress);
+                const YRSBalance = await YRSContract.balanceOf(userAddress);
                 
-                // Re-initialize provider and signer
-                provider = new ethers.providers.Web3Provider(window.ethereum, "any");
-                signer = provider.getSigner();
-                contract = new ethers.Contract(contractAddress, contractABI, provider).connect(signer);
+                const formattedWZYS = ethers.utils.formatUnits(wZYSBalance, wZYSDecimals);
+                const formattedYRS = ethers.utils.formatUnits(YRSBalance, YRSDecimals);
                 
-                await initializeTokenContracts();
-                await refreshAllBalances();
-                document.getElementById('balanceError').style.display = 'none';
-                
-                const isCorrectNetwork = await checkNetwork();
-                toggleInteractionButtons(isCorrectNetwork);
+                userWZYSBalance.textContent = parseFloat(formattedWZYS).toFixed(4);
+                userYRSBalance.textContent = parseFloat(formattedYRS).toFixed(4);
             } catch (error) {
-                console.error('Retry failed:', error);
-                document.getElementById('connectionError').style.display = 'block';
+                console.error('Error loading user balances:', error);
+                showToast('Failed to load user balances.', 'danger');
             }
         }
 
-        async function checkNetwork() {
+        // Buy form submission
+        buyForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const wZYSAmount = document.getElementById('buyWZYSAmount').value;
+            const minYRSOut = document.getElementById('buyMinYRSOut').value;
+            
+            if (!wZYSAmount || !minYRSOut) {
+                showToast('Please fill in all fields.', 'warning');
+                return;
+            }
+            
             try {
-                const network = await provider.getNetwork();
-                const isCorrectNetwork = network.chainId === EXPECTED_CHAIN_ID;
+                // Show loading state
+                buyForm.classList.add('loading');
                 
-                if (!isCorrectNetwork) {
-                    console.log(`Expected Chain ID ${EXPECTED_CHAIN_ID}, but connected to ${network.chainId}. Showing network switch prompt.`);
-                    document.getElementById('networkAlert').style.display = 'block';
-                    toggleInteractionButtons(false);
-                    return false;
-                } else {
-                    document.getElementById('networkAlert').style.display = 'none';
-                    toggleInteractionButtons(true);
-                    return true;
+                // Convert to wei
+                const wZYSAmountWei = ethers.utils.parseUnits(wZYSAmount, wZYSDecimals);
+                const minYRSOutWei = ethers.utils.parseUnits(minYRSOut, YRSDecimals);
+                
+                // Check allowance
+                const userAddress = await signer.getAddress();
+                const allowance = await wZYSContract.allowance(userAddress, CONTRACT_ADDRESS);
+                
+                if (allowance.lt(wZYSAmountWei)) {
+                    // Approve first
+                    const approveTx = await wZYSContract.approve(CONTRACT_ADDRESS, wZYSAmountWei);
+                    await approveTx.wait();
+                    showToast('Approval successful. Proceeding with purchase...', 'info');
                 }
+                
+                // Execute buy
+                const tx = await contract.buy1(wZYSAmountWei, minYRSOutWei);
+                await tx.wait();
+                
+                // Reset form
+                buyForm.reset();
+                
+                // Refresh data
+                await loadContractData();
+                await loadUserBalances();
+                
+                showToast('Purchase successful!', 'success');
             } catch (error) {
-                console.error('Error checking network:', error);
-                document.getElementById('networkAlert').style.display = 'block';
-                return false;
+                console.error('Error buying tokens:', error);
+                showToast(`Purchase failed: ${error.message}`, 'danger');
+            } finally {
+                // Hide loading state
+                buyForm.classList.remove('loading');
             }
-        }
+        });
 
-        function disconnectWallet() {
-            userAddress = null;
-            signer = null;
-            if (window.ethereum) {
-                provider = new ethers.providers.Web3Provider(window.ethereum);
-                contract = new ethers.Contract(contractAddress, contractABI, provider);
+        // Sell form submission
+        sellForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const YRSAmount = document.getElementById('sellYRSAmount').value;
+            const minWZYSOut = document.getElementById('sellMinWZYSOut').value;
+            
+            if (!YRSAmount || !minWZYSOut) {
+                showToast('Please fill in all fields.', 'warning');
+                return;
             }
-            wZYSToken = null;
-            YRSToken = null;
             
-            document.getElementById('connectionStatus').textContent = 'Not Connected';
-            document.getElementById('connectionStatus').className = 'status-disconnected';
-            document.getElementById('walletInfo').style.display = 'none';
-            document.getElementById('connectedAddress').textContent = '';
-            document.getElementById('networkInfo').textContent = '';
-            document.getElementById('connectButton').style.display = 'inline-block';
-            document.getElementById('disconnectButton').style.display = 'none';
-            document.getElementById('connectionError').style.display = 'none';
-            document.getElementById('networkAlert').style.display = 'none';
-            document.getElementById('balanceError').style.display = 'none';
-            
-            // Reset balances
-            document.getElementById('wZYSBalance').textContent = '0';
-            document.getElementById('YRSBalance').textContent = '0';
-            document.getElementById('contractYRSBalance').textContent = '0';
-            
-            // Clear outputs
-            document.querySelectorAll('[id$="Output"]').forEach(el => el.innerHTML = '');
-            
-            toggleInteractionButtons(false);
-        }
-
-        async function updateWalletInfo() {
-            if (userAddress) {
-                try {
-                    const network = await provider.getNetwork();
-                    document.getElementById('connectedAddress').textContent = `${userAddress.substring(0, 6)}...${userAddress.substring(38)}`;
-                    document.getElementById('networkInfo').textContent = `${network.name} (Chain ID: ${network.chainId})`;
-                    document.getElementById('walletInfo').style.display = 'block';
-                } catch (error) {
-                    console.error('Error updating wallet info:', error);
+            try {
+                // Show loading state
+                sellForm.classList.add('loading');
+                
+                // Convert to wei
+                const YRSAmountWei = ethers.utils.parseUnits(YRSAmount, YRSDecimals);
+                const minWZYSOutWei = ethers.utils.parseUnits(minWZYSOut, wZYSDecimals);
+                
+                // Check allowance
+                const userAddress = await signer.getAddress();
+                const allowance = await YRSContract.allowance(userAddress, CONTRACT_ADDRESS);
+                
+                if (allowance.lt(YRSAmountWei)) {
+                    // Approve first
+                    const approveTx = await YRSContract.approve(CONTRACT_ADDRESS, YRSAmountWei);
+                    await approveTx.wait();
+                    showToast('Approval successful. Proceeding with sale...', 'info');
                 }
+                
+                // Execute sell
+                const tx = await contract.sell1(YRSAmountWei, minWZYSOutWei);
+                await tx.wait();
+                
+                // Reset form
+                sellForm.reset();
+                
+                // Refresh data
+                await loadContractData();
+                await loadUserBalances();
+                
+                showToast('Sale successful!', 'success');
+            } catch (error) {
+                console.error('Error selling tokens:', error);
+                showToast(`Sale failed: ${error.message}`, 'danger');
+            } finally {
+                // Hide loading state
+                sellForm.classList.remove('loading');
             }
-        }
+        });
 
-        function toggleInteractionButtons(enabled) {
-            const buttons = ['buyButton', 'sellButton', 'burnButton', 'recoverButton', 'refreshBalances'];
-            buttons.forEach(id => {
-                document.getElementById(id).disabled = !enabled;
+        // Burn form submission
+        burnForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const burnAmount = document.getElementById('burnAmount').value;
+            
+            if (!burnAmount) {
+                showToast('Please fill in all fields.', 'warning');
+                return;
+            }
+            
+            try {
+                // Show loading state
+                burnForm.classList.add('loading');
+                
+                // Convert to wei
+                const burnAmountWei = ethers.utils.parseUnits(burnAmount, YRSDecimals);
+                
+                // Check allowance
+                const userAddress = await signer.getAddress();
+                const allowance = await YRSContract.allowance(userAddress, CONTRACT_ADDRESS);
+                
+                if (allowance.lt(burnAmountWei)) {
+                    // Approve first
+                    const approveTx = await YRSContract.approve(CONTRACT_ADDRESS, burnAmountWei);
+                    await approveTx.wait();
+                    showToast('Approval successful. Proceeding with burn...', 'info');
+                }
+                
+                // Execute burn
+                const tx = await contract.burn(burnAmountWei);
+                await tx.wait();
+                
+                // Reset form
+                burnForm.reset();
+                
+                // Refresh data
+                await loadContractData();
+                await loadUserBalances();
+                
+                showToast('Burn successful!', 'success');
+            } catch (error) {
+                console.error('Error burning tokens:', error);
+                showToast(`Burn failed: ${error.message}`, 'danger');
+            } finally {
+                // Hide loading state
+                burnForm.classList.remove('loading');
+            }
+        });
+
+        // Show toast notification
+        function showToast(message, type) {
+            const toastContainer = document.querySelector('.toast-container');
+            const toastId = 'toast-' + Date.now();
+            
+            const toastHtml = `
+                <div id="${toastId}" class="toast custom-toast align-items-center text-white bg-${type} border-0" role="alert" aria-live="assertive" aria-atomic="true">
+                    <div class="d-flex">
+                        <div class="toast-body">
+                            ${message}
+                        </div>
+                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                    </div>
+                </div>
+            `;
+            
+            toastContainer.insertAdjacentHTML('beforeend', toastHtml);
+            
+            const toastElement = document.getElementById(toastId);
+            const toast = new bootstrap.Toast(toastElement, { delay: 5000 });
+            toast.show();
+            
+            // Remove toast element after it's hidden
+            toastElement.addEventListener('hidden.bs.toast', () => {
+                toastElement.remove();
             });
         }
 
-        // =============================================
-        // Token and Balance Functions
-        // =============================================
-        
-        async function initializeTokenContracts() {
-            if (!signer) {
-                throw new Error('No signer available for token contract initialization');
+        // Auto-refresh data every 30 seconds
+        setInterval(async () => {
+            if (signer) {
+                await loadContractData();
+                await loadUserBalances();
             }
-            
-            let wZYSAddress, YRSAddress;
-            try {
-                wZYSAddress = await contract.wZYS();
-                YRSAddress = await contract.YRS();
-            } catch (error) {
-                console.error('Failed to fetch token addresses:', error);
-                throw error;
-            }
-            
-            // Create contract instances for the tokens
-            wZYSToken = new ethers.Contract(wZYSAddress, erc20ABI, signer);
-            YRSToken = new ethers.Contract(YRSAddress, erc20ABI, signer);
-            
-            // Get token decimals
-            try {
-                wZYSDecimals = await wZYSToken.decimals();
-                YRSDecimals = await YRSToken.decimals();
-                console.log(`wZYS decimals: ${wZYSDecimals}, YRS decimals: ${YRSDecimals}`);
-            } catch (error) {
-                console.error('Error fetching token decimals:', error);
-                // Use default values if fetching fails
-                wZYSDecimals = 12;
-                YRSDecimals = 18;
-            }
-        }
-
-        async function getTokenAllowance(tokenContract, spender) {
-            try {
-                return await tokenContract.allowance(userAddress, spender);
-            } catch (error) {
-                console.error('Error getting allowance:', error);
-                return ethers.BigNumber.from(0);
-            }
-        }
-
-        async function ensureApproval(tokenContract, spender, amount, decimals, outputId) {
-            if (!signer) {
-                throw new Error('No signer available for approval transaction');
-            }
-            
-            const allowance = await getTokenAllowance(tokenContract, spender);
-            const amountWei = ethers.utils.parseUnits(amount.toString(), decimals);
-            
-            if (allowance.lt(amountWei)) {
-                try {
-                    document.getElementById(outputId).innerHTML = '<div class="alert alert-info">Approving tokens... Waiting for confirmation.</div>';
-                    
-                    let approveTx;
-                    try {
-                        approveTx = await tokenContract.increaseAllowance(spender, amountWei, { gasLimit: 100000 });
-                    } catch {
-                        approveTx = await tokenContract.approve(spender, amountWei, { gasLimit: 100000 });
-                    }
-                    
-                    await approveTx.wait();
-                    document.getElementById(outputId).innerHTML += '<div class="alert alert-success mt-2">Approval successful!</div>';
-                } catch (error) {
-                    console.error('Approval failed:', error);
-                    document.getElementById(outputId).innerHTML = `<div class="alert alert-danger">Approval failed: ${error.message}</div>`;
-                    throw error;
-                }
-            } else {
-                document.getElementById(outputId).innerHTML = '<div class="alert alert-info">Sufficient allowance found. Skipping approval.</div>';
-            }
-        }
-
-        async function refreshAllBalances() {
-            if (!userAddress) {
-                return;
-            }
-            
-            try {
-                // If we have token contracts initialized, use them
-                if (wZYSToken && YRSToken) {
-                    const wZYSBalance = await wZYSToken.balanceOf(userAddress);
-                    document.getElementById('wZYSBalance').textContent = parseFloat(ethers.utils.formatUnits(wZYSBalance, wZYSDecimals)).toFixed(4);
-                    
-                    const YRSBalance = await YRSToken.balanceOf(userAddress);
-                    document.getElementById('YRSBalance').textContent = parseFloat(ethers.utils.formatUnits(YRSBalance, YRSDecimals)).toFixed(4);
-                    
-                    const contractBalance = await YRSToken.balanceOf(contractAddress);
-                    document.getElementById('contractYRSBalance').textContent = parseFloat(ethers.utils.formatUnits(contractBalance, YRSDecimals)).toFixed(4);
-                }
-                
-                document.getElementById('balanceError').style.display = 'none';
-            } catch (error) {
-                console.error('Error refreshing balances:', error);
-                document.getElementById('balanceError').style.display = 'block';
-            }
-        }
-
-        // =============================================
-        // Contract Interaction Functions
-        // =============================================
-        
-        async function buyYRS() {
-            if (!userAddress || !signer) {
-                alert('Please connect your wallet!');
-                return;
-            }
-            
-            const isCorrectNetwork = await checkNetwork();
-            if (!isCorrectNetwork) {
-                alert('Please switch to Sepolia testnet to proceed with this transaction!');
-                return;
-            }
-            
-            const wZYSAmount = parseFloat(document.getElementById('buyWZYSAmount').value);
-            const minYRSOut = parseFloat(document.getElementById('minYRSOut').value);
-            
-            if (!wZYSAmount || !minYRSOut || wZYSAmount <= 0 || minYRSOut <= 0) {
-                alert('Please enter valid positive amounts!');
-                return;
-            }
-            
-            const outputId = 'buyOutput';
-            try {
-                const wZYSAddress = await contract.wZYS();
-                const wZYSTokenWithSigner = new ethers.Contract(wZYSAddress, erc20ABI, signer);
-                await ensureApproval(wZYSTokenWithSigner, contractAddress, wZYSAmount, wZYSDecimals, outputId);
-                
-                const buyTx = await contract.buy1(
-                    ethers.utils.parseUnits(wZYSAmount.toString(), wZYSDecimals),
-                    ethers.utils.parseUnits(minYRSOut.toString(), YRSDecimals),
-                    { gasLimit: 500000 }
-                );
-                
-                document.getElementById(outputId).innerHTML += '<div class="alert alert-info">Buy transaction submitted! Waiting for confirmation...</div>';
-                const receipt = await buyTx.wait();
-                
-                if (receipt.status === 1) {
-                    document.getElementById(outputId).innerHTML += '<div class="alert alert-success">Successfully bought YRS tokens! Tx: ' + receipt.transactionHash + '</div>';
-                } else {
-                    document.getElementById(outputId).innerHTML += '<div class="alert alert-danger">Transaction failed! Check details.</div>';
-                }
-                
-                await refreshAllBalances();
-                
-            } catch (error) {
-                console.error('Error buying YRS:', error);
-                let errorMsg = error.message;
-                if (error.code === 'UNPREDICTABLE_GAS_LIMIT') {
-                    errorMsg = 'Gas estimation failed. This may be due to insufficient funds, wrong parameters, or contract revert. Try adjusting slippage or amounts.';
-                } else if (error.data && error.data.includes('execution reverted')) {
-                    errorMsg = 'Transaction would revert. Check balances, allowances, or slippage protection.';
-                }
-                document.getElementById(outputId).innerHTML = `<div class="alert alert-danger">Error: ${errorMsg}</div>`;
-            }
-        }
-
-        async function sellYRS() {
-            if (!userAddress || !signer) {
-                alert('Please connect your wallet!');
-                return;
-            }
-            
-            const isCorrectNetwork = await checkNetwork();
-            if (!isCorrectNetwork) {
-                alert('Please switch to Sepolia testnet to proceed with this transaction!');
-                return;
-            }
-            
-            const YRSAmount = parseFloat(document.getElementById('sellYRSAmount').value);
-            const minWZYSOut = parseFloat(document.getElementById('minWZYSOut').value);
-            
-            if (!YRSAmount || !minWZYSOut || YRSAmount <= 0 || minWZYSOut <= 0) {
-                alert('Please enter valid positive amounts!');
-                return;
-            }
-            
-            const outputId = 'sellOutput';
-            try {
-                const YRSAddress = await contract.YRS();
-                const YRSTokenWithSigner = new ethers.Contract(YRSAddress, erc20ABI, signer);
-                await ensureApproval(YRSTokenWithSigner, contractAddress, YRSAmount, YRSDecimals, outputId);
-                
-                const sellTx = await contract.sell1(
-                    ethers.utils.parseUnits(YRSAmount.toString(), YRSDecimals),
-                    ethers.utils.parseUnits(minWZYSOut.toString(), wZYSDecimals),
-                    { gasLimit: 500000 }
-                );
-                
-                document.getElementById(outputId).innerHTML += '<div class="alert alert-info">Sell transaction submitted! Waiting for confirmation...</div>';
-                const receipt = await sellTx.wait();
-                
-                if (receipt.status === 1) {
-                    document.getElementById(outputId).innerHTML += '<div class="alert alert-success">Successfully sold YRS tokens! Tx: ' + receipt.transactionHash + '</div>';
-                } else {
-                    document.getElementById(outputId).innerHTML += '<div class="alert alert-danger">Transaction failed! Check details.</div>';
-                }
-                
-                await refreshAllBalances();
-                
-            } catch (error) {
-                console.error('Error selling YRS:', error);
-                let errorMsg = error.message;
-                if (error.code === 'UNPREDICTABLE_GAS_LIMIT') {
-                    errorMsg = 'Gas estimation failed. This may be due to insufficient funds, wrong parameters, or contract revert. Try adjusting slippage or amounts.';
-                } else if (error.data && error.data.includes('execution reverted')) {
-                    errorMsg = 'Transaction would revert. Check balances, allowances, or slippage protection.';
-                }
-                document.getElementById(outputId).innerHTML = `<div class="alert alert-danger">Error: ${errorMsg}</div>`;
-            }
-        }
-
-        async function burnYRS() {
-            if (!userAddress || !signer) {
-                alert('Please connect your wallet!');
-                return;
-            }
-            
-            const isCorrectNetwork = await checkNetwork();
-            if (!isCorrectNetwork) {
-                alert('Please switch to Sepolia testnet to proceed with this transaction!');
-                return;
-            }
-            
-            const burnAmount = parseFloat(document.getElementById('burnAmount').value);
-            
-            if (!burnAmount || burnAmount <= 0) {
-                alert('Please enter a valid positive amount to burn!');
-                return;
-            }
-            
-            const outputId = 'burnOutput';
-            try {
-                const YRSAddress = await contract.YRS();
-                const YRSTokenWithSigner = new ethers.Contract(YRSAddress, erc20ABI, signer);
-                await ensureApproval(YRSTokenWithSigner, contractAddress, burnAmount, YRSDecimals, outputId);
-                
-                const burnTx = await contract.burn(
-                    ethers.utils.parseUnits(burnAmount.toString(), YRSDecimals),
-                    { gasLimit: 300000 }
-                );
-                
-                document.getElementById(outputId).innerHTML += '<div class="alert alert-info">Burn transaction submitted! Waiting for confirmation...</div>';
-                const receipt = await burnTx.wait();
-                
-                if (receipt.status === 1) {
-                    document.getElementById(outputId).innerHTML += '<div class="alert alert-success">Successfully burned YRS tokens! Tx: ' + receipt.transactionHash + '</div>';
-                } else {
-                    document.getElementById(outputId).innerHTML += '<div class="alert alert-danger">Transaction failed! Check details.</div>';
-                }
-                
-                await refreshAllBalances();
-                
-            } catch (error) {
-                console.error('Error burning YRS:', error);
-                let errorMsg = error.message;
-                if (error.code === 'UNPREDICTABLE_GAS_LIMIT') {
-                    errorMsg = 'Gas estimation failed. Try a smaller amount.';
-                } else if (error.data && error.data.includes('execution reverted')) {
-                    errorMsg = 'Transaction would revert. Check balance or allowance.';
-                }
-                document.getElementById(outputId).innerHTML = `<div class="alert alert-danger">Error: ${errorMsg}</div>`;
-            }
-        }
-
-        async function recoverTokens() {
-            if (!userAddress || !signer) {
-                alert('Please connect your wallet!');
-                return;
-            }
-            
-            const isCorrectNetwork = await checkNetwork();
-            if (!isCorrectNetwork) {
-                alert('Please switch to Sepolia testnet to proceed with this transaction!');
-                return;
-            }
-            
-            const tokenAddress = document.getElementById('recoverTokenAddress').value;
-            const amount = parseFloat(document.getElementById('recoverAmount').value);
-            
-            if (!tokenAddress || !amount || amount <= 0) {
-                alert('Please fill in all fields with valid positive amounts!');
-                return;
-            }
-            
-            if (!ethers.utils.isAddress(tokenAddress)) {
-                alert('Please enter a valid token address!');
-                return;
-            }
-            
-            const outputId = 'recoverOutput';
-            try {
-                const recoverTx = await contract.recoverERC20(
-                    tokenAddress,
-                    ethers.utils.parseUnits(amount.toString(), 18), // Assuming 18 decimals for recovered tokens
-                    { gasLimit: 200000 }
-                );
-                
-                document.getElementById(outputId).innerHTML = '<div class="alert alert-info">Recovery transaction submitted! Waiting for confirmation...</div>';
-                const receipt = await recoverTx.wait();
-                
-                if (receipt.status === 1) {
-                    document.getElementById(outputId).innerHTML += '<div class="alert alert-success">Successfully recovered tokens! Tx: ' + receipt.transactionHash + '</div>';
-                } else {
-                    document.getElementById(outputId).innerHTML += '<div class="alert alert-danger">Transaction failed! Check details.</div>';
-                }
-                
-            } catch (error) {
-                console.error('Error recovering tokens:', error);
-                let errorMsg = error.message;
-                if (error.code === 'UNPREDICTABLE_GAS_LIMIT') {
-                    errorMsg = 'Gas estimation failed. Ensure you are the contract owner.';
-                } else if (error.data && error.data.includes('execution reverted')) {
-                    errorMsg = 'Transaction would revert. Only contract owner can recover tokens.';
-                }
-                document.getElementById(outputId).innerHTML = `<div class="alert alert-danger">Error: ${errorMsg}</div>`;
-            }
-        }
+        }, 30000);
     </script>
 </body>
 </html>
