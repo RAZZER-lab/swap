@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -14,7 +15,8 @@
         .status-disconnected { color: #dc3545; font-weight: bold; }
         .function-section { border-left: 4px solid #0d6efd; padding-left: 1rem; margin-bottom: 2rem; }
         .wallet-info { background-color: #f8f9fa; padding: 1rem; border-radius: 0.375rem; }
-        .gas-error { color: #dc3545; font-size: 0.9em; }
+        .gas-error, .rpc-error { color: #dc3545; font-size: 0.9em; }
+        .retry-btn { margin-top: 0.5rem; }
     </style>
 </head>
 <body>
@@ -31,6 +33,7 @@
                     <div class="col-md-6">
                         <p>Connection Status: <span id="connectionStatus" class="status-disconnected">Not Connected</span></p>
                         <p id="networkWarning" class="gas-error" style="display: none;">⚠️ Wrong Network! Switch to the correct chain.</p>
+                        <p id="rpcWarning" class="rpc-error" style="display: none;">⚠️ RPC Error (Circuit Breaker Open). Try refreshing the page, resetting MetaMask account, or switching networks. <button id="retryInitBtn" class="btn btn-sm btn-outline-primary retry-btn">Retry Init</button></p>
                         <button id="connectButton" class="btn btn-primary">Connect MetaMask</button>
                         <button id="disconnectButton" class="btn btn-secondary" style="display: none;">Disconnect</button>
                     </div>
@@ -48,7 +51,7 @@
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h5 class="mb-0">Token Balances</h5>
-                <button id="refreshBalances" class="btn btn-sm btn-outline-secondary">Refresh</button>
+                <button id="refreshBalances" class="btn btn-sm btn-outline-secondary" disabled>Refresh</button>
             </div>
             <div class="card-body">
                 <div class="row">
@@ -62,6 +65,7 @@
                         <p>Contract YRS Reserve: <strong id="contractYRSBalance">0</strong></p>
                     </div>
                 </div>
+                <p id="balanceError" class="rpc-error" style="display: none;">Failed to load balances due to RPC error. Retry after fixing connection.</p>
             </div>
         </div>
 
@@ -81,7 +85,7 @@
                         <label for="minYRSOut" class="form-label">Minimum YRS to Receive (Slippage Protection)</label>
                         <input type="number" class="form-control" id="minYRSOut" placeholder="Enter minimum YRS expected" step="0.000000000000000001">
                     </div>
-                    <button id="buyButton" class="btn btn-success">Buy YRS</button>
+                    <button id="buyButton" class="btn btn-success" disabled>Buy YRS</button>
                     <div id="buyOutput" class="mt-2"></div>
                 </div>
             </div>
@@ -101,7 +105,7 @@
                         <label for="minWZYSOut" class="form-label">Minimum wZYS to Receive (Slippage Protection)</label>
                         <input type="number" class="form-control" id="minWZYSOut" placeholder="Enter minimum wZYS expected" step="0.000000000000000001">
                     </div>
-                    <button id="sellButton" class="btn btn-warning">Sell YRS</button>
+                    <button id="sellButton" class="btn btn-warning" disabled>Sell YRS</button>
                     <div id="sellOutput" class="mt-2"></div>
                 </div>
             </div>
@@ -117,7 +121,7 @@
                         <label for="burnAmount" class="form-label">YRS Amount to Burn</label>
                         <input type="number" class="form-control" id="burnAmount" placeholder="Enter YRS amount to burn" step="0.000000000000000001">
                     </div>
-                    <button id="burnButton" class="btn btn-danger">Burn YRS</button>
+                    <button id="burnButton" class="btn btn-danger" disabled>Burn YRS</button>
                     <div id="burnOutput" class="mt-2"></div>
                 </div>
             </div>
@@ -137,7 +141,7 @@
                         <label for="recoverAmount" class="form-label">Amount to Recover</label>
                         <input type="number" class="form-control" id="recoverAmount" placeholder="Enter amount to recover" step="0.000000000000000001">
                     </div>
-                    <button id="recoverButton" class="btn btn-info">Recover ERC20 Tokens</button>
+                    <button id="recoverButton" class="btn btn-info" disabled>Recover ERC20 Tokens</button>
                     <div id="recoverOutput" class="mt-2"></div>
                 </div>
             </div>
@@ -282,6 +286,16 @@
                 "name": "increaseAllowance",
                 "outputs": [{"name": "", "type": "bool"}],
                 "type": "function"
+            },
+            {
+                "constant": true,
+                "inputs": [
+                    {"name": "_owner", "type": "address"},
+                    {"name": "_spender", "type": "address"}
+                ],
+                "name": "allowance",
+                "outputs": [{"name": "", "type": "uint256"}],
+                "type": "function"
             }
         ];
 
@@ -292,6 +306,47 @@
         let userAddress;
         let wZYSToken;
         let YRSToken;
+        let initFailed = false;
+
+        // =============================================
+        // Utility Functions for RPC Error Handling
+        // =============================================
+        
+        function handleRPCCircuitBreaker(error, context = '') {
+            if (error.code === -32603 && error.message.includes('circuit breaker')) {
+                console.error(`RPC Circuit Breaker Error in ${context}:`, error);
+                document.getElementById('rpcWarning').style.display = 'block';
+                initFailed = true;
+                // Disable buttons if init failed
+                toggleInteractionButtons(false);
+                return true;
+            }
+            return false;
+        }
+
+        async function retryableCall(callFn, maxRetries = 2, delay = 1000) {
+            for (let i = 0; i < maxRetries; i++) {
+                try {
+                    return await callFn();
+                } catch (error) {
+                    if (handleRPCCircuitBreaker(error, `Retry ${i + 1} for call`)) {
+                        break;
+                    }
+                    if (i < maxRetries - 1) {
+                        await new Promise(resolve => setTimeout(resolve, delay * (i + 1)));
+                    } else {
+                        throw error;
+                    }
+                }
+            }
+        }
+
+        function toggleInteractionButtons(enabled) {
+            const buttons = ['buyButton', 'sellButton', 'burnButton', 'recoverButton', 'refreshBalances'];
+            buttons.forEach(id => {
+                document.getElementById(id).disabled = !enabled;
+            });
+        }
 
         // =============================================
         // DOM Content Loaded Event Listener
@@ -316,16 +371,6 @@
                 return;
             }
 
-            // Check if already connected on load
-            try {
-                const accounts = await provider.listAccounts();
-                if (accounts.length > 0) {
-                    await connectWallet(accounts[0]);
-                }
-            } catch (error) {
-                console.log('No accounts found, waiting for manual connection.');
-            }
-
             // Set up event listeners
             document.getElementById('connectButton').addEventListener('click', connectWallet);
             document.getElementById('disconnectButton').addEventListener('click', disconnectWallet);
@@ -334,6 +379,7 @@
             document.getElementById('burnButton').addEventListener('click', burnYRS);
             document.getElementById('recoverButton').addEventListener('click', recoverTokens);
             document.getElementById('refreshBalances').addEventListener('click', refreshAllBalances);
+            document.getElementById('retryInitBtn').addEventListener('click', retryInitialization);
 
             // Listen for account changes
             window.ethereum.on('accountsChanged', async function(accounts) {
@@ -351,6 +397,16 @@
                     await refreshAllBalances();
                 }
             });
+
+            // Initial check for existing connection
+            try {
+                const accounts = await provider.listAccounts();
+                if (accounts.length > 0) {
+                    await connectWallet(accounts[0]);
+                }
+            } catch (error) {
+                console.log('No accounts found or error listing accounts:', error);
+            }
         });
 
         // =============================================
@@ -377,26 +433,57 @@
                 // Update contract instance with signer for write operations
                 contract = contract.connect(signer);
                 
-                // Initialize token contracts
-                await initializeTokenContracts();
-                
-                // Check network
+                // Check network first
                 await checkNetwork();
                 
                 // Update UI
                 updateWalletInfo();
-                await refreshAllBalances();
+                
+                // Attempt to initialize token contracts with retry
+                try {
+                    await retryableCall(initializeTokenContracts);
+                    initFailed = false;
+                    document.getElementById('rpcWarning').style.display = 'none';
+                } catch (error) {
+                    console.error('Failed to initialize after retries:', error);
+                    initFailed = true;
+                    document.getElementById('rpcWarning').style.display = 'block';
+                }
+                
+                // Refresh balances if init succeeded
+                if (!initFailed) {
+                    await refreshAllBalances();
+                } else {
+                    document.getElementById('balanceError').style.display = 'block';
+                }
                 
                 document.getElementById('connectionStatus').textContent = 'Connected';
                 document.getElementById('connectionStatus').className = 'status-connected';
                 document.getElementById('connectButton').style.display = 'none';
                 document.getElementById('disconnectButton').style.display = 'inline-block';
                 
+                toggleInteractionButtons(!initFailed);
+                
             } catch (error) {
                 console.error('Error connecting to wallet:', error);
-                if (error.code !== 4001) { // Ignore user rejection
+                if (error.code !== 4001 && !handleRPCCircuitBreaker(error, 'connectWallet')) { // Ignore user rejection
                     alert('Error connecting to MetaMask: ' + error.message);
                 }
+            }
+        }
+
+        async function retryInitialization() {
+            if (!userAddress) return;
+            try {
+                document.getElementById('rpcWarning').style.display = 'none';
+                await retryableCall(initializeTokenContracts);
+                initFailed = false;
+                await refreshAllBalances();
+                document.getElementById('balanceError').style.display = 'none';
+                toggleInteractionButtons(true);
+            } catch (error) {
+                console.error('Retry failed:', error);
+                handleRPCCircuitBreaker(error, 'retryInitialization');
             }
         }
 
@@ -406,13 +493,20 @@
                 if (network.chainId !== EXPECTED_CHAIN_ID) {
                     document.getElementById('networkWarning').style.display = 'block';
                     document.getElementById('networkWarning').textContent = `⚠️ Wrong Network! Expected Chain ID ${EXPECTED_CHAIN_ID}, but connected to ${network.chainId}. Switch to the correct network.`;
+                    toggleInteractionButtons(false);
                     return false;
                 } else {
                     document.getElementById('networkWarning').style.display = 'none';
+                    if (!initFailed) {
+                        toggleInteractionButtons(true);
+                    }
                     return true;
                 }
             } catch (error) {
                 console.error('Error checking network:', error);
+                if (handleRPCCircuitBreaker(error, 'checkNetwork')) {
+                    return false;
+                }
                 return false;
             }
         }
@@ -423,6 +517,7 @@
             contract = new ethers.Contract(contractAddress, contractABI, provider);
             wZYSToken = null;
             YRSToken = null;
+            initFailed = false;
             
             document.getElementById('connectionStatus').textContent = 'Not Connected';
             document.getElementById('connectionStatus').className = 'status-disconnected';
@@ -432,6 +527,8 @@
             document.getElementById('connectButton').style.display = 'inline-block';
             document.getElementById('disconnectButton').style.display = 'none';
             document.getElementById('networkWarning').style.display = 'none';
+            document.getElementById('rpcWarning').style.display = 'none';
+            document.getElementById('balanceError').style.display = 'none';
             
             // Reset balances
             document.getElementById('wZYSBalance').textContent = '0';
@@ -440,6 +537,8 @@
             
             // Clear outputs
             document.querySelectorAll('[id$="Output"]').forEach(el => el.innerHTML = '');
+            
+            toggleInteractionButtons(false);
         }
 
         async function updateWalletInfo() {
@@ -451,6 +550,9 @@
                     document.getElementById('walletInfo').style.display = 'block';
                 } catch (error) {
                     console.error('Error updating wallet info:', error);
+                    if (handleRPCCircuitBreaker(error, 'updateWalletInfo')) {
+                        return;
+                    }
                 }
             }
         }
@@ -460,29 +562,27 @@
         // =============================================
         
         async function initializeTokenContracts() {
+            // Get token addresses from the main contract with retry
+            let wZYSAddress, YRSAddress;
             try {
-                // Get token addresses from the main contract
-                const wZYSAddress = await contract.wZYS();
-                const YRSAddress = await contract.YRS();
-                
-                // Create contract instances for the tokens
-                wZYSToken = new ethers.Contract(wZYSAddress, erc20ABI, signer || provider);
-                YRSToken = new ethers.Contract(YRSAddress, erc20ABI, signer || provider);
-                
+                wZYSAddress = await retryableCall(() => contract.wZYS());
+                YRSAddress = await retryableCall(() => contract.YRS());
             } catch (error) {
-                console.error('Error initializing token contracts:', error);
-                throw error; // Re-throw to handle in caller
+                console.error('Failed to fetch token addresses:', error);
+                throw error;
             }
+            
+            // Create contract instances for the tokens
+            wZYSToken = new ethers.Contract(wZYSAddress, erc20ABI, signer || provider);
+            YRSToken = new ethers.Contract(YRSAddress, erc20ABI, signer || provider);
         }
 
         async function getTokenAllowance(tokenContract, spender) {
             try {
-                // Use allowance function if available, otherwise assume 0
-                const allowance = await tokenContract.allowance(userAddress, spender);
-                return allowance;
+                return await retryableCall(() => tokenContract.allowance(userAddress, spender));
             } catch (error) {
                 console.error('Error getting allowance:', error);
-                return 0;
+                return ethers.BigNumber.from(0);
             }
         }
 
@@ -506,6 +606,9 @@
                     document.getElementById(outputId).innerHTML += '<div class="alert alert-success mt-2">Approval successful!</div>';
                 } catch (error) {
                     console.error('Approval failed:', error);
+                    if (handleRPCCircuitBreaker(error, 'ensureApproval')) {
+                        throw new Error('RPC Error during approval');
+                    }
                     document.getElementById(outputId).innerHTML = `<div class="alert alert-danger">Approval failed: ${error.message}</div>`;
                     throw error;
                 }
@@ -515,23 +618,32 @@
         }
 
         async function refreshAllBalances() {
-            if (!userAddress || !wZYSToken || !YRSToken) return;
+            if (!userAddress || !wZYSToken || !YRSToken || initFailed) {
+                if (initFailed) {
+                    document.getElementById('balanceError').style.display = 'block';
+                }
+                return;
+            }
             
             try {
                 // Get user's wZYS balance
-                const wZYSBalance = await wZYSToken.balanceOf(userAddress);
+                const wZYSBalance = await retryableCall(() => wZYSToken.balanceOf(userAddress));
                 document.getElementById('wZYSBalance').textContent = parseFloat(ethers.utils.formatUnits(wZYSBalance, 18)).toFixed(4);
                 
                 // Get user's YRS balance
-                const YRSBalance = await YRSToken.balanceOf(userAddress);
+                const YRSBalance = await retryableCall(() => YRSToken.balanceOf(userAddress));
                 document.getElementById('YRSBalance').textContent = parseFloat(ethers.utils.formatUnits(YRSBalance, 18)).toFixed(4);
                 
                 // Get contract's YRS balance
-                const contractBalance = await YRSToken.balanceOf(contractAddress);
+                const contractBalance = await retryableCall(() => YRSToken.balanceOf(contractAddress));
                 document.getElementById('contractYRSBalance').textContent = parseFloat(ethers.utils.formatUnits(contractBalance, 18)).toFixed(4);
                 
+                document.getElementById('balanceError').style.display = 'none';
             } catch (error) {
                 console.error('Error refreshing balances:', error);
+                if (handleRPCCircuitBreaker(error, 'refreshAllBalances')) {
+                    document.getElementById('balanceError').style.display = 'block';
+                }
             }
         }
 
@@ -540,8 +652,8 @@
         // =============================================
         
         async function buyYRS() {
-            if (!userAddress || !await checkNetwork()) {
-                alert('Please connect your wallet and switch to the correct network!');
+            if (!userAddress || !await checkNetwork() || initFailed) {
+                alert('Please connect your wallet, switch to the correct network, and resolve any RPC issues!');
                 return;
             }
             
@@ -556,7 +668,7 @@
             const outputId = 'buyOutput';
             try {
                 // Ensure approval
-                const wZYSAddress = await contract.wZYS();
+                const wZYSAddress = await retryableCall(() => contract.wZYS());
                 const wZYSTokenWithSigner = new ethers.Contract(wZYSAddress, erc20ABI, signer);
                 await ensureApproval(wZYSTokenWithSigner, contractAddress, wZYSAmount, outputId);
                 
@@ -582,7 +694,9 @@
             } catch (error) {
                 console.error('Error buying YRS:', error);
                 let errorMsg = error.message;
-                if (error.code === 'UNPREDICTABLE_GAS_LIMIT') {
+                if (handleRPCCircuitBreaker(error, 'buyYRS')) {
+                    errorMsg = 'RPC Circuit Breaker: Execution blocked. Resolve in MetaMask and retry.';
+                } else if (error.code === 'UNPREDICTABLE_GAS_LIMIT') {
                     errorMsg = 'Gas estimation failed. This may be due to insufficient funds, wrong parameters, or contract revert. Try adjusting slippage or amounts.';
                 } else if (error.data && error.data.includes('execution reverted')) {
                     errorMsg = 'Transaction would revert. Check balances, allowances, or slippage protection.';
@@ -592,8 +706,8 @@
         }
 
         async function sellYRS() {
-            if (!userAddress || !await checkNetwork()) {
-                alert('Please connect your wallet and switch to the correct network!');
+            if (!userAddress || !await checkNetwork() || initFailed) {
+                alert('Please connect your wallet, switch to the correct network, and resolve any RPC issues!');
                 return;
             }
             
@@ -608,7 +722,7 @@
             const outputId = 'sellOutput';
             try {
                 // Ensure approval
-                const YRSAddress = await contract.YRS();
+                const YRSAddress = await retryableCall(() => contract.YRS());
                 const YRSTokenWithSigner = new ethers.Contract(YRSAddress, erc20ABI, signer);
                 await ensureApproval(YRSTokenWithSigner, contractAddress, YRSAmount, outputId);
                 
@@ -634,7 +748,9 @@
             } catch (error) {
                 console.error('Error selling YRS:', error);
                 let errorMsg = error.message;
-                if (error.code === 'UNPREDICTABLE_GAS_LIMIT') {
+                if (handleRPCCircuitBreaker(error, 'sellYRS')) {
+                    errorMsg = 'RPC Circuit Breaker: Execution blocked. Resolve in MetaMask and retry.';
+                } else if (error.code === 'UNPREDICTABLE_GAS_LIMIT') {
                     errorMsg = 'Gas estimation failed. This may be due to insufficient funds, wrong parameters, or contract revert. Try adjusting slippage or amounts.';
                 } else if (error.data && error.data.includes('execution reverted')) {
                     errorMsg = 'Transaction would revert. Check balances, allowances, or slippage protection.';
@@ -644,8 +760,8 @@
         }
 
         async function burnYRS() {
-            if (!userAddress || !await checkNetwork()) {
-                alert('Please connect your wallet and switch to the correct network!');
+            if (!userAddress || !await checkNetwork() || initFailed) {
+                alert('Please connect your wallet, switch to the correct network, and resolve any RPC issues!');
                 return;
             }
             
@@ -659,7 +775,7 @@
             const outputId = 'burnOutput';
             try {
                 // Ensure approval
-                const YRSAddress = await contract.YRS();
+                const YRSAddress = await retryableCall(() => contract.YRS());
                 const YRSTokenWithSigner = new ethers.Contract(YRSAddress, erc20ABI, signer);
                 await ensureApproval(YRSTokenWithSigner, contractAddress, burnAmount, outputId);
                 
@@ -684,7 +800,9 @@
             } catch (error) {
                 console.error('Error burning YRS:', error);
                 let errorMsg = error.message;
-                if (error.code === 'UNPREDICTABLE_GAS_LIMIT') {
+                if (handleRPCCircuitBreaker(error, 'burnYRS')) {
+                    errorMsg = 'RPC Circuit Breaker: Execution blocked. Resolve in MetaMask and retry.';
+                } else if (error.code === 'UNPREDICTABLE_GAS_LIMIT') {
                     errorMsg = 'Gas estimation failed. Try a smaller amount.';
                 } else if (error.data && error.data.includes('execution reverted')) {
                     errorMsg = 'Transaction would revert. Check balance or allowance.';
@@ -694,8 +812,8 @@
         }
 
         async function recoverTokens() {
-            if (!userAddress || !await checkNetwork()) {
-                alert('Please connect your wallet and switch to the correct network!');
+            if (!userAddress || !await checkNetwork() || initFailed) {
+                alert('Please connect your wallet, switch to the correct network, and resolve any RPC issues!');
                 return;
             }
             
@@ -734,7 +852,9 @@
             } catch (error) {
                 console.error('Error recovering tokens:', error);
                 let errorMsg = error.message;
-                if (error.code === 'UNPREDICTABLE_GAS_LIMIT') {
+                if (handleRPCCircuitBreaker(error, 'recoverTokens')) {
+                    errorMsg = 'RPC Circuit Breaker: Execution blocked. Resolve in MetaMask and retry.';
+                } else if (error.code === 'UNPREDICTABLE_GAS_LIMIT') {
                     errorMsg = 'Gas estimation failed. Ensure you are the contract owner.';
                 } else if (error.data && error.data.includes('execution reverted')) {
                     errorMsg = 'Transaction would revert. Only contract owner can recover tokens.';
@@ -745,3 +865,4 @@
     </script>
 </body>
 </html>
+```
