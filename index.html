@@ -519,6 +519,27 @@
 
         .detail-value {
             color: var(--text-primary);
+            word-break: break-all;
+        }
+
+        /* Info box */
+        .info-box {
+            background: rgba(79, 70, 229, 0.1);
+            border: 1px solid rgba(79, 70, 229, 0.2);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .info-box-title {
+            font-weight: 600;
+            color: var(--primary-color);
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
         /* Responsive design */
@@ -620,6 +641,14 @@
                         <div class="trade-type buy-type">+10% Bonus</div>
                     </div>
                     
+                    <div class="info-box">
+                        <div class="info-box-title">
+                            <i class="fas fa-info-circle"></i>
+                            Important Note
+                        </div>
+                        <div>Due to different decimal places, 1 wZYS = 1,000,000 YRS in the contract calculation.</div>
+                    </div>
+                    
                     <div class="form-group">
                         <label class="form-label">Amount of wZYS to spend</label>
                         <div class="input-group">
@@ -657,6 +686,10 @@
                             <span class="detail-label">Min YRS Out (wei):</span>
                             <span class="detail-value" id="buyYRSWei">-</span>
                         </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Contract sees wZYS as:</span>
+                            <span class="detail-value" id="contractWZYSValue">-</span>
+                        </div>
                     </div>
                     
                     <button id="buyBtn" class="trade-btn buy-btn" disabled>
@@ -668,6 +701,14 @@
                     <div class="trade-header">
                         <div class="trade-title">Sell YRS</div>
                         <div class="trade-type sell-type">-10% Penalty</div>
+                    </div>
+                    
+                    <div class="info-box">
+                        <div class="info-box-title">
+                            <i class="fas fa-info-circle"></i>
+                            Important Note
+                        </div>
+                        <div>Due to different decimal places, 1,000,000 YRS = 1 wZYS in the contract calculation.</div>
                     </div>
                     
                     <div class="form-group">
@@ -706,6 +747,10 @@
                         <div class="detail-row">
                             <span class="detail-label">Min wZYS Out (wei):</span>
                             <span class="detail-value" id="sellWZYSWei">-</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Contract sees YRS as:</span>
+                            <span class="detail-value" id="contractYRSValue">-</span>
                         </div>
                     </div>
                     
@@ -818,6 +863,8 @@
             const buyYRSWeiElement = document.getElementById('buyYRSWei');
             const sellYRSWeiElement = document.getElementById('sellYRSWei');
             const sellWZYSWeiElement = document.getElementById('sellWZYSWei');
+            const contractWZYSValueElement = document.getElementById('contractWZYSValue');
+            const contractYRSValueElement = document.getElementById('contractYRSValue');
             
             // Initialize
             await checkConnection();
@@ -1125,7 +1172,8 @@
             // Calculate expected YRS with bonus
             function calculateExpectedYRS() {
                 const wZYSAmount = parseFloat(buyWZYSAmountInput.value) || 0;
-                const expectedYRS = wZYSAmount * 1.1; // 10% bonus
+                // Account for decimal difference: 1 wZYS = 1,000,000 YRS in contract calculation
+                const expectedYRS = wZYSAmount * 1000000 * 1.1; // 10% bonus
                 expectedYRSInput.value = expectedYRS.toFixed(6);
             }
             
@@ -1140,7 +1188,8 @@
             // Calculate expected wZYS with penalty
             function calculateExpectedWZYS() {
                 const YRSAmount = parseFloat(sellYRSAmountInput.value) || 0;
-                const expectedWZYS = YRSAmount * 0.9; // 10% penalty
+                // Account for decimal difference: 1,000,000 YRS = 1 wZYS in contract calculation
+                const expectedWZYS = (YRSAmount / 1000000) * 0.9; // 10% penalty
                 expectedWZYSInput.value = expectedWZYS.toFixed(6);
             }
             
@@ -1164,9 +1213,15 @@
                     const wZYSAmountWei = ethers.utils.parseUnits(wZYSAmount.toString(), wZYSDecimals);
                     const minYRSOutWei = ethers.utils.parseUnits(minYRSOut.toString(), YRSDecimals);
                     
+                    // For the contract, we need to convert wZYS to YRS decimals
+                    // by multiplying by 10^(YRSDecimals - wZYSDecimals) = 10^6
+                    const decimalDifference = YRSDecimals - wZYSDecimals;
+                    const wZYSAmountForContract = wZYSAmountWei.mul(ethers.BigNumber.from(10).pow(decimalDifference));
+                    
                     // Display wei values
                     buyWZYSWeiElement.textContent = wZYSAmountWei.toString();
                     buyYRSWeiElement.textContent = minYRSOutWei.toString();
+                    contractWZYSValueElement.textContent = wZYSAmountForContract.toString();
                 } else {
                     buyTransactionDetails.style.display = 'none';
                 }
@@ -1184,9 +1239,15 @@
                     const YRSAmountWei = ethers.utils.parseUnits(YRSAmount.toString(), YRSDecimals);
                     const minWZYSOutWei = ethers.utils.parseUnits(minWZYSOut.toString(), wZYSDecimals);
                     
+                    // For the contract, we need to convert wZYS to YRS decimals
+                    // by multiplying by 10^(YRSDecimals - wZYSDecimals) = 10^6
+                    const decimalDifference = YRSDecimals - wZYSDecimals;
+                    const minWZYSOutForContract = minWZYSOutWei.mul(ethers.BigNumber.from(10).pow(decimalDifference));
+                    
                     // Display wei values
                     sellYRSWeiElement.textContent = YRSAmountWei.toString();
                     sellWZYSWeiElement.textContent = minWZYSOutWei.toString();
+                    contractYRSValueElement.textContent = minWZYSOutForContract.toString();
                 } else {
                     sellTransactionDetails.style.display = 'none';
                 }
@@ -1221,6 +1282,11 @@
                     const wZYSAmountWei = ethers.utils.parseUnits(wZYSAmount, wZYSDecimals);
                     const minYRSOutWei = ethers.utils.parseUnits(minYRSOut, YRSDecimals);
                     
+                    // For the contract, we need to convert wZYS to YRS decimals
+                    // by multiplying by 10^(YRSDecimals - wZYSDecimals) = 10^6
+                    const decimalDifference = YRSDecimals - wZYSDecimals;
+                    const wZYSAmountForContract = wZYSAmountWei.mul(ethers.BigNumber.from(10).pow(decimalDifference));
+                    
                     // Check allowance
                     const allowance = await wZYSContract.allowance(userAddress, CONTRACT_ADDRESS);
                     if (allowance.lt(wZYSAmountWei)) {
@@ -1230,8 +1296,8 @@
                         showToast('info', 'Approval Confirmed', 'Transaction approved. Proceeding with purchase...');
                     }
                     
-                    // Execute buy transaction
-                    const tx = await contract.buy1(wZYSAmountWei, minYRSOutWei);
+                    // Execute buy transaction with converted wZYS amount
+                    const tx = await contract.buy1(wZYSAmountForContract, minYRSOutWei);
                     await tx.wait();
                     
                     // Update UI
@@ -1302,6 +1368,11 @@
                     const YRSAmountWei = ethers.utils.parseUnits(YRSAmount, YRSDecimals);
                     const minWZYSOutWei = ethers.utils.parseUnits(minWZYSOut, wZYSDecimals);
                     
+                    // For the contract, we need to convert wZYS to YRS decimals
+                    // by multiplying by 10^(YRSDecimals - wZYSDecimals) = 10^6
+                    const decimalDifference = YRSDecimals - wZYSDecimals;
+                    const minWZYSOutForContract = minWZYSOutWei.mul(ethers.BigNumber.from(10).pow(decimalDifference));
+                    
                     // Check allowance
                     const allowance = await YRSContract.allowance(userAddress, CONTRACT_ADDRESS);
                     if (allowance.lt(YRSAmountWei)) {
@@ -1311,8 +1382,8 @@
                         showToast('info', 'Approval Confirmed', 'Transaction approved. Proceeding with sale...');
                     }
                     
-                    // Execute sell transaction
-                    const tx = await contract.sell1(YRSAmountWei, minWZYSOutWei);
+                    // Execute sell transaction with converted wZYS amount
+                    const tx = await contract.sell1(YRSAmountWei, minWZYSOutForContract);
                     await tx.wait();
                     
                     // Update UI
