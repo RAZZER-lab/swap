@@ -542,6 +542,18 @@
             gap: 8px;
         }
 
+        /* Debug info */
+        .debug-info {
+            background: rgba(245, 158, 11, 0.1);
+            border: 1px solid rgba(245, 158, 11, 0.2);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+            font-size: 12px;
+            color: var(--text-secondary);
+            font-family: monospace;
+        }
+
         /* Responsive design */
         @media (max-width: 768px) {
             .dashboard, .trading-section {
@@ -607,6 +619,11 @@
                     </div>
                     <button id="saveConfig" class="config-btn">Save</button>
                 </div>
+            </div>
+
+            <div class="debug-info" id="debugInfo" style="display: none;">
+                <div>Debug Information:</div>
+                <div id="debugContent"></div>
             </div>
 
             <div class="dashboard">
@@ -771,12 +788,6 @@
             document.getElementById('YRSAddress').value = YRS_ADDRESS;
             
             // Pre-fill with provided addresses if empty
-            if (!CONTRACT_ADDRESS) {
-                // This would be the deployed contract address
-                // CONTRACT_ADDRESS = "0x..."; // You would need to provide this
-                // document.getElementById('contractAddress').value = CONTRACT_ADDRESS;
-            }
-            
             if (!WZYS_ADDRESS) {
                 WZYS_ADDRESS = "0x7Eb81e6a8E1686DE83E232c876ad2bf5E01728a4";
                 document.getElementById('wZYSAddress').value = WZYS_ADDRESS;
@@ -847,6 +858,8 @@
             const buyBtn = document.getElementById('buyBtn');
             const sellBtn = document.getElementById('sellBtn');
             const loadingOverlay = document.getElementById('loadingOverlay');
+            const debugInfo = document.getElementById('debugInfo');
+            const debugContent = document.getElementById('debugContent');
             
             // Transaction details elements
             const buyTransactionDetails = document.getElementById('buyTransactionDetails');
@@ -1090,6 +1103,9 @@
                 buyTransactionDetails.style.display = 'none';
                 sellTransactionDetails.style.display = 'none';
                 
+                // Hide debug info
+                debugInfo.style.display = 'none';
+                
                 showToast('info', 'Wallet Disconnected', 'Your wallet has been disconnected');
             }
             
@@ -1099,13 +1115,29 @@
                 
                 try {
                     // Get contract data using getTotals function
+                    console.log('Calling getTotals()...');
                     const totals = await contract.getTotals();
+                    console.log('getTotals() result:', totals);
+                    
                     const totalWZYS = totals.totalWZYSDeposited;
                     const totalYRS = totals.totalYieldReserveShares;
+                    
+                    // Update debug info
+                    debugContent.innerHTML = `
+                        <div>Contract Address: ${CONTRACT_ADDRESS}</div>
+                        <div>Total WZYS (raw): ${totalWZYS.toString()}</div>
+                        <div>Total YRS (raw): ${totalYRS.toString()}</div>
+                        <div>WZYS Decimals: ${wZYSDecimals}</div>
+                        <div>YRS Decimals: ${YRSDecimals}</div>
+                    `;
+                    debugInfo.style.display = 'block';
                     
                     // Format and display with correct decimals
                     const formattedWZYS = ethers.utils.formatUnits(totalWZYS, wZYSDecimals);
                     const formattedYRS = ethers.utils.formatUnits(totalYRS, YRSDecimals);
+                    
+                    console.log('Formatted WZYS:', formattedWZYS);
+                    console.log('Formatted YRS:', formattedYRS);
                     
                     totalWZYSElement.textContent = parseFloat(formattedWZYS).toLocaleString();
                     totalYRSElement.textContent = parseFloat(formattedYRS).toLocaleString();
@@ -1115,6 +1147,14 @@
                     ratioElement.textContent = isNaN(ratio) ? '0' : ratio.toFixed(4);
                 } catch (error) {
                     console.error('Error updating contract data:', error);
+                    
+                    // Update debug info with error
+                    debugContent.innerHTML = `
+                        <div>Error: ${error.message}</div>
+                        <div>Contract Address: ${CONTRACT_ADDRESS}</div>
+                    `;
+                    debugInfo.style.display = 'block';
+                    
                     showToast('error', 'Contract Error', 'Failed to fetch contract data. Check contract address.');
                 }
             }
