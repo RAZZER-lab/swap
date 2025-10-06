@@ -542,6 +542,20 @@
             gap: 8px;
         }
 
+        /* Visual multiplier indicator */
+        .multiplier-indicator {
+            background: rgba(245, 158, 11, 0.1);
+            border: 1px solid rgba(245, 158, 11, 0.2);
+            border-radius: 8px;
+            padding: 8px 12px;
+            margin-bottom: 15px;
+            font-size: 13px;
+            color: var(--accent-color);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
         /* Responsive design */
         @media (max-width: 768px) {
             .dashboard, .trading-section {
@@ -625,7 +639,7 @@
                         Total YRS Reserve
                     </div>
                     <div class="stat-value" id="totalYRS">-</div>
-                    <div class="stat-label">YRS tokens in reserve</div>
+                    <div class="stat-label">YRS tokens in reserve (×10⁶ for display)</div>
                 </div>
                 
                 <div class="card ratio-card">
@@ -665,7 +679,7 @@
                         <label class="form-label">Expected YRS (with 10% bonus)</label>
                         <div class="input-group">
                             <input type="text" id="expectedYRS" class="form-input" placeholder="0.0" readonly>
-                            <span class="input-suffix">YRS</span>
+                            <span class="input-suffix">YRS (×10⁶)</span>
                         </div>
                     </div>
                     
@@ -673,7 +687,7 @@
                         <label class="form-label">Minimum YRS expected (slippage protection)</label>
                         <div class="input-group">
                             <input type="number" id="minYRSOut" class="form-input" placeholder="0.0" min="0" step="0.01">
-                            <span class="input-suffix">YRS</span>
+                            <span class="input-suffix">YRS (×10⁶)</span>
                         </div>
                     </div>
                     
@@ -703,6 +717,11 @@
                         <div class="trade-type sell-type">-10% Penalty</div>
                     </div>
                     
+                    <div class="multiplier-indicator">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <span>YRS values displayed ×10⁶ for visual clarity</span>
+                    </div>
+                    
                     <div class="info-box">
                         <div class="info-box-title">
                             <i class="fas fa-info-circle"></i>
@@ -715,7 +734,7 @@
                         <label class="form-label">Amount of YRS to sell</label>
                         <div class="input-group">
                             <input type="number" id="sellYRSAmount" class="form-input" placeholder="0.0" min="0" step="0.01">
-                            <span class="input-suffix">YRS</span>
+                            <span class="input-suffix">YRS (×10⁶)</span>
                         </div>
                         <div class="balance-info">
                             <span>Balance:</span>
@@ -837,6 +856,9 @@
             let isConfigured = false;
             let wZYSDecimals = 12; // wZYS uses 12 decimals
             let YRSDecimals = 18; // YRS uses 18 decimals
+            
+            // Visual multiplier for YRS display (10^6)
+            const YRS_VISUAL_MULTIPLIER = 1000000;
             
             // DOM elements
             const connectWalletBtn = document.getElementById('connectWallet');
@@ -1121,7 +1143,13 @@
                     const formattedYRS = ethers.utils.formatUnits(totalYRS, YRSDecimals);
                     
                     totalWZYSElement.textContent = parseFloat(formattedWZYS).toLocaleString();
-                    totalYRSElement.textContent = parseFloat(formattedYRS).toLocaleString();
+                    
+                    // Display YRS with visual multiplier (×10^6)
+                    const visualYRS = parseFloat(formattedYRS) * YRS_VISUAL_MULTIPLIER;
+                    totalYRSElement.textContent = visualYRS.toLocaleString(undefined, {
+                        minimumFractionDigits: 0,
+                        maximumFractionDigits: 6
+                    });
                     
                     // Calculate and display ratio
                     const ratio = parseFloat(formattedWZYS) / parseFloat(formattedYRS);
@@ -1162,7 +1190,13 @@
                     const formattedYRS = ethers.utils.formatUnits(YRSBalance, YRSDecimals);
                     
                     userWZYSBalanceElement.textContent = `${parseFloat(formattedWZYS).toLocaleString()} ${wZYSSymbol}`;
-                    userYRSBalanceElement.textContent = `${parseFloat(formattedYRS).toLocaleString()} ${YRSSymbol}`;
+                    
+                    // Display YRS with visual multiplier (×10^6)
+                    const visualYRS = parseFloat(formattedYRS) * YRS_VISUAL_MULTIPLIER;
+                    userYRSBalanceElement.textContent = `${visualYRS.toLocaleString(undefined, {
+                        minimumFractionDigits: 0,
+                        maximumFractionDigits: 6
+                    })} ${YRSSymbol}`;
                 } catch (error) {
                     console.error('Error updating user balances:', error);
                     showToast('error', 'Balance Error', 'Failed to fetch token balances. Check token addresses.');
@@ -1174,7 +1208,8 @@
                 const wZYSAmount = parseFloat(buyWZYSAmountInput.value) || 0;
                 // Contract treats both as same unit, so 1 wZYS = 1 YRS
                 const expectedYRS = wZYSAmount * 1.1; // 10% bonus
-                expectedYRSInput.value = expectedYRS.toFixed(6);
+                // Display with visual multiplier (×10^6)
+                expectedYRSInput.value = (expectedYRS * YRS_VISUAL_MULTIPLIER).toFixed(6);
             }
             
             // Set minimum YRS output (slippage protection)
@@ -1187,9 +1222,12 @@
             
             // Calculate expected wZYS with penalty
             function calculateExpectedWZYS() {
-                const YRSAmount = parseFloat(sellYRSAmountInput.value) || 0;
+                // Convert from visual YRS to actual YRS
+                const visualYRSAmount = parseFloat(sellYRSAmountInput.value) || 0;
+                const actualYRSAmount = visualYRSAmount / YRS_VISUAL_MULTIPLIER;
+                
                 // Contract treats both as same unit, so 1 YRS = 1 wZYS
-                const expectedWZYS = YRSAmount * 0.9; // 10% penalty
+                const expectedWZYS = actualYRSAmount * 0.9; // 10% penalty
                 expectedWZYSInput.value = expectedWZYS.toFixed(6);
             }
             
@@ -1212,14 +1250,17 @@
                     // Convert to wei with correct decimals
                     const wZYSAmountWei = ethers.utils.parseUnits(wZYSAmount.toString(), wZYSDecimals);
                     
+                    // Convert from visual YRS to actual YRS
+                    const actualMinYRSOut = minYRSOut / YRS_VISUAL_MULTIPLIER;
+                    
                     // For the contract, we need to convert YRS from 18 decimals to 12 decimals
                     // by dividing by 10^(YRSDecimals - wZYSDecimals) = 10^6
                     const decimalDifference = YRSDecimals - wZYSDecimals;
-                    const minYRSOutForContract = ethers.utils.parseUnits(minYRSOut.toString(), YRSDecimals).div(ethers.BigNumber.from(10).pow(decimalDifference));
+                    const minYRSOutForContract = ethers.utils.parseUnits(actualMinYRSOut.toString(), YRSDecimals).div(ethers.BigNumber.from(10).pow(decimalDifference));
                     
                     // Display wei values
                     buyWZYSWeiElement.textContent = wZYSAmountWei.toString();
-                    buyYRSWeiElement.textContent = ethers.utils.parseUnits(minYRSOut.toString(), YRSDecimals).toString();
+                    buyYRSWeiElement.textContent = ethers.utils.parseUnits(actualMinYRSOut.toString(), YRSDecimals).toString();
                     sentToContractElement.textContent = `wZYS: ${wZYSAmountWei.toString()}, MinYRS: ${minYRSOutForContract.toString()}`;
                 } else {
                     buyTransactionDetails.style.display = 'none';
@@ -1228,17 +1269,17 @@
             
             // Update sell transaction details
             function updateSellTransactionDetails() {
-                const YRSAmount = parseFloat(sellYRSAmountInput.value) || 0;
+                const visualYRSAmount = parseFloat(sellYRSAmountInput.value) || 0;
                 const minWZYSOut = parseFloat(minWZYSOutInput.value) || 0;
                 
-                if (YRSAmount > 0 && minWZYSOut > 0) {
+                if (visualYRSAmount > 0 && minWZYSOut > 0) {
                     sellTransactionDetails.style.display = 'block';
                     
-                    // Convert to wei with correct decimals
-                    const YRSAmountWei = ethers.utils.parseUnits(YRSAmount.toString(), YRSDecimals);
+                    // Convert from visual YRS to actual YRS
+                    const actualYRSAmount = visualYRSAmount / YRS_VISUAL_MULTIPLIER;
                     
-                    // For the contract, we need to convert wZYS from 12 decimals to 12 decimals (no change)
-                    // But the minWZYSOut is in 12 decimals already
+                    // Convert to wei with correct decimals
+                    const YRSAmountWei = ethers.utils.parseUnits(actualYRSAmount.toString(), YRSDecimals);
                     const minWZYSOutWei = ethers.utils.parseUnits(minWZYSOut.toString(), wZYSDecimals);
                     
                     // Display wei values
@@ -1278,10 +1319,13 @@
                     // Convert to wei with correct decimals
                     const wZYSAmountWei = ethers.utils.parseUnits(wZYSAmount, wZYSDecimals);
                     
+                    // Convert from visual YRS to actual YRS
+                    const actualMinYRSOut = parseFloat(minYRSOut) / YRS_VISUAL_MULTIPLIER;
+                    
                     // For the contract, we need to convert YRS from 18 decimals to 12 decimals
                     // by dividing by 10^(YRSDecimals - wZYSDecimals) = 10^6
                     const decimalDifference = YRSDecimals - wZYSDecimals;
-                    const minYRSOutForContract = ethers.utils.parseUnits(minYRSOut, YRSDecimals).div(ethers.BigNumber.from(10).pow(decimalDifference));
+                    const minYRSOutForContract = ethers.utils.parseUnits(actualMinYRSOut.toString(), YRSDecimals).div(ethers.BigNumber.from(10).pow(decimalDifference));
                     
                     // Check allowance
                     const allowance = await wZYSContract.allowance(userAddress, CONTRACT_ADDRESS);
@@ -1342,10 +1386,10 @@
                     return;
                 }
                 
-                const YRSAmount = sellYRSAmountInput.value;
+                const visualYRSAmount = sellYRSAmountInput.value;
                 const minWZYSOut = minWZYSOutInput.value;
                 
-                if (!YRSAmount || parseFloat(YRSAmount) <= 0) {
+                if (!visualYRSAmount || parseFloat(visualYRSAmount) <= 0) {
                     showToast('error', 'Invalid Amount', 'Please enter a valid YRS amount');
                     return;
                 }
@@ -1360,8 +1404,11 @@
                     sellBtn.disabled = true;
                     sellBtn.innerHTML = '<span class="spinner"></span> Processing...';
                     
+                    // Convert from visual YRS to actual YRS
+                    const actualYRSAmount = parseFloat(visualYRSAmount) / YRS_VISUAL_MULTIPLIER;
+                    
                     // Convert to wei with correct decimals
-                    const YRSAmountWei = ethers.utils.parseUnits(YRSAmount, YRSDecimals);
+                    const YRSAmountWei = ethers.utils.parseUnits(actualYRSAmount.toString(), YRSDecimals);
                     const minWZYSOutWei = ethers.utils.parseUnits(minWZYSOut, wZYSDecimals);
                     
                     // Check allowance
@@ -1387,7 +1434,7 @@
                     minWZYSOutInput.value = '';
                     sellTransactionDetails.style.display = 'none';
                     
-                    showToast('success', 'Sale Successful', `You sold ${YRSAmount} YRS tokens`);
+                    showToast('success', 'Sale Successful', `You sold ${visualYRSAmount} YRS tokens`);
                 } catch (error) {
                     console.error('Error selling tokens:', error);
                     let errorMessage = 'Failed to sell YRS tokens';
