@@ -1,4 +1,3 @@
-```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -32,7 +31,6 @@
                 <div class="row">
                     <div class="col-md-6">
                         <p>Connection Status: <span id="connectionStatus" class="status-disconnected">Not Connected</span></p>
-                        <p id="networkWarning" class="gas-error" style="display: none;">⚠️ Wrong Network! Switch to the correct chain.</p>
                         <p id="rpcWarning" class="rpc-error" style="display: none;">⚠️ RPC Error (Circuit Breaker Open). Try refreshing the page, resetting MetaMask account, or switching networks. <button id="retryInitBtn" class="btn btn-sm btn-outline-primary retry-btn">Retry Init</button></p>
                         <button id="connectButton" class="btn btn-primary">Connect MetaMask</button>
                         <button id="disconnectButton" class="btn btn-secondary" style="display: none;">Disconnect</button>
@@ -156,7 +154,7 @@
         
         // Contract address and ABI
         const contractAddress = '0x0eba64eA7d1055Cb87654EC554360741C31650E6';
-        const EXPECTED_CHAIN_ID = 1; // Change this to the correct chain ID for your contract (e.g., 1 for Ethereum Mainnet, 137 for Polygon, etc.)
+        const EXPECTED_CHAIN_ID = 11155111; // Sepolia testnet
         
         // Proper ABI for the YRSStaking contract (inferred from function signatures)
         const contractABI = [
@@ -491,12 +489,10 @@
             try {
                 const network = await provider.getNetwork();
                 if (network.chainId !== EXPECTED_CHAIN_ID) {
-                    document.getElementById('networkWarning').style.display = 'block';
-                    document.getElementById('networkWarning').textContent = `⚠️ Wrong Network! Expected Chain ID ${EXPECTED_CHAIN_ID}, but connected to ${network.chainId}. Switch to the correct network.`;
+                    console.warn(`Wrong Network! Expected Chain ID ${EXPECTED_CHAIN_ID}, but connected to ${network.chainId}.`);
                     toggleInteractionButtons(false);
                     return false;
                 } else {
-                    document.getElementById('networkWarning').style.display = 'none';
                     if (!initFailed) {
                         toggleInteractionButtons(true);
                     }
@@ -526,7 +522,6 @@
             document.getElementById('networkInfo').textContent = '';
             document.getElementById('connectButton').style.display = 'inline-block';
             document.getElementById('disconnectButton').style.display = 'none';
-            document.getElementById('networkWarning').style.display = 'none';
             document.getElementById('rpcWarning').style.display = 'none';
             document.getElementById('balanceError').style.display = 'none';
             
@@ -865,4 +860,3 @@
     </script>
 </body>
 </html>
-```
