@@ -4,8 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>YRS Staking Platform</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Fixed CDN URLs with working versions -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    
+    <!-- Fixed Ethers.js CDN - using a more reliable source -->
+    <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.min.js" integrity="sha384-3M2Tw9uCQ6hb0Zz8pZqcnpVZIzY5L+4qZQ0oMciTA0ZNY0B6PZOkcMVkIVdZ2O0I" crossorigin="anonymous"></script>
+    
     <style>
         :root {
             --primary-color: #4a6cf7;
@@ -181,11 +187,30 @@
             padding: 2rem 0;
             margin-top: 3rem;
         }
-        
+
+        /* Additional styles for better error handling */
         .error-message {
             color: var(--danger-color);
-            margin-top: 0.5rem;
-            display: none;
+            font-size: 0.875rem;
+            margin-top: 0.25rem;
+        }
+
+        .connection-status {
+            padding: 0.5rem;
+            border-radius: 5px;
+            margin-bottom: 1rem;
+        }
+
+        .status-connected {
+            background-color: rgba(40, 167, 69, 0.1);
+            color: var(--success-color);
+            border: 1px solid var(--success-color);
+        }
+
+        .status-disconnected {
+            background-color: rgba(220, 53, 69, 0.1);
+            color: var(--danger-color);
+            border: 1px solid var(--danger-color);
         }
     </style>
 </head>
@@ -197,6 +222,9 @@
                 <i class="bi bi-currency-bitcoin"></i> YRS Staking Platform
             </a>
             <div class="d-flex align-items-center">
+                <div id="connectionStatus" class="connection-status status-disconnected me-3 d-none">
+                    <i class="bi bi-dot"></i> Disconnected
+                </div>
                 <div id="walletInfo" class="me-3 d-none">
                     <span class="wallet-address" id="walletAddress"></span>
                 </div>
@@ -217,6 +245,28 @@
 
     <!-- Main Content -->
     <div class="container mb-5">
+        <!-- Connection Requirements -->
+        <div class="row mb-4" id="requirementsSection">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <i class="bi bi-info-circle"></i> Requirements
+                    </div>
+                    <div class="card-body">
+                        <p>To use this dApp, you need:</p>
+                        <ul>
+                            <li>A Web3 wallet (like MetaMask) installed in your browser</li>
+                            <li>Ensure you're on a supported network</li>
+                            <li>Have some ETH for transaction fees</li>
+                        </ul>
+                        <div id="noWalletAlert" class="alert alert-warning d-none">
+                            <i class="bi bi-exclamation-triangle"></i> No Web3 wallet detected. Please install MetaMask or another Ethereum wallet.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Stats Section -->
         <div class="row mb-4">
             <div class="col-md-4">
@@ -289,10 +339,12 @@
                                     <div class="mb-3">
                                         <label for="buyWZYSAmount" class="form-label">wZYS Amount</label>
                                         <input type="number" class="form-control" id="buyWZYSAmount" placeholder="Amount of wZYS to spend" min="0" step="0.0001" required>
+                                        <div class="error-message" id="buyWZYSAmountError"></div>
                                     </div>
                                     <div class="mb-3">
                                         <label for="buyMinYRSOut" class="form-label">Minimum YRS Expected (Slippage Protection)</label>
                                         <input type="number" class="form-control" id="buyMinYRSOut" placeholder="Minimum YRS you expect to receive" min="0" step="0.0001" required>
+                                        <div class="error-message" id="buyMinYRSError"></div>
                                     </div>
                                     <div class="mb-3">
                                         <div class="alert alert-info">
@@ -303,7 +355,6 @@
                                         <span class="btn-text">Buy YRS</span>
                                         <span class="spinner-border spinner-border-sm loading-spinner" role="status" aria-hidden="true"></span>
                                     </button>
-                                    <div class="error-message" id="buyError"></div>
                                 </form>
                             </div>
                             <!-- Sell Tab -->
@@ -312,10 +363,12 @@
                                     <div class="mb-3">
                                         <label for="sellYRSAmount" class="form-label">YRS Amount</label>
                                         <input type="number" class="form-control" id="sellYRSAmount" placeholder="Amount of YRS to sell" min="0" step="0.0001" required>
+                                        <div class="error-message" id="sellYRSAmountError"></div>
                                     </div>
                                     <div class="mb-3">
                                         <label for="sellMinWZYSOut" class="form-label">Minimum wZYS Expected (Slippage Protection)</label>
                                         <input type="number" class="form-control" id="sellMinWZYSOut" placeholder="Minimum wZYS you expect to receive" min="0" step="0.0001" required>
+                                        <div class="error-message" id="sellMinWZYSError"></div>
                                     </div>
                                     <div class="mb-3">
                                         <div class="alert alert-warning">
@@ -326,7 +379,6 @@
                                         <span class="btn-text">Sell YRS</span>
                                         <span class="spinner-border spinner-border-sm loading-spinner" role="status" aria-hidden="true"></span>
                                     </button>
-                                    <div class="error-message" id="sellError"></div>
                                 </form>
                             </div>
                             <!-- Burn Tab -->
@@ -335,6 +387,7 @@
                                     <div class="mb-3">
                                         <label for="burnAmount" class="form-label">YRS Amount to Burn</label>
                                         <input type="number" class="form-control" id="burnAmount" placeholder="Amount of YRS to burn" min="0" step="0.0001" required>
+                                        <div class="error-message" id="burnAmountError"></div>
                                     </div>
                                     <div class="mb-3">
                                         <div class="alert alert-danger">
@@ -345,7 +398,6 @@
                                         <span class="btn-text">Burn YRS</span>
                                         <span class="spinner-border spinner-border-sm loading-spinner" role="status" aria-hidden="true"></span>
                                     </button>
-                                    <div class="error-message" id="burnError"></div>
                                 </form>
                             </div>
                         </div>
@@ -366,370 +418,481 @@
     <div class="toast-container"></div>
 
     <!-- Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
-    
-    <!-- Ethers.js - using a more reliable CDN -->
-    <script src="https://unpkg.com/ethers@5.7.2/dist/ethers.umd.min.js" type="application/javascript"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
-        // Wait for the document to be fully loaded
+        // Enhanced contract ABI with error handling
+        const contractABI = [
+            "function totalWZYSDeposited() view returns (uint256)",
+            "function totalYieldReserveShares() view returns (uint256)",
+            "function buy1(uint256 wZYSAmount, uint256 minYRSOut)",
+            "function sell1(uint256 YRSAmount, uint256 minWZYSOut)",
+            "function burn(uint256 amount)",
+            "event TokensBought(address indexed buyer, uint256 wZYSAmount, uint256 YRSAmount)",
+            "event TokensSold(address indexed seller, uint256 YRSAmount, uint256 wZYSAmount)",
+            "event TokensBurned(address indexed burner, uint256 amount)"
+        ];
+
+        // Enhanced ERC20 ABI
+        const erc20ABI = [
+            "function balanceOf(address account) view returns (uint256)",
+            "function decimals() view returns (uint8)",
+            "function approve(address spender, uint256 amount) returns (bool)",
+            "function allowance(address owner, address spender) view returns (uint256)",
+            "function name() view returns (string)",
+            "function symbol() view returns (string)"
+        ];
+
+        // Contract addresses - replace with actual addresses
+        const CONTRACT_ADDRESS = "0x1234567890123456789012345678901234567890"; // Replace with actual contract address
+        const WZYS_ADDRESS = "0x1234567890123456789012345678901234567891"; // Replace with actual wZYS token address
+        const YRS_ADDRESS = "0x1234567890123456789012345678901234567892"; // Replace with actual YRS token address
+
+        // Global variables
+        let provider;
+        let signer;
+        let contract;
+        let wZYSContract;
+        let YRSContract;
+        let wZYSDecimals = 18;
+        let YRSDecimals = 18;
+        let isConnected = false;
+
+        // DOM Elements
+        const connectWalletBtn = document.getElementById('connectWalletBtn');
+        const walletInfo = document.getElementById('walletInfo');
+        const walletAddress = document.getElementById('walletAddress');
+        const connectionStatus = document.getElementById('connectionStatus');
+        const userBalancesSection = document.getElementById('userBalancesSection');
+        const tradeSection = document.getElementById('tradeSection');
+        const requirementsSection = document.getElementById('requirementsSection');
+        const noWalletAlert = document.getElementById('noWalletAlert');
+        const totalWZYSDisplay = document.getElementById('totalWZYS');
+        const totalYRSDisplay = document.getElementById('totalYRS');
+        const ratioDisplay = document.getElementById('ratio');
+        const userWZYSBalance = document.getElementById('userWZYSBalance');
+        const userYRSBalance = document.getElementById('userYRSBalance');
+        const buyForm = document.getElementById('buyForm');
+        const sellForm = document.getElementById('sellForm');
+        const burnForm = document.getElementById('burnForm');
+
+        // Initialize the application
         document.addEventListener('DOMContentLoaded', function() {
-            // Check if ethers is loaded
-            if (typeof ethers === 'undefined') {
-                console.error('Ethers.js library failed to load');
-                showToast('Failed to load required libraries. Please refresh the page.', 'danger');
+            checkEthereumAvailability();
+            setupEventListeners();
+        });
+
+        // Check if Ethereum is available
+        function checkEthereumAvailability() {
+            if (typeof window.ethereum === 'undefined') {
+                noWalletAlert.classList.remove('d-none');
+                connectWalletBtn.disabled = true;
+                connectWalletBtn.innerHTML = '<i class="bi bi-x-circle"></i> No Web3 Wallet';
+            } else {
+                // Check if we're already connected
+                checkExistingConnection();
+            }
+        }
+
+        // Check for existing connection
+        async function checkExistingConnection() {
+            try {
+                const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+                if (accounts.length > 0) {
+                    // We have a connected account, initialize the connection
+                    initializeConnection();
+                }
+            } catch (error) {
+                console.error('Error checking existing connection:', error);
+            }
+        }
+
+        // Setup event listeners
+        function setupEventListeners() {
+            connectWalletBtn.addEventListener('click', connectWallet);
+            
+            // Listen for account changes
+            if (window.ethereum) {
+                window.ethereum.on('accountsChanged', handleAccountsChanged);
+                window.ethereum.on('chainChanged', handleChainChanged);
+            }
+        }
+
+        // Handle accounts changed
+        function handleAccountsChanged(accounts) {
+            if (accounts.length === 0) {
+                // User disconnected their wallet
+                disconnectWallet();
+            } else {
+                // Account changed, reinitialize
+                initializeConnection();
+            }
+        }
+
+        // Handle chain changed
+        function handleChainChanged(chainId) {
+            // Reload the page when network changes
+            window.location.reload();
+        }
+
+        // Connect wallet
+        async function connectWallet() {
+            if (typeof window.ethereum === 'undefined') {
+                showToast('Web3 wallet not detected. Please install MetaMask.', 'danger');
                 return;
             }
 
-            // Contract ABI - simplified version with only the functions we need
-            const contractABI = [
-                "function totalWZYSDeposited() view returns (uint256)",
-                "function totalYieldReserveShares() view returns (uint256)",
-                "function buy1(uint256 wZYSAmount, uint256 minYRSOut)",
-                "function sell1(uint256 YRSAmount, uint256 minWZYSOut)",
-                "function burn(uint256 amount)",
-                "event TokensBought(address indexed buyer, uint256 wZYSAmount, uint256 YRSAmount)",
-                "event TokensSold(address indexed seller, uint256 YRSAmount, uint256 wZYSAmount)",
-                "event TokensBurned(address indexed burner, uint256 amount)"
-            ];
-
-            // ERC20 ABI - simplified version
-            const erc20ABI = [
-                "function balanceOf(address account) view returns (uint256)",
-                "function decimals() view returns (uint8)",
-                "function approve(address spender, uint256 amount) returns (bool)",
-                "function allowance(address owner, address spender) view returns (uint256)"
-            ];
-
-            // Contract addresses - replace with actual addresses
-            const CONTRACT_ADDRESS = "0x1234567890123456789012345678901234567890"; // Replace with actual contract address
-            const WZYS_ADDRESS = "0x1234567890123456789012345678901234567891"; // Replace with actual wZYS token address
-            const YRS_ADDRESS = "0x1234567890123456789012345678901234567892"; // Replace with actual YRS token address
-
-            let provider;
-            let signer;
-            let contract;
-            let wZYSContract;
-            let YRSContract;
-            let wZYSDecimals = 12;
-            let YRSDecimals = 18;
-
-            // DOM Elements
-            const connectWalletBtn = document.getElementById('connectWalletBtn');
-            const walletInfo = document.getElementById('walletInfo');
-            const walletAddress = document.getElementById('walletAddress');
-            const userBalancesSection = document.getElementById('userBalancesSection');
-            const tradeSection = document.getElementById('tradeSection');
-            const totalWZYSDisplay = document.getElementById('totalWZYS');
-            const totalYRSDisplay = document.getElementById('totalYRS');
-            const ratioDisplay = document.getElementById('ratio');
-            const userWZYSBalance = document.getElementById('userWZYSBalance');
-            const userYRSBalance = document.getElementById('userYRSBalance');
-            const buyForm = document.getElementById('buyForm');
-            const sellForm = document.getElementById('sellForm');
-            const burnForm = document.getElementById('burnForm');
-            const buyError = document.getElementById('buyError');
-            const sellError = document.getElementById('sellError');
-            const burnError = document.getElementById('burnError');
-
-            // Connect to MetaMask
-            connectWalletBtn.addEventListener('click', async () => {
-                try {
-                    // Check if MetaMask is installed
-                    if (typeof window.ethereum === 'undefined') {
-                        showToast('MetaMask is not installed. Please install it to use this dApp.', 'danger');
-                        return;
-                    }
-
-                    // Request account access
-                    await window.ethereum.request({ method: 'eth_requestAccounts' });
-                    
-                    // Create provider and signer
-                    provider = new ethers.providers.Web3Provider(window.ethereum);
-                    signer = provider.getSigner();
-                    
-                    // Initialize contracts
-                    contract = new ethers.Contract(CONTRACT_ADDRESS, contractABI, signer);
-                    wZYSContract = new ethers.Contract(WZYS_ADDRESS, erc20ABI, signer);
-                    YRSContract = new ethers.Contract(YRS_ADDRESS, erc20ABI, signer);
-                    
-                    // Get token decimals
-                    try {
-                        wZYSDecimals = await wZYSContract.decimals();
-                        YRSDecimals = await YRSContract.decimals();
-                    } catch (error) {
-                        console.warn('Could not fetch token decimals, using default (18):', error);
-                    }
-                    
-                    // Update UI
-                    const address = await signer.getAddress();
-                    walletAddress.textContent = `${address.substring(0, 6)}...${address.substring(address.length - 4)}`;
-                    connectWalletBtn.classList.add('d-none');
-                    walletInfo.classList.remove('d-none');
-                    userBalancesSection.style.display = 'block';
-                    tradeSection.style.display = 'block';
-                    
-                    // Load initial data
-                    await loadContractData();
-                    await loadUserBalances();
-                    
-                    showToast('Wallet connected successfully!', 'success');
-                } catch (error) {
-                    console.error('Error connecting wallet:', error);
-                    showToast(`Failed to connect wallet: ${error.message}`, 'danger');
+            try {
+                connectWalletBtn.classList.add('loading');
+                
+                // Request account access
+                await window.ethereum.request({ method: 'eth_requestAccounts' });
+                
+                // Initialize the connection
+                await initializeConnection();
+                
+            } catch (error) {
+                console.error('Error connecting wallet:', error);
+                
+                if (error.code === 4001) {
+                    // User rejected the request
+                    showToast('Connection rejected. Please connect your wallet to use this dApp.', 'warning');
+                } else {
+                    showToast('Failed to connect wallet: ' + error.message, 'danger');
                 }
-            });
-
-            // Load contract data
-            async function loadContractData() {
-                try {
-                    const totalWZYS = await contract.totalWZYSDeposited();
-                    const totalYRS = await contract.totalYieldReserveShares();
-                    
-                    const formattedWZYS = ethers.utils.formatUnits(totalWZYS, wZYSDecimals);
-                    const formattedYRS = ethers.utils.formatUnits(totalYRS, YRSDecimals);
-                    
-                    totalWZYSDisplay.textContent = parseFloat(formattedWZYS).toFixed(4);
-                    totalYRSDisplay.textContent = parseFloat(formattedYRS).toFixed(4);
-                    
-                    // Calculate ratio
-                    if (totalYRS.gt(0)) {
-                        const ratio = totalWZYS.mul(ethers.BigNumber.from(10).pow(18)).div(totalYRS);
-                        const formattedRatio = ethers.utils.formatUnits(ratio, 18);
-                        ratioDisplay.textContent = parseFloat(formattedRatio).toFixed(6);
-                    } else {
-                        ratioDisplay.textContent = "0";
-                    }
-                } catch (error) {
-                    console.error('Error loading contract data:', error);
-                    showToast('Failed to load contract data.', 'danger');
-                }
+            } finally {
+                connectWalletBtn.classList.remove('loading');
             }
+        }
 
-            // Load user balances
-            async function loadUserBalances() {
+        // Initialize connection after wallet is connected
+        async function initializeConnection() {
+            try {
+                // Create provider and signer
+                provider = new ethers.providers.Web3Provider(window.ethereum);
+                signer = provider.getSigner();
+                
+                // Initialize contracts
+                contract = new ethers.Contract(CONTRACT_ADDRESS, contractABI, signer);
+                wZYSContract = new ethers.Contract(WZYS_ADDRESS, erc20ABI, signer);
+                YRSContract = new ethers.Contract(YRS_ADDRESS, erc20ABI, signer);
+                
+                // Get token decimals with fallback
                 try {
-                    const userAddress = await signer.getAddress();
-                    const wZYSBalance = await wZYSContract.balanceOf(userAddress);
-                    const YRSBalance = await YRSContract.balanceOf(userAddress);
-                    
-                    const formattedWZYS = ethers.utils.formatUnits(wZYSBalance, wZYSDecimals);
-                    const formattedYRS = ethers.utils.formatUnits(YRSBalance, YRSDecimals);
-                    
-                    userWZYSBalance.textContent = parseFloat(formattedWZYS).toFixed(4);
-                    userYRSBalance.textContent = parseFloat(formattedYRS).toFixed(4);
-                } catch (error) {
-                    console.error('Error loading user balances:', error);
-                    showToast('Failed to load user balances.', 'danger');
-                }
-            }
-
-            // Buy form submission
-            buyForm.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                hideError('buyError');
-                
-                const wZYSAmount = document.getElementById('buyWZYSAmount').value;
-                const minYRSOut = document.getElementById('buyMinYRSOut').value;
-                
-                if (!wZYSAmount || !minYRSOut) {
-                    showError('buyError', 'Please fill in all fields.');
-                    return;
+                    wZYSDecimals = await wZYSContract.decimals();
+                } catch (e) {
+                    console.warn('Could not get wZYS decimals, using default 18');
+                    wZYSDecimals = 18;
                 }
                 
                 try {
-                    // Show loading state
-                    buyForm.classList.add('loading');
-                    
-                    // Convert to wei
-                    const wZYSAmountWei = ethers.utils.parseUnits(wZYSAmount, wZYSDecimals);
-                    const minYRSOutWei = ethers.utils.parseUnits(minYRSOut, YRSDecimals);
-                    
-                    // Check allowance
-                    const userAddress = await signer.getAddress();
-                    const allowance = await wZYSContract.allowance(userAddress, CONTRACT_ADDRESS);
-                    
-                    if (allowance.lt(wZYSAmountWei)) {
-                        // Approve first
-                        const approveTx = await wZYSContract.approve(CONTRACT_ADDRESS, wZYSAmountWei);
-                        await approveTx.wait();
-                        showToast('Approval successful. Proceeding with purchase...', 'info');
-                    }
-                    
-                    // Execute buy
-                    const tx = await contract.buy1(wZYSAmountWei, minYRSOutWei);
-                    await tx.wait();
-                    
-                    // Reset form
-                    buyForm.reset();
-                    
-                    // Refresh data
-                    await loadContractData();
-                    await loadUserBalances();
-                    
-                    showToast('Purchase successful!', 'success');
-                } catch (error) {
-                    console.error('Error buying tokens:', error);
-                    showError('buyError', `Purchase failed: ${error.message}`);
-                } finally {
-                    // Hide loading state
-                    buyForm.classList.remove('loading');
-                }
-            });
-
-            // Sell form submission
-            sellForm.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                hideError('sellError');
-                
-                const YRSAmount = document.getElementById('sellYRSAmount').value;
-                const minWZYSOut = document.getElementById('sellMinWZYSOut').value;
-                
-                if (!YRSAmount || !minWZYSOut) {
-                    showError('sellError', 'Please fill in all fields.');
-                    return;
+                    YRSDecimals = await YRSContract.decimals();
+                } catch (e) {
+                    console.warn('Could not get YRS decimals, using default 18');
+                    YRSDecimals = 18;
                 }
                 
-                try {
-                    // Show loading state
-                    sellForm.classList.add('loading');
-                    
-                    // Convert to wei
-                    const YRSAmountWei = ethers.utils.parseUnits(YRSAmount, YRSDecimals);
-                    const minWZYSOutWei = ethers.utils.parseUnits(minWZYSOut, wZYSDecimals);
-                    
-                    // Check allowance
-                    const userAddress = await signer.getAddress();
-                    const allowance = await YRSContract.allowance(userAddress, CONTRACT_ADDRESS);
-                    
-                    if (allowance.lt(YRSAmountWei)) {
-                        // Approve first
-                        const approveTx = await YRSContract.approve(CONTRACT_ADDRESS, YRSAmountWei);
-                        await approveTx.wait();
-                        showToast('Approval successful. Proceeding with sale...', 'info');
-                    }
-                    
-                    // Execute sell
-                    const tx = await contract.sell1(YRSAmountWei, minWZYSOutWei);
-                    await tx.wait();
-                    
-                    // Reset form
-                    sellForm.reset();
-                    
-                    // Refresh data
-                    await loadContractData();
-                    await loadUserBalances();
-                    
-                    showToast('Sale successful!', 'success');
-                } catch (error) {
-                    console.error('Error selling tokens:', error);
-                    showError('sellError', `Sale failed: ${error.message}`);
-                } finally {
-                    // Hide loading state
-                    sellForm.classList.remove('loading');
-                }
-            });
-
-            // Burn form submission
-            burnForm.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                hideError('burnError');
+                // Update UI
+                const address = await signer.getAddress();
+                walletAddress.textContent = `${address.substring(0, 6)}...${address.substring(address.length - 4)}`;
                 
-                const burnAmount = document.getElementById('burnAmount').value;
+                connectWalletBtn.classList.add('d-none');
+                walletInfo.classList.remove('d-none');
+                connectionStatus.classList.remove('d-none', 'status-disconnected');
+                connectionStatus.classList.add('status-connected');
+                connectionStatus.innerHTML = '<i class="bi bi-dot"></i> Connected';
                 
-                if (!burnAmount) {
-                    showError('burnError', 'Please fill in all fields.');
-                    return;
-                }
+                requirementsSection.style.display = 'none';
+                userBalancesSection.style.display = 'block';
+                tradeSection.style.display = 'block';
                 
-                try {
-                    // Show loading state
-                    burnForm.classList.add('loading');
-                    
-                    // Convert to wei
-                    const burnAmountWei = ethers.utils.parseUnits(burnAmount, YRSDecimals);
-                    
-                    // Check allowance
-                    const userAddress = await signer.getAddress();
-                    const allowance = await YRSContract.allowance(userAddress, CONTRACT_ADDRESS);
-                    
-                    if (allowance.lt(burnAmountWei)) {
-                        // Approve first
-                        const approveTx = await YRSContract.approve(CONTRACT_ADDRESS, burnAmountWei);
-                        await approveTx.wait();
-                        showToast('Approval successful. Proceeding with burn...', 'info');
-                    }
-                    
-                    // Execute burn
-                    const tx = await contract.burn(burnAmountWei);
-                    await tx.wait();
-                    
-                    // Reset form
-                    burnForm.reset();
-                    
-                    // Refresh data
-                    await loadContractData();
-                    await loadUserBalances();
-                    
-                    showToast('Burn successful!', 'success');
-                } catch (error) {
-                    console.error('Error burning tokens:', error);
-                    showError('burnError', `Burn failed: ${error.message}`);
-                } finally {
-                    // Hide loading state
-                    burnForm.classList.remove('loading');
-                }
-            });
-
-            // Show error message
-            function showError(elementId, message) {
-                const errorElement = document.getElementById(elementId);
-                errorElement.textContent = message;
-                errorElement.style.display = 'block';
+                isConnected = true;
+                
+                // Load initial data
+                await loadContractData();
+                await loadUserBalances();
+                
+                showToast('Wallet connected successfully!', 'success');
+                
+            } catch (error) {
+                console.error('Error initializing connection:', error);
+                showToast('Failed to initialize connection: ' + error.message, 'danger');
             }
+        }
 
-            // Hide error message
-            function hideError(elementId) {
-                const errorElement = document.getElementById(elementId);
-                errorElement.style.display = 'none';
+        // Disconnect wallet
+        function disconnectWallet() {
+            isConnected = false;
+            
+            connectWalletBtn.classList.remove('d-none', 'loading');
+            walletInfo.classList.add('d-none');
+            connectionStatus.classList.remove('status-connected');
+            connectionStatus.classList.add('status-disconnected');
+            connectionStatus.innerHTML = '<i class="bi bi-dot"></i> Disconnected';
+            
+            requirementsSection.style.display = 'block';
+            userBalancesSection.style.display = 'none';
+            tradeSection.style.display = 'none';
+            
+            connectWalletBtn.innerHTML = '<i class="bi bi-wallet2"></i> Connect Wallet';
+            
+            showToast('Wallet disconnected.', 'info');
+        }
+
+        // Load contract data
+        async function loadContractData() {
+            if (!isConnected) return;
+            
+            try {
+                const totalWZYS = await contract.totalWZYSDeposited();
+                const totalYRS = await contract.totalYieldReserveShares();
+                
+                const formattedWZYS = ethers.utils.formatUnits(totalWZYS, wZYSDecimals);
+                const formattedYRS = ethers.utils.formatUnits(totalYRS, YRSDecimals);
+                
+                totalWZYSDisplay.textContent = parseFloat(formattedWZYS).toFixed(4);
+                totalYRSDisplay.textContent = parseFloat(formattedYRS).toFixed(4);
+                
+                // Calculate ratio
+                const ratio = totalYRS.gt(0) ? totalWZYS.mul(ethers.BigNumber.from(10).pow(18)).div(totalYRS) : ethers.BigNumber.from(0);
+                const formattedRatio = ethers.utils.formatUnits(ratio, 18);
+                ratioDisplay.textContent = parseFloat(formattedRatio).toFixed(6);
+            } catch (error) {
+                console.error('Error loading contract data:', error);
+                showToast('Failed to load contract data.', 'danger');
             }
+        }
 
-            // Show toast notification
-            function showToast(message, type) {
-                const toastContainer = document.querySelector('.toast-container');
-                const toastId = 'toast-' + Date.now();
+        // Load user balances
+        async function loadUserBalances() {
+            if (!isConnected) return;
+            
+            try {
+                const userAddress = await signer.getAddress();
+                const wZYSBalance = await wZYSContract.balanceOf(userAddress);
+                const YRSBalance = await YRSContract.balanceOf(userAddress);
                 
-                const toastHtml = `
-                    <div id="${toastId}" class="toast custom-toast align-items-center text-white bg-${type} border-0" role="alert" aria-live="assertive" aria-atomic="true">
-                        <div class="d-flex">
-                            <div class="toast-body">
-                                ${message}
-                            </div>
-                            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
-                        </div>
-                    </div>
-                `;
+                const formattedWZYS = ethers.utils.formatUnits(wZYSBalance, wZYSDecimals);
+                const formattedYRS = ethers.utils.formatUnits(YRSBalance, YRSDecimals);
                 
-                toastContainer.insertAdjacentHTML('beforeend', toastHtml);
-                
-                const toastElement = document.getElementById(toastId);
-                const toast = new bootstrap.Toast(toastElement, { delay: 5000 });
-                toast.show();
-                
-                // Remove toast element after it's hidden
-                toastElement.addEventListener('hidden.bs.toast', () => {
-                    toastElement.remove();
-                });
+                userWZYSBalance.textContent = parseFloat(formattedWZYS).toFixed(4);
+                userYRSBalance.textContent = parseFloat(formattedYRS).toFixed(4);
+            } catch (error) {
+                console.error('Error loading user balances:', error);
+                showToast('Failed to load user balances.', 'danger');
             }
+        }
 
-            // Auto-refresh data every 30 seconds
-            setInterval(async () => {
-                if (signer) {
-                    await loadContractData();
-                    await loadUserBalances();
+        // Buy form submission
+        buyForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            if (!isConnected) {
+                showToast('Please connect your wallet first.', 'warning');
+                return;
+            }
+            
+            const wZYSAmount = document.getElementById('buyWZYSAmount').value;
+            const minYRSOut = document.getElementById('buyMinYRSOut').value;
+            
+            if (!wZYSAmount || !minYRSOut) {
+                showToast('Please fill in all fields.', 'warning');
+                return;
+            }
+            
+            try {
+                // Show loading state
+                buyForm.classList.add('loading');
+                
+                // Convert to wei
+                const wZYSAmountWei = ethers.utils.parseUnits(wZYSAmount, wZYSDecimals);
+                const minYRSOutWei = ethers.utils.parseUnits(minYRSOut, YRSDecimals);
+                
+                // Check allowance
+                const userAddress = await signer.getAddress();
+                const allowance = await wZYSContract.allowance(userAddress, CONTRACT_ADDRESS);
+                
+                if (allowance.lt(wZYSAmountWei)) {
+                    // Approve first
+                    showToast('Approving tokens...', 'info');
+                    const approveTx = await wZYSContract.approve(CONTRACT_ADDRESS, wZYSAmountWei);
+                    await approveTx.wait();
+                    showToast('Approval successful. Proceeding with purchase...', 'info');
                 }
-            }, 30000);
+                
+                // Execute buy
+                const tx = await contract.buy1(wZYSAmountWei, minYRSOutWei);
+                showToast('Transaction submitted. Waiting for confirmation...', 'info');
+                await tx.wait();
+                
+                // Reset form
+                buyForm.reset();
+                
+                // Refresh data
+                await loadContractData();
+                await loadUserBalances();
+                
+                showToast('Purchase successful!', 'success');
+            } catch (error) {
+                console.error('Error buying tokens:', error);
+                showToast(`Purchase failed: ${error.message}`, 'danger');
+            } finally {
+                // Hide loading state
+                buyForm.classList.remove('loading');
+            }
         });
+
+        // Sell form submission
+        sellForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            if (!isConnected) {
+                showToast('Please connect your wallet first.', 'warning');
+                return;
+            }
+            
+            const YRSAmount = document.getElementById('sellYRSAmount').value;
+            const minWZYSOut = document.getElementById('sellMinWZYSOut').value;
+            
+            if (!YRSAmount || !minWZYSOut) {
+                showToast('Please fill in all fields.', 'warning');
+                return;
+            }
+            
+            try {
+                // Show loading state
+                sellForm.classList.add('loading');
+                
+                // Convert to wei
+                const YRSAmountWei = ethers.utils.parseUnits(YRSAmount, YRSDecimals);
+                const minWZYSOutWei = ethers.utils.parseUnits(minWZYSOut, wZYSDecimals);
+                
+                // Check allowance
+                const userAddress = await signer.getAddress();
+                const allowance = await YRSContract.allowance(userAddress, CONTRACT_ADDRESS);
+                
+                if (allowance.lt(YRSAmountWei)) {
+                    // Approve first
+                    showToast('Approving tokens...', 'info');
+                    const approveTx = await YRSContract.approve(CONTRACT_ADDRESS, YRSAmountWei);
+                    await approveTx.wait();
+                    showToast('Approval successful. Proceeding with sale...', 'info');
+                }
+                
+                // Execute sell
+                const tx = await contract.sell1(YRSAmountWei, minWZYSOutWei);
+                showToast('Transaction submitted. Waiting for confirmation...', 'info');
+                await tx.wait();
+                
+                // Reset form
+                sellForm.reset();
+                
+                // Refresh data
+                await loadContractData();
+                await loadUserBalances();
+                
+                showToast('Sale successful!', 'success');
+            } catch (error) {
+                console.error('Error selling tokens:', error);
+                showToast(`Sale failed: ${error.message}`, 'danger');
+            } finally {
+                // Hide loading state
+                sellForm.classList.remove('loading');
+            }
+        });
+
+        // Burn form submission
+        burnForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            if (!isConnected) {
+                showToast('Please connect your wallet first.', 'warning');
+                return;
+            }
+            
+            const burnAmount = document.getElementById('burnAmount').value;
+            
+            if (!burnAmount) {
+                showToast('Please fill in all fields.', 'warning');
+                return;
+            }
+            
+            try {
+                // Show loading state
+                burnForm.classList.add('loading');
+                
+                // Convert to wei
+                const burnAmountWei = ethers.utils.parseUnits(burnAmount, YRSDecimals);
+                
+                // Check allowance
+                const userAddress = await signer.getAddress();
+                const allowance = await YRSContract.allowance(userAddress, CONTRACT_ADDRESS);
+                
+                if (allowance.lt(burnAmountWei)) {
+                    // Approve first
+                    showToast('Approving tokens...', 'info');
+                    const approveTx = await YRSContract.approve(CONTRACT_ADDRESS, burnAmountWei);
+                    await approveTx.wait();
+                    showToast('Approval successful. Proceeding with burn...', 'info');
+                }
+                
+                // Execute burn
+                const tx = await contract.burn(burnAmountWei);
+                showToast('Transaction submitted. Waiting for confirmation...', 'info');
+                await tx.wait();
+                
+                // Reset form
+                burnForm.reset();
+                
+                // Refresh data
+                await loadContractData();
+                await loadUserBalances();
+                
+                showToast('Burn successful!', 'success');
+            } catch (error) {
+                console.error('Error burning tokens:', error);
+                showToast(`Burn failed: ${error.message}`, 'danger');
+            } finally {
+                // Hide loading state
+                burnForm.classList.remove('loading');
+            }
+        });
+
+        // Show toast notification
+        function showToast(message, type) {
+            const toastContainer = document.querySelector('.toast-container');
+            const toastId = 'toast-' + Date.now();
+            
+            const toastHtml = `
+                <div id="${toastId}" class="toast custom-toast align-items-center text-white bg-${type} border-0" role="alert" aria-live="assertive" aria-atomic="true">
+                    <div class="d-flex">
+                        <div class="toast-body">
+                            ${message}
+                        </div>
+                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                    </div>
+                </div>
+            `;
+            
+            toastContainer.insertAdjacentHTML('beforeend', toastHtml);
+            
+            const toastElement = document.getElementById(toastId);
+            const toast = new bootstrap.Toast(toastElement, { delay: 5000 });
+            toast.show();
+            
+            // Remove toast element after it's hidden
+            toastElement.addEventListener('hidden.bs.toast', () => {
+                toastElement.remove();
+            });
+        }
+
+        // Auto-refresh data every 30 seconds if connected
+        setInterval(async () => {
+            if (isConnected) {
+                await loadContractData();
+                await loadUserBalances();
+            }
+        }, 30000);
     </script>
 </body>
 </html>
