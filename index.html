@@ -18,6 +18,7 @@
             --text-secondary: #a0a9c9;
             --success: #10b981;
             --danger: #ef4444;
+            --warning: #f59e0b;
             --border-radius: 12px;
         }
 
@@ -373,6 +374,10 @@
             color: var(--primary-color);
         }
 
+        .toast.warning .toast-icon {
+            color: var(--warning);
+        }
+
         .toast-message {
             flex: 1;
         }
@@ -433,6 +438,65 @@
             font-weight: 500;
         }
 
+        /* Contract config section */
+        .config-section {
+            background: var(--surface);
+            border-radius: var(--border-radius);
+            padding: 20px;
+            margin-bottom: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .config-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: var(--text-secondary);
+        }
+
+        .config-form {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr auto;
+            gap: 15px;
+            align-items: end;
+        }
+
+        .config-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .config-label {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 5px;
+        }
+
+        .config-input {
+            background: var(--surface-light);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 10px 12px;
+            color: var(--text-primary);
+            font-size: 14px;
+        }
+
+        .config-btn {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            height: fit-content;
+        }
+
+        .config-btn:hover {
+            background: var(--secondary-color);
+        }
+
         /* Responsive design */
         @media (max-width: 768px) {
             .dashboard, .trading-section {
@@ -446,6 +510,10 @@
             .header-content {
                 flex-direction: column;
                 gap: 20px;
+            }
+            
+            .config-form {
+                grid-template-columns: 1fr;
             }
         }
     </style>
@@ -477,6 +545,25 @@
 
     <main>
         <div class="container">
+            <div class="config-section">
+                <div class="config-title">Contract Configuration</div>
+                <div class="config-form">
+                    <div class="config-group">
+                        <label class="config-label">YRSStaking Contract</label>
+                        <input type="text" id="contractAddress" class="config-input" placeholder="0x...">
+                    </div>
+                    <div class="config-group">
+                        <label class="config-label">wZYS Token</label>
+                        <input type="text" id="wZYSAddress" class="config-input" placeholder="0x...">
+                    </div>
+                    <div class="config-group">
+                        <label class="config-label">YRS Token</label>
+                        <input type="text" id="YRSAddress" class="config-input" placeholder="0x...">
+                    </div>
+                    <button id="saveConfig" class="config-btn">Save</button>
+                </div>
+            </div>
+
             <div class="dashboard">
                 <div class="card">
                     <div class="card-title">
@@ -606,22 +693,34 @@
                 return;
             }
             
-            // Contract configuration
-            const CONTRACT_ADDRESS = "0x1234567890123456789012345678901234567890"; // Replace with actual contract address
-            const WZYS_ADDRESS = "0x1234567890123456789012345678901234567890"; // Replace with actual wZYS address
-            const YRS_ADDRESS = "0x1234567890123456789012345678901234567890"; // Replace with actual YRS address
+            // Contract configuration - will be loaded from localStorage or set by user
+            let CONTRACT_ADDRESS = localStorage.getItem('contractAddress') || "";
+            let WZYS_ADDRESS = localStorage.getItem('wZYSAddress') || "";
+            let YRS_ADDRESS = localStorage.getItem('YRSAddress') || "";
             
-            // Contract ABI (simplified for demonstration)
+            // Set the saved values in the input fields
+            document.getElementById('contractAddress').value = CONTRACT_ADDRESS;
+            document.getElementById('wZYSAddress').value = WZYS_ADDRESS;
+            document.getElementById('YRSAddress').value = YRS_ADDRESS;
+            
+            // Complete ABI for the YRSStaking contract
             const CONTRACT_ABI = [
+                // Public state variables as view functions
                 "function totalWZYSDeposited() view returns (uint256)",
                 "function totalYieldReserveShares() view returns (uint256)",
+                "function wZYS() view returns (address)",
+                "function YRS() view returns (address)",
+                
+                // Contract functions
                 "function buy1(uint256 wZYSAmount, uint256 minYRSOut)",
                 "function sell1(uint256 YRSAmount, uint256 minWZYSOut)",
-                "function balanceOf(address) view returns (uint256)",
-                "function allowance(address owner, address spender) view returns (uint256)",
-                "function approve(address spender, uint256 amount) returns (bool)",
-                "function transfer(address to, uint256 amount) returns (bool)",
-                "function transferFrom(address from, address to, uint256 amount) returns (bool)"
+                "function burn(uint256 amount)",
+                "function recoverERC20(address tokenAddress, uint256 amount)",
+                
+                // Events
+                "event TokensBought(address indexed buyer, uint256 wZYSAmount, uint256 YRSAmount)",
+                "event TokensSold(address indexed seller, uint256 YRSAmount, uint256 wZYSAmount)",
+                "event TokensBurned(address indexed burner, uint256 amount)"
             ];
             
             // ERC20 ABI
@@ -631,7 +730,9 @@
                 "function approve(address spender, uint256 amount) returns (bool)",
                 "function transfer(address to, uint256 amount) returns (bool)",
                 "function transferFrom(address from, address to, uint256 amount) returns (bool)",
-                "function decimals() view returns (uint8)"
+                "function decimals() view returns (uint8)",
+                "function symbol() view returns (string)",
+                "function name() view returns (string)"
             ];
             
             // State variables
@@ -642,9 +743,11 @@
             let YRSContract;
             let userAddress;
             let isConnected = false;
+            let isConfigured = false;
             
             // DOM elements
             const connectWalletBtn = document.getElementById('connectWallet');
+            const saveConfigBtn = document.getElementById('saveConfig');
             const totalWZYSElement = document.getElementById('totalWZYS');
             const totalYRSElement = document.getElementById('totalYRS');
             const ratioElement = document.getElementById('ratio');
@@ -663,7 +766,9 @@
             // Initialize
             await checkConnection();
             setupEventListeners();
-            updateContractData();
+            
+            // Check if contracts are configured
+            checkContractConfiguration();
             
             // Hide loading overlay
             loadingOverlay.style.display = 'none';
@@ -682,9 +787,48 @@
                 }
             }
             
+            // Check if contracts are properly configured
+            function checkContractConfiguration() {
+                if (!CONTRACT_ADDRESS || !WZYS_ADDRESS || !YRS_ADDRESS) {
+                    showToast('warning', 'Configuration Required', 'Please enter the contract addresses to continue');
+                    isConfigured = false;
+                    return;
+                }
+                
+                if (!ethers.utils.isAddress(CONTRACT_ADDRESS) || 
+                    !ethers.utils.isAddress(WZYS_ADDRESS) || 
+                    !ethers.utils.isAddress(YRS_ADDRESS)) {
+                    showToast('error', 'Invalid Addresses', 'One or more contract addresses are invalid');
+                    isConfigured = false;
+                    return;
+                }
+                
+                isConfigured = true;
+                
+                // Initialize contracts if wallet is connected
+                if (isConnected) {
+                    initializeContracts();
+                    updateContractData();
+                    updateUserBalances();
+                }
+            }
+            
+            // Initialize contract instances
+            function initializeContracts() {
+                try {
+                    contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
+                    wZYSContract = new ethers.Contract(WZYS_ADDRESS, ERC20_ABI, signer);
+                    YRSContract = new ethers.Contract(YRS_ADDRESS, ERC20_ABI, signer);
+                } catch (error) {
+                    console.error('Error initializing contracts:', error);
+                    showToast('error', 'Contract Error', 'Failed to initialize contracts');
+                }
+            }
+            
             // Setup event listeners
             function setupEventListeners() {
                 connectWalletBtn.addEventListener('click', connectWallet);
+                saveConfigBtn.addEventListener('click', saveConfiguration);
                 
                 // Buy form inputs
                 buyWZYSAmountInput.addEventListener('input', calculateExpectedYRS);
@@ -729,6 +873,35 @@
                 }
             }
             
+            // Save contract configuration
+            function saveConfiguration() {
+                CONTRACT_ADDRESS = document.getElementById('contractAddress').value;
+                WZYS_ADDRESS = document.getElementById('wZYSAddress').value;
+                YRS_ADDRESS = document.getElementById('YRSAddress').value;
+                
+                if (!CONTRACT_ADDRESS || !WZYS_ADDRESS || !YRS_ADDRESS) {
+                    showToast('error', 'Missing Addresses', 'Please enter all contract addresses');
+                    return;
+                }
+                
+                if (!ethers.utils.isAddress(CONTRACT_ADDRESS) || 
+                    !ethers.utils.isAddress(WZYS_ADDRESS) || 
+                    !ethers.utils.isAddress(YRS_ADDRESS)) {
+                    showToast('error', 'Invalid Addresses', 'One or more contract addresses are invalid');
+                    return;
+                }
+                
+                // Save to localStorage
+                localStorage.setItem('contractAddress', CONTRACT_ADDRESS);
+                localStorage.setItem('wZYSAddress', WZYS_ADDRESS);
+                localStorage.setItem('YRSAddress', YRS_ADDRESS);
+                
+                // Check configuration and initialize contracts if needed
+                checkContractConfiguration();
+                
+                showToast('success', 'Configuration Saved', 'Contract addresses have been saved');
+            }
+            
             // Connect wallet
             async function connectWallet() {
                 if (!window.ethereum) {
@@ -737,6 +910,24 @@
                 }
                 
                 try {
+                    // Check if we're on the correct network (Sepolia)
+                    const chainId = await window.ethereum.request({ method: 'eth_chainId' });
+                    if (chainId !== '0xaa36a7') { // Sepolia testnet chain ID
+                        showToast('error', 'Wrong Network', 'Please switch to Sepolia Testnet');
+                        try {
+                            await window.ethereum.request({
+                                method: 'wallet_switchEthereumChain',
+                                params: [{ chainId: '0xaa36a7' }],
+                            });
+                        } catch (switchError) {
+                            // This error code indicates that the chain has not been added to MetaMask
+                            if (switchError.code === 4902) {
+                                showToast('error', 'Network Not Found', 'Sepolia Testnet is not added to your wallet');
+                            }
+                        }
+                        return;
+                    }
+                    
                     // Request account access
                     await window.ethereum.request({ method: 'eth_requestAccounts' });
                     
@@ -745,23 +936,21 @@
                     signer = provider.getSigner();
                     userAddress = await signer.getAddress();
                     
-                    // Create contract instances
-                    contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
-                    wZYSContract = new ethers.Contract(WZYS_ADDRESS, ERC20_ABI, signer);
-                    YRSContract = new ethers.Contract(YRS_ADDRESS, ERC20_ABI, signer);
-                    
                     // Update UI
                     isConnected = true;
                     connectWalletBtn.innerHTML = `<i class="fas fa-check-circle"></i> ${userAddress.substring(0, 6)}...${userAddress.substring(userAddress.length - 4)}`;
                     connectWalletBtn.classList.add('connected');
                     
-                    // Enable trade buttons
-                    buyBtn.disabled = false;
-                    sellBtn.disabled = false;
-                    
-                    // Update data
-                    updateContractData();
-                    updateUserBalances();
+                    // Initialize contracts if configured
+                    if (isConfigured) {
+                        initializeContracts();
+                        updateContractData();
+                        updateUserBalances();
+                        
+                        // Enable trade buttons
+                        buyBtn.disabled = false;
+                        sellBtn.disabled = false;
+                    }
                     
                     showToast('success', 'Wallet Connected', 'Your wallet has been connected successfully');
                 } catch (error) {
@@ -790,7 +979,7 @@
             
             // Update contract data
             async function updateContractData() {
-                if (!isConnected) return;
+                if (!isConnected || !isConfigured || !contract) return;
                 
                 try {
                     // Get contract data
@@ -809,26 +998,44 @@
                     ratioElement.textContent = isNaN(ratio) ? '0' : ratio.toFixed(4);
                 } catch (error) {
                     console.error('Error updating contract data:', error);
+                    showToast('error', 'Contract Error', 'Failed to fetch contract data. Check contract address.');
                 }
             }
             
             // Update user balances
             async function updateUserBalances() {
-                if (!isConnected) return;
+                if (!isConnected || !isConfigured || !wZYSContract || !YRSContract) return;
                 
                 try {
                     // Get user balances
                     const wZYSBalance = await wZYSContract.balanceOf(userAddress);
                     const YRSBalance = await YRSContract.balanceOf(userAddress);
                     
+                    // Get token symbols
+                    let wZYSSymbol = "wZYS";
+                    let YRSSymbol = "YRS";
+                    
+                    try {
+                        wZYSSymbol = await wZYSContract.symbol();
+                    } catch (e) {
+                        console.log("Could not fetch wZYS symbol");
+                    }
+                    
+                    try {
+                        YRSSymbol = await YRSContract.symbol();
+                    } catch (e) {
+                        console.log("Could not fetch YRS symbol");
+                    }
+                    
                     // Format and display
                     const formattedWZYS = ethers.utils.formatUnits(wZYSBalance, 18);
                     const formattedYRS = ethers.utils.formatUnits(YRSBalance, 18);
                     
-                    userWZYSBalanceElement.textContent = `${parseFloat(formattedWZYS).toLocaleString()} wZYS`;
-                    userYRSBalanceElement.textContent = `${parseFloat(formattedYRS).toLocaleString()} YRS`;
+                    userWZYSBalanceElement.textContent = `${parseFloat(formattedWZYS).toLocaleString()} ${wZYSSymbol}`;
+                    userYRSBalanceElement.textContent = `${parseFloat(formattedYRS).toLocaleString()} ${YRSSymbol}`;
                 } catch (error) {
                     console.error('Error updating user balances:', error);
+                    showToast('error', 'Balance Error', 'Failed to fetch token balances. Check token addresses.');
                 }
             }
             
@@ -864,8 +1071,8 @@
             
             // Handle buy transaction
             async function handleBuy() {
-                if (!isConnected) {
-                    showToast('error', 'Wallet Not Connected', 'Please connect your wallet first');
+                if (!isConnected || !isConfigured) {
+                    showToast('error', 'Not Ready', 'Please connect wallet and configure contracts');
                     return;
                 }
                 
@@ -916,7 +1123,16 @@
                     showToast('success', 'Purchase Successful', `You bought ${expectedYRSInput.value} YRS tokens`);
                 } catch (error) {
                     console.error('Error buying tokens:', error);
-                    showToast('error', 'Transaction Failed', error.message || 'Failed to buy YRS tokens');
+                    let errorMessage = 'Failed to buy YRS tokens';
+                    
+                    // Try to extract a more specific error message
+                    if (error.data && error.data.message) {
+                        errorMessage = error.data.message;
+                    } else if (error.message) {
+                        errorMessage = error.message;
+                    }
+                    
+                    showToast('error', 'Transaction Failed', errorMessage);
                 } finally {
                     // Reset button state
                     buyBtn.disabled = false;
@@ -926,8 +1142,8 @@
             
             // Handle sell transaction
             async function handleSell() {
-                if (!isConnected) {
-                    showToast('error', 'Wallet Not Connected', 'Please connect your wallet first');
+                if (!isConnected || !isConfigured) {
+                    showToast('error', 'Not Ready', 'Please connect wallet and configure contracts');
                     return;
                 }
                 
@@ -978,7 +1194,16 @@
                     showToast('success', 'Sale Successful', `You sold ${YRSAmount} YRS tokens`);
                 } catch (error) {
                     console.error('Error selling tokens:', error);
-                    showToast('error', 'Transaction Failed', error.message || 'Failed to sell YRS tokens');
+                    let errorMessage = 'Failed to sell YRS tokens';
+                    
+                    // Try to extract a more specific error message
+                    if (error.data && error.data.message) {
+                        errorMessage = error.data.message;
+                    } else if (error.message) {
+                        errorMessage = error.message;
+                    }
+                    
+                    showToast('error', 'Transaction Failed', errorMessage);
                 } finally {
                     // Reset button state
                     sellBtn.disabled = false;
@@ -1001,6 +1226,8 @@
                     toastIcon.className = 'fas fa-check-circle';
                 } else if (type === 'error') {
                     toastIcon.className = 'fas fa-exclamation-circle';
+                } else if (type === 'warning') {
+                    toastIcon.className = 'fas fa-exclamation-triangle';
                 } else {
                     toastIcon.className = 'fas fa-info-circle';
                 }
@@ -1020,7 +1247,7 @@
             
             // Auto-refresh data every 30 seconds
             setInterval(() => {
-                if (isConnected) {
+                if (isConnected && isConfigured) {
                     updateContractData();
                     updateUserBalances();
                 }
