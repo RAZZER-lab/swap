@@ -778,25 +778,14 @@
             }
             
             // Contract configuration - will be loaded from localStorage or set by user
-            let CONTRACT_ADDRESS = localStorage.getItem('contractAddress') || "";
-            let WZYS_ADDRESS = localStorage.getItem('wZYSAddress') || "";
-            let YRS_ADDRESS = localStorage.getItem('YRSAddress') || "";
+            let CONTRACT_ADDRESS = localStorage.getItem('contractAddress') || "0xBFc4Cf7B1639AeB0601B217899e2d7C8F123B053";
+            let WZYS_ADDRESS = localStorage.getItem('wZYSAddress') || "0x7Eb81e6a8E1686DE83E232c876ad2bf5E01728a4";
+            let YRS_ADDRESS = localStorage.getItem('YRSAddress') || "0x1e45324f51F82533F3bb324E54a8FBda8eb315E3";
             
             // Set the saved values in the input fields
             document.getElementById('contractAddress').value = CONTRACT_ADDRESS;
             document.getElementById('wZYSAddress').value = WZYS_ADDRESS;
             document.getElementById('YRSAddress').value = YRS_ADDRESS;
-            
-            // Pre-fill with provided addresses if empty
-            if (!WZYS_ADDRESS) {
-                WZYS_ADDRESS = "0x7Eb81e6a8E1686DE83E232c876ad2bf5E01728a4";
-                document.getElementById('wZYSAddress').value = WZYS_ADDRESS;
-            }
-            
-            if (!YRS_ADDRESS) {
-                YRS_ADDRESS = "0x1e45324f51F82533F3bb324E54a8FBda8eb315E3";
-                document.getElementById('YRSAddress').value = YRS_ADDRESS;
-            }
             
             // Complete ABI for the YRSStaking contract
             const CONTRACT_ABI = [
@@ -840,8 +829,8 @@
             let userAddress;
             let isConnected = false;
             let isConfigured = false;
-            let wZYSDecimals = 18; // Default to 18 decimals
-            let YRSDecimals = 18; // Default to 18 decimals
+            let wZYSDecimals = 12;
+            let YRSDecimals = 12;
             
             // DOM elements
             const connectWalletBtn = document.getElementById('connectWallet');
@@ -931,16 +920,16 @@
                         wZYSDecimals = await wZYSContract.decimals();
                         console.log(`wZYS decimals: ${wZYSDecimals}`);
                     } catch (e) {
-                        console.log("Could not fetch wZYS decimals, using default 18");
-                        wZYSDecimals = 18;
+                        console.log("Could not fetch wZYS decimals, using default 12");
+                        wZYSDecimals = 12;
                     }
                     
                     try {
                         YRSDecimals = await YRSContract.decimals();
                         console.log(`YRS decimals: ${YRSDecimals}`);
                     } catch (e) {
-                        console.log("Could not fetch YRS decimals, using default 18");
-                        YRSDecimals = 18;
+                        console.log("Could not fetch YRS decimals, using default 12");
+                        YRSDecimals = 12;
                     }
                 } catch (error) {
                     console.error('Error initializing contracts:', error);
@@ -950,41 +939,84 @@
             
             // Setup event listeners
             function setupEventListeners() {
-                connectWalletBtn.addEventListener('click', connectWallet);
-                saveConfigBtn.addEventListener('click', saveConfiguration);
+                // Use addEventListener with proper event handling for Brave/Chrome compatibility
+                if (connectWalletBtn) {
+                    connectWalletBtn.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        connectWallet();
+                    }, false);
+                }
+                
+                if (saveConfigBtn) {
+                    saveConfigBtn.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        saveConfiguration();
+                    }, false);
+                }
                 
                 // Buy form inputs
-                buyWZYSAmountInput.addEventListener('input', calculateExpectedYRS);
-                buyWZYSAmountInput.addEventListener('input', updateBuyTransactionDetails);
+                if (buyWZYSAmountInput) {
+                    buyWZYSAmountInput.addEventListener('input', function(e) {
+                        calculateExpectedYRS();
+                        updateBuyTransactionDetails();
+                    }, false);
+                }
                 
                 // Sell form inputs
-                sellYRSAmountInput.addEventListener('input', calculateExpectedWZYS);
-                sellYRSAmountInput.addEventListener('input', updateSellTransactionDetails);
+                if (sellYRSAmountInput) {
+                    sellYRSAmountInput.addEventListener('input', function(e) {
+                        calculateExpectedWZYS();
+                        updateSellTransactionDetails();
+                    }, false);
+                }
                 
                 // Trade buttons
-                buyBtn.addEventListener('click', handleBuy);
-                sellBtn.addEventListener('click', handleSell);
+                if (buyBtn) {
+                    buyBtn.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        handleBuy();
+                    }, false);
+                }
+                
+                if (sellBtn) {
+                    sellBtn.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        handleSell();
+                    }, false);
+                }
                 
                 // Balance click to set max
-                userWZYSBalanceElement.addEventListener('click', () => {
-                    const balanceText = userWZYSBalanceElement.textContent.split(' ')[0];
-                    const balance = parseFloat(balanceText.replace(/,/g, ''));
-                    buyWZYSAmountInput.value = balance;
-                    calculateExpectedYRS();
-                    updateBuyTransactionDetails();
-                });
+                if (userWZYSBalanceElement) {
+                    userWZYSBalanceElement.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        const balanceText = userWZYSBalanceElement.textContent.split(' ')[0];
+                        const balance = parseFloat(balanceText.replace(/,/g, ''));
+                        buyWZYSAmountInput.value = balance;
+                        calculateExpectedYRS();
+                        updateBuyTransactionDetails();
+                    }, false);
+                }
                 
-                userYRSBalanceElement.addEventListener('click', () => {
-                    const balanceText = userYRSBalanceElement.textContent.split(' ')[0];
-                    const balance = parseFloat(balanceText.replace(/,/g, ''));
-                    sellYRSAmountInput.value = balance;
-                    calculateExpectedWZYS();
-                    updateSellTransactionDetails();
-                });
+                if (userYRSBalanceElement) {
+                    userYRSBalanceElement.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        const balanceText = userYRSBalanceElement.textContent.split(' ')[0];
+                        const balance = parseFloat(balanceText.replace(/,/g, ''));
+                        sellYRSAmountInput.value = balance;
+                        calculateExpectedWZYS();
+                        updateSellTransactionDetails();
+                    }, false);
+                }
                 
                 // Handle account changes
                 if (window.ethereum) {
-                    window.ethereum.on('accountsChanged', (accounts) => {
+                    window.ethereum.on('accountsChanged', function(accounts) {
                         if (accounts.length === 0) {
                             disconnectWallet();
                         } else {
@@ -992,7 +1024,7 @@
                         }
                     });
                     
-                    window.ethereum.on('chainChanged', () => {
+                    window.ethereum.on('chainChanged', function() {
                         window.location.reload();
                     });
                 }
@@ -1144,7 +1176,7 @@
                     
                     // Calculate and display ratio
                     const ratio = parseFloat(formattedWZYS) / parseFloat(formattedYRS);
-                    ratioElement.textContent = isNaN(ratio) ? '0' : ratio.toFixed(4);
+                    ratioElement.textContent = isNaN(ratio) || !isFinite(ratio) ? '0' : ratio.toFixed(4);
                 } catch (error) {
                     console.error('Error updating contract data:', error);
                     
