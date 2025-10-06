@@ -6,8 +6,8 @@
     <title>YRS Staking DApp</title>
     <!-- Bootstrap CSS for styling -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Ethers.js library for blockchain interaction (updated CDN) -->
-    <script src="https://unpkg.com/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+    <!-- Ethers.js library for blockchain interaction (official CDN) -->
+    <script src="https://cdn.ethers.io/lib/ethers-5.7.2.umd.min.js"></script>
     <style>
         .card { margin-bottom: 1.5rem; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         .status-connected { color: #198754; font-weight: bold; }
@@ -54,6 +54,11 @@
                                 <li>Resetting your MetaMask account (Settings → Advanced → Reset Account)</li>
                             </ul>
                             <button id="retryInitBtn" class="btn btn-sm btn-outline-primary retry-btn">Retry Connection</button>
+                        </div>
+                        <div id="limitedModeWarning" class="alert alert-info" style="display: none;">
+                            <strong>ℹ️ Limited Functionality</strong>
+                            <p class="mb-1">Connected in read-only mode. Write operations are disabled due to browser compatibility. Balances can still be viewed. For full functionality, try Chrome or Brave.</p>
+                            <button id="retryInitBtnLimited" class="btn btn-sm btn-outline-primary retry-btn">Retry Full Connection</button>
                         </div>
                         <div id="networkAlert" class="alert network-alert" style="display: none;">
                             <strong>🌐 Network Change Required</strong>
@@ -345,6 +350,7 @@
         let initFailed = false;
         let circuitBreakerRetryCount = 0;
         const MAX_CIRCUIT_BREAKER_RETRIES = 3;
+        const isFirefox = navigator.userAgent.toLowerCase().indexOf('firefox') > -1;
 
         // =============================================
         // Enhanced Provider Detection for Firefox
@@ -369,8 +375,8 @@
                 'execution prevented',
                 'rpc error',
                 'transport is closing',
-                'unavailable',
-                'unknown account'
+                'unavailable'
+                // Removed 'unknown account' as it's a connection issue, not RPC
             ];
             
             const isCircuitBreakerError = circuitBreakerIndicators.some(indicator => 
@@ -384,8 +390,8 @@
                 initFailed = true;
                 circuitBreakerRetryCount++;
                 
-                // Disable buttons if init failed
-                toggleInteractionButtons(false);
+                // Disable write buttons if init failed
+                toggleWriteButtons(false);
                 return true;
             }
             return false;
@@ -420,8 +426,8 @@
             throw new Error('All retry attempts failed');
         }
 
-        function toggleInteractionButtons(enabled) {
-            const buttons = ['buyButton', 'sellButton', 'burnButton', 'recoverButton', 'refreshBalances'];
+        function toggleWriteButtons(enabled) {
+            const buttons = ['buyButton', 'sellButton', 'burnButton', 'recoverButton'];
             buttons.forEach(id => {
                 document.getElementById(id).disabled = !enabled;
             });
@@ -483,18 +489,20 @@
             
             if (!ethereumProvider) {
                 alert('Please install MetaMask to use this dApp!');
-                document.getElementById('browserWarning').style.display = 'block';
+                if (isFirefox) {
+                    document.getElementById('browserWarning').style.display = 'block';
+                }
                 return;
             }
 
-            // Check if we're in Firefox and show warning if needed
-            if (navigator.userAgent.toLowerCase().indexOf('firefox') > -1) {
+            // Check if we're in Firefox and show warning
+            if (isFirefox) {
                 document.getElementById('browserWarning').style.display = 'block';
             }
 
             try {
                 // Initialize the provider with the detected Ethereum provider
-                provider = new ethers.providers.Web3Provider(ethereumProvider, "any");
+                provider = new ethers.providers.Web3Provider(ethereumProvider);
                 
                 // Initialize contract object (read-only until signer is connected)
                 contract = new ethers.Contract(contractAddress, contractABI, provider);
@@ -513,6 +521,7 @@
             document.getElementById('recoverButton').addEventListener('click', recoverTokens);
             document.getElementById('refreshBalances').addEventListener('click', refreshAllBalances);
             document.getElementById('retryInitBtn').addEventListener('click', retryInitialization);
+            document.getElementById('retryInitBtnLimited').addEventListener('click', retryInitialization);
             document.getElementById('switchNetworkBtn').addEventListener('click', switchToSepoliaNetwork);
 
             // Enhanced event listeners for account and chain changes
@@ -530,6 +539,7 @@
                     circuitBreakerRetryCount = 0;
                     initFailed = false;
                     document.getElementById('rpcWarning').style.display = 'none';
+                    document.getElementById('limitedModeWarning').style.display = 'none';
                     
                     await checkNetwork();
                     if (userAddress) {
@@ -538,15 +548,15 @@
                 });
             }
 
-            // Initial check for existing connection
+            // Initial check for existing connection using eth_accounts (non-prompting)
             try {
-                const accounts = await provider.listAccounts();
+                const accounts = await ethereumProvider.request({ method: 'eth_accounts' });
                 if (accounts.length > 0) {
                     await connectWallet(accounts[0]);
                 }
             } catch (error) {
-                console.log('No accounts found or error listing accounts:', error);
-                // This might be a Firefox compatibility issue, continue anyway
+                console.log('No accounts found or permission error:', error);
+                // Continue without auto-connection
             }
         });
 
@@ -574,30 +584,28 @@
                 }
 
                 // Re-initialize provider with current context
-                provider = new ethers.providers.Web3Provider(ethereumProvider, "any");
+                provider = new ethers.providers.Web3Provider(ethereumProvider);
+                
+                // Small delay to ensure provider state update (helps in Firefox)
+                await new Promise(resolve => setTimeout(resolve, 300));
                 
                 // Get the signer with proper error handling
+                let tempSigner;
                 try {
-                    signer = provider.getSigner();
-                    userAddress = accounts[0];
+                    tempSigner = provider.getSigner();
+                    userAddress = await tempSigner.getAddress(); // Verify address to ensure readiness
                 } catch (signerError) {
                     console.error('Error getting signer:', signerError);
-                    // Fallback: create a read-only connection
-                    userAddress = accounts[0];
-                    signer = null;
-                    initFailed = true;
-                    document.getElementById('rpcWarning').style.display = 'block';
-                    document.getElementById('rpcWarning').innerHTML = `
-                        <strong>⚠️ Limited Functionality</strong>
-                        <p class="mb-1">Connected in read-only mode. Some features may not work in Firefox.</p>
-                        <button id="retryInitBtn" class="btn btn-sm btn-outline-primary retry-btn">Retry Full Connection</button>
-                    `;
+                    if (signerError.message.includes('unknown account')) {
+                        throw new Error('Failed to access account. Ensure MetaMask is unlocked and connected.');
+                    }
+                    throw signerError;
                 }
                 
-                // Update contract instance with signer for write operations (if available)
-                if (signer) {
-                    contract = contract.connect(signer);
-                }
+                signer = tempSigner;
+                
+                // Update contract instance with signer for write operations
+                contract = contract.connect(signer);
                 
                 // Check network first
                 const isCorrectNetwork = await checkNetwork();
@@ -607,42 +615,66 @@
                     document.getElementById('networkAlert').style.display = 'none';
                 }
                 
-                // Update UI
-                updateWalletInfo();
-                
-                // Attempt to initialize token contracts with retry (only if we have a signer)
-                if (signer) {
-                    try {
-                        await retryableCall(initializeTokenContracts);
-                        initFailed = false;
-                        document.getElementById('rpcWarning').style.display = 'none';
-                    } catch (error) {
-                        console.error('Failed to initialize after retries:', error);
-                        initFailed = true;
-                        document.getElementById('rpcWarning').style.display = 'block';
+                // Initialize token contracts (now works with provider for read-only)
+                try {
+                    await retryableCall(initializeTokenContracts);
+                    initFailed = false;
+                    document.getElementById('rpcWarning').style.display = 'none';
+                    document.getElementById('limitedModeWarning').style.display = 'none';
+                } catch (error) {
+                    console.error('Failed to initialize after retries:', error);
+                    if (handleRPCCircuitBreaker(error, 'initializeTokenContracts')) {
+                        // Keep connected but initFailed for writes
                     }
                 }
                 
-                // Refresh balances if init succeeded or we have read-only access
-                if (!initFailed || userAddress) {
-                    await refreshAllBalances();
-                } else {
-                    document.getElementById('balanceError').style.display = 'block';
-                }
+                // Refresh balances
+                await refreshAllBalances();
                 
-                document.getElementById('connectionStatus').textContent = signer ? 'Connected' : 'Read-Only';
-                document.getElementById('connectionStatus').className = signer ? 'status-connected' : 'status-disconnected';
-                document.getElementById('connectButton').style.display = 'none';
-                document.getElementById('disconnectButton').style.display = 'inline-block';
+                // Update UI for full connection
+                updateConnectionStatus(true, true); // connected, full access
                 
-                // Only enable interactions if we're on the correct network and have a signer
-                toggleInteractionButtons(!initFailed && isCorrectNetwork && signer);
+                // Enable refresh and writes if appropriate
+                document.getElementById('refreshBalances').disabled = false;
+                toggleWriteButtons(!initFailed && isCorrectNetwork);
                 
             } catch (error) {
                 console.error('Error connecting to wallet:', error);
                 if (error.code !== 4001 && !handleRPCCircuitBreaker(error, 'connectWallet')) {
+                    if (error.message.includes('unknown account') || error.code === 'UNSUPPORTED_OPERATION') {
+                        // Fallback to read-only mode
+                        userAddress = accounts ? accounts[0] : null;
+                        signer = null;
+                        initFailed = true; // For writes
+                        document.getElementById('limitedModeWarning').style.display = 'block';
+                        updateConnectionStatus(true, false); // connected, read-only
+                        document.getElementById('refreshBalances').disabled = false;
+                        toggleWriteButtons(false);
+                        // Try to initialize for read-only
+                        try {
+                            await initializeTokenContracts();
+                            await refreshAllBalances();
+                        } catch (initError) {
+                            console.error('Failed to init read-only:', initError);
+                            document.getElementById('balanceError').style.display = 'block';
+                        }
+                        return;
+                    }
                     alert('Error connecting to MetaMask: ' + error.message);
                 }
+            }
+        }
+
+        function updateConnectionStatus(connected, fullAccess) {
+            if (connected) {
+                const statusEl = document.getElementById('connectionStatus');
+                statusEl.textContent = fullAccess ? 'Connected' : 'Connected (Read-Only)';
+                statusEl.className = 'status-connected';
+                document.getElementById('connectButton').style.display = 'none';
+                document.getElementById('disconnectButton').style.display = 'inline-block';
+                updateWalletInfo();
+            } else {
+                // Reset to disconnected (handled in disconnectWallet)
             }
         }
 
@@ -650,12 +682,15 @@
             if (!userAddress) return;
             try {
                 document.getElementById('rpcWarning').style.display = 'none';
+                document.getElementById('limitedModeWarning').style.display = 'none';
                 
                 // Re-initialize provider and signer
                 const ethereumProvider = getEthereumProvider();
                 if (ethereumProvider) {
-                    provider = new ethers.providers.Web3Provider(ethereumProvider, "any");
+                    provider = new ethers.providers.Web3Provider(ethereumProvider);
+                    await new Promise(resolve => setTimeout(resolve, 300));
                     signer = provider.getSigner();
+                    userAddress = await signer.getAddress();
                     contract = new ethers.Contract(contractAddress, contractABI, provider).connect(signer);
                 }
                 
@@ -663,12 +698,20 @@
                 initFailed = false;
                 await refreshAllBalances();
                 document.getElementById('balanceError').style.display = 'none';
+                document.getElementById('limitedModeWarning').style.display = 'none';
                 
                 const isCorrectNetwork = await checkNetwork();
-                toggleInteractionButtons(isCorrectNetwork);
+                document.getElementById('refreshBalances').disabled = false;
+                toggleWriteButtons(isCorrectNetwork);
+                updateConnectionStatus(true, true);
             } catch (error) {
                 console.error('Retry failed:', error);
-                handleRPCCircuitBreaker(error, 'retryInitialization');
+                if (error.message.includes('unknown account') || error.code === 'UNSUPPORTED_OPERATION') {
+                    document.getElementById('limitedModeWarning').style.display = 'block';
+                    updateConnectionStatus(true, false);
+                } else {
+                    handleRPCCircuitBreaker(error, 'retryInitialization');
+                }
             }
         }
 
@@ -680,12 +723,12 @@
                 if (!isCorrectNetwork) {
                     console.log(`Expected Chain ID ${EXPECTED_CHAIN_ID}, but connected to ${network.chainId}. Showing network switch prompt.`);
                     document.getElementById('networkAlert').style.display = 'block';
-                    toggleInteractionButtons(false);
+                    toggleWriteButtons(false);
                     return false;
                 } else {
                     document.getElementById('networkAlert').style.display = 'none';
-                    if (!initFailed && signer) {
-                        toggleInteractionButtons(true);
+                    if (!initFailed) {
+                        toggleWriteButtons(!!signer);
                     }
                     return true;
                 }
@@ -720,6 +763,7 @@
             document.getElementById('connectButton').style.display = 'inline-block';
             document.getElementById('disconnectButton').style.display = 'none';
             document.getElementById('rpcWarning').style.display = 'none';
+            document.getElementById('limitedModeWarning').style.display = 'none';
             document.getElementById('networkAlert').style.display = 'none';
             document.getElementById('balanceError').style.display = 'none';
             
@@ -731,7 +775,8 @@
             // Clear outputs
             document.querySelectorAll('[id$="Output"]').forEach(el => el.innerHTML = '');
             
-            toggleInteractionButtons(false);
+            document.getElementById('refreshBalances').disabled = true;
+            toggleWriteButtons(false);
         }
 
         async function updateWalletInfo() {
@@ -755,10 +800,6 @@
         // =============================================
         
         async function initializeTokenContracts() {
-            if (!signer) {
-                throw new Error('No signer available for token contract initialization');
-            }
-            
             let wZYSAddress, YRSAddress;
             try {
                 wZYSAddress = await retryableCall(() => contract.wZYS());
@@ -768,9 +809,10 @@
                 throw error;
             }
             
-            // Create contract instances for the tokens
-            wZYSToken = new ethers.Contract(wZYSAddress, erc20ABI, signer);
-            YRSToken = new ethers.Contract(YRSAddress, erc20ABI, signer);
+            // Create contract instances for the tokens (use signer if available, else provider for read-only)
+            const tokenConnector = signer || provider;
+            wZYSToken = new ethers.Contract(wZYSAddress, erc20ABI, tokenConnector);
+            YRSToken = new ethers.Contract(YRSAddress, erc20ABI, tokenConnector);
         }
 
         async function getTokenAllowance(tokenContract, spender) {
@@ -817,25 +859,19 @@
         }
 
         async function refreshAllBalances() {
-            if (!userAddress || initFailed) {
-                if (initFailed) {
-                    document.getElementById('balanceError').style.display = 'block';
-                }
+            if (!userAddress || !wZYSToken || !YRSToken) {
                 return;
             }
             
             try {
-                // If we have token contracts initialized, use them
-                if (wZYSToken && YRSToken) {
-                    const wZYSBalance = await retryableCall(() => wZYSToken.balanceOf(userAddress));
-                    document.getElementById('wZYSBalance').textContent = parseFloat(ethers.utils.formatUnits(wZYSBalance, 18)).toFixed(4);
-                    
-                    const YRSBalance = await retryableCall(() => YRSToken.balanceOf(userAddress));
-                    document.getElementById('YRSBalance').textContent = parseFloat(ethers.utils.formatUnits(YRSBalance, 18)).toFixed(4);
-                    
-                    const contractBalance = await retryableCall(() => YRSToken.balanceOf(contractAddress));
-                    document.getElementById('contractYRSBalance').textContent = parseFloat(ethers.utils.formatUnits(contractBalance, 18)).toFixed(4);
-                }
+                const wZYSBalance = await retryableCall(() => wZYSToken.balanceOf(userAddress));
+                document.getElementById('wZYSBalance').textContent = parseFloat(ethers.utils.formatUnits(wZYSBalance, 18)).toFixed(4);
+                
+                const YRSBalance = await retryableCall(() => YRSToken.balanceOf(userAddress));
+                document.getElementById('YRSBalance').textContent = parseFloat(ethers.utils.formatUnits(YRSBalance, 18)).toFixed(4);
+                
+                const contractBalance = await retryableCall(() => YRSToken.balanceOf(contractAddress));
+                document.getElementById('contractYRSBalance').textContent = parseFloat(ethers.utils.formatUnits(contractBalance, 18)).toFixed(4);
                 
                 document.getElementById('balanceError').style.display = 'none';
             } catch (error) {
@@ -852,7 +888,7 @@
         
         async function buyYRS() {
             if (!userAddress || !signer || initFailed) {
-                alert('Please connect your wallet with write access and resolve any RPC issues!');
+                alert('Please connect your wallet with write access and resolve any issues!');
                 return;
             }
             
@@ -909,13 +945,9 @@
             }
         }
 
-        // Note: sellYRS, burnYRS, and recoverTokens functions would follow similar patterns
-        // For brevity, I've included the complete buyYRS function as an example
-        // The other functions would need similar error handling enhancements
-
         async function sellYRS() {
             if (!userAddress || !signer || initFailed) {
-                alert('Please connect your wallet with write access and resolve any RPC issues!');
+                alert('Please connect your wallet with write access and resolve any issues!');
                 return;
             }
             
@@ -974,7 +1006,7 @@
 
         async function burnYRS() {
             if (!userAddress || !signer || initFailed) {
-                alert('Please connect your wallet with write access and resolve any RPC issues!');
+                alert('Please connect your wallet with write access and resolve any issues!');
                 return;
             }
             
@@ -1031,7 +1063,7 @@
 
         async function recoverTokens() {
             if (!userAddress || !signer || initFailed) {
-                alert('Please connect your wallet with write access and resolve any RPC issues!');
+                alert('Please connect your wallet with write access and resolve any issues!');
                 return;
             }
             
