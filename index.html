@@ -553,11 +553,11 @@
                         <input type="text" id="contractAddress" class="config-input" placeholder="0x...">
                     </div>
                     <div class="config-group">
-                        <label class="config-label">wZYS Token</label>
+                        <label class="config-label">wZYS Token (12 decimals)</label>
                         <input type="text" id="wZYSAddress" class="config-input" placeholder="0x...">
                     </div>
                     <div class="config-group">
-                        <label class="config-label">YRS Token</label>
+                        <label class="config-label">YRS Token (18 decimals)</label>
                         <input type="text" id="YRSAddress" class="config-input" placeholder="0x...">
                     </div>
                     <button id="saveConfig" class="config-btn">Save</button>
@@ -744,6 +744,8 @@
             let userAddress;
             let isConnected = false;
             let isConfigured = false;
+            let wZYSDecimals = 12; // wZYS uses 12 decimals
+            let YRSDecimals = 18; // YRS uses 18 decimals
             
             // DOM elements
             const connectWalletBtn = document.getElementById('connectWallet');
@@ -814,11 +816,28 @@
             }
             
             // Initialize contract instances
-            function initializeContracts() {
+            async function initializeContracts() {
                 try {
                     contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
                     wZYSContract = new ethers.Contract(WZYS_ADDRESS, ERC20_ABI, signer);
                     YRSContract = new ethers.Contract(YRS_ADDRESS, ERC20_ABI, signer);
+                    
+                    // Get actual decimals from contracts
+                    try {
+                        wZYSDecimals = await wZYSContract.decimals();
+                        console.log(`wZYS decimals: ${wZYSDecimals}`);
+                    } catch (e) {
+                        console.log("Could not fetch wZYS decimals, using default 12");
+                        wZYSDecimals = 12;
+                    }
+                    
+                    try {
+                        YRSDecimals = await YRSContract.decimals();
+                        console.log(`YRS decimals: ${YRSDecimals}`);
+                    } catch (e) {
+                        console.log("Could not fetch YRS decimals, using default 18");
+                        YRSDecimals = 18;
+                    }
                 } catch (error) {
                     console.error('Error initializing contracts:', error);
                     showToast('error', 'Contract Error', 'Failed to initialize contracts');
@@ -844,14 +863,16 @@
                 
                 // Balance click to set max
                 userWZYSBalanceElement.addEventListener('click', () => {
-                    const balance = userWZYSBalanceElement.textContent.split(' ')[0];
+                    const balanceText = userWZYSBalanceElement.textContent.split(' ')[0];
+                    const balance = parseFloat(balanceText.replace(/,/g, ''));
                     buyWZYSAmountInput.value = balance;
                     calculateExpectedYRS();
                     setMinYRSOut();
                 });
                 
                 userYRSBalanceElement.addEventListener('click', () => {
-                    const balance = userYRSBalanceElement.textContent.split(' ')[0];
+                    const balanceText = userYRSBalanceElement.textContent.split(' ')[0];
+                    const balance = parseFloat(balanceText.replace(/,/g, ''));
                     sellYRSAmountInput.value = balance;
                     calculateExpectedWZYS();
                     setMinWZYSOut();
@@ -943,7 +964,7 @@
                     
                     // Initialize contracts if configured
                     if (isConfigured) {
-                        initializeContracts();
+                        await initializeContracts();
                         updateContractData();
                         updateUserBalances();
                         
@@ -986,9 +1007,9 @@
                     const totalWZYS = await contract.totalWZYSDeposited();
                     const totalYRS = await contract.totalYieldReserveShares();
                     
-                    // Format and display
-                    const formattedWZYS = ethers.utils.formatUnits(totalWZYS, 18);
-                    const formattedYRS = ethers.utils.formatUnits(totalYRS, 18);
+                    // Format and display with correct decimals
+                    const formattedWZYS = ethers.utils.formatUnits(totalWZYS, wZYSDecimals);
+                    const formattedYRS = ethers.utils.formatUnits(totalYRS, YRSDecimals);
                     
                     totalWZYSElement.textContent = parseFloat(formattedWZYS).toLocaleString();
                     totalYRSElement.textContent = parseFloat(formattedYRS).toLocaleString();
@@ -1027,9 +1048,9 @@
                         console.log("Could not fetch YRS symbol");
                     }
                     
-                    // Format and display
-                    const formattedWZYS = ethers.utils.formatUnits(wZYSBalance, 18);
-                    const formattedYRS = ethers.utils.formatUnits(YRSBalance, 18);
+                    // Format and display with correct decimals
+                    const formattedWZYS = ethers.utils.formatUnits(wZYSBalance, wZYSDecimals);
+                    const formattedYRS = ethers.utils.formatUnits(YRSBalance, YRSDecimals);
                     
                     userWZYSBalanceElement.textContent = `${parseFloat(formattedWZYS).toLocaleString()} ${wZYSSymbol}`;
                     userYRSBalanceElement.textContent = `${parseFloat(formattedYRS).toLocaleString()} ${YRSSymbol}`;
@@ -1094,9 +1115,9 @@
                     buyBtn.disabled = true;
                     buyBtn.innerHTML = '<span class="spinner"></span> Processing...';
                     
-                    // Convert to wei
-                    const wZYSAmountWei = ethers.utils.parseUnits(wZYSAmount, 18);
-                    const minYRSOutWei = ethers.utils.parseUnits(minYRSOut, 18);
+                    // Convert to wei with correct decimals
+                    const wZYSAmountWei = ethers.utils.parseUnits(wZYSAmount, wZYSDecimals);
+                    const minYRSOutWei = ethers.utils.parseUnits(minYRSOut, YRSDecimals);
                     
                     // Check allowance
                     const allowance = await wZYSContract.allowance(userAddress, CONTRACT_ADDRESS);
@@ -1165,9 +1186,9 @@
                     sellBtn.disabled = true;
                     sellBtn.innerHTML = '<span class="spinner"></span> Processing...';
                     
-                    // Convert to wei
-                    const YRSAmountWei = ethers.utils.parseUnits(YRSAmount, 18);
-                    const minWZYSOutWei = ethers.utils.parseUnits(minWZYSOut, 18);
+                    // Convert to wei with correct decimals
+                    const YRSAmountWei = ethers.utils.parseUnits(YRSAmount, YRSDecimals);
+                    const minWZYSOutWei = ethers.utils.parseUnits(minWZYSOut, wZYSDecimals);
                     
                     // Check allowance
                     const allowance = await YRSContract.allowance(userAddress, CONTRACT_ADDRESS);
