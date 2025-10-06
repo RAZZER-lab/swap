@@ -14,6 +14,7 @@
         .status-disconnected { color: #dc3545; font-weight: bold; }
         .function-section { border-left: 4px solid #0d6efd; padding-left: 1rem; margin-bottom: 2rem; }
         .wallet-info { background-color: #f8f9fa; padding: 1rem; border-radius: 0.375rem; }
+        .gas-error { color: #dc3545; font-size: 0.9em; }
     </style>
 </head>
 <body>
@@ -29,6 +30,7 @@
                 <div class="row">
                     <div class="col-md-6">
                         <p>Connection Status: <span id="connectionStatus" class="status-disconnected">Not Connected</span></p>
+                        <p id="networkWarning" class="gas-error" style="display: none;">⚠️ Wrong Network! Switch to the correct chain.</p>
                         <button id="connectButton" class="btn btn-primary">Connect MetaMask</button>
                         <button id="disconnectButton" class="btn btn-secondary" style="display: none;">Disconnect</button>
                     </div>
@@ -73,11 +75,11 @@
                 <div class="col-md-8">
                     <div class="mb-3">
                         <label for="buyWZYSAmount" class="form-label">wZYS Amount to Spend</label>
-                        <input type="number" class="form-control" id="buyWZYSAmount" placeholder="Enter wZYS amount">
+                        <input type="number" class="form-control" id="buyWZYSAmount" placeholder="Enter wZYS amount" step="0.000000000000000001">
                     </div>
                     <div class="mb-3">
                         <label for="minYRSOut" class="form-label">Minimum YRS to Receive (Slippage Protection)</label>
-                        <input type="number" class="form-control" id="minYRSOut" placeholder="Enter minimum YRS expected">
+                        <input type="number" class="form-control" id="minYRSOut" placeholder="Enter minimum YRS expected" step="0.000000000000000001">
                     </div>
                     <button id="buyButton" class="btn btn-success">Buy YRS</button>
                     <div id="buyOutput" class="mt-2"></div>
@@ -93,11 +95,11 @@
                 <div class="col-md-8">
                     <div class="mb-3">
                         <label for="sellYRSAmount" class="form-label">YRS Amount to Sell</label>
-                        <input type="number" class="form-control" id="sellYRSAmount" placeholder="Enter YRS amount">
+                        <input type="number" class="form-control" id="sellYRSAmount" placeholder="Enter YRS amount" step="0.000000000000000001">
                     </div>
                     <div class="mb-3">
                         <label for="minWZYSOut" class="form-label">Minimum wZYS to Receive (Slippage Protection)</label>
-                        <input type="number" class="form-control" id="minWZYSOut" placeholder="Enter minimum wZYS expected">
+                        <input type="number" class="form-control" id="minWZYSOut" placeholder="Enter minimum wZYS expected" step="0.000000000000000001">
                     </div>
                     <button id="sellButton" class="btn btn-warning">Sell YRS</button>
                     <div id="sellOutput" class="mt-2"></div>
@@ -113,7 +115,7 @@
                 <div class="col-md-8">
                     <div class="mb-3">
                         <label for="burnAmount" class="form-label">YRS Amount to Burn</label>
-                        <input type="number" class="form-control" id="burnAmount" placeholder="Enter YRS amount to burn">
+                        <input type="number" class="form-control" id="burnAmount" placeholder="Enter YRS amount to burn" step="0.000000000000000001">
                     </div>
                     <button id="burnButton" class="btn btn-danger">Burn YRS</button>
                     <div id="burnOutput" class="mt-2"></div>
@@ -133,7 +135,7 @@
                     </div>
                     <div class="mb-3">
                         <label for="recoverAmount" class="form-label">Amount to Recover</label>
-                        <input type="number" class="form-control" id="recoverAmount" placeholder="Enter amount to recover">
+                        <input type="number" class="form-control" id="recoverAmount" placeholder="Enter amount to recover" step="0.000000000000000001">
                     </div>
                     <button id="recoverButton" class="btn btn-info">Recover ERC20 Tokens</button>
                     <div id="recoverOutput" class="mt-2"></div>
@@ -150,6 +152,7 @@
         
         // Contract address and ABI
         const contractAddress = '0x0eba64eA7d1055Cb87654EC554360741C31650E6';
+        const EXPECTED_CHAIN_ID = 1; // Change this to the correct chain ID for your contract (e.g., 1 for Ethereum Mainnet, 137 for Polygon, etc.)
         
         // Proper ABI for the YRSStaking contract (inferred from function signatures)
         const contractABI = [
@@ -268,6 +271,17 @@
                 "name": "symbol",
                 "outputs": [{"name": "", "type": "string"}],
                 "type": "function"
+            },
+            {
+                "constant": false,
+                "inputs": [
+                    {"name": "_spender", "type": "address"},
+                    {"name": "_subtractor", "type": "uint256"},
+                    {"name": "_addedValue", "type": "uint256"}
+                ],
+                "name": "increaseAllowance",
+                "outputs": [{"name": "", "type": "bool"}],
+                "type": "function"
             }
         ];
 
@@ -331,8 +345,11 @@
             });
 
             // Listen for chain changes
-            window.ethereum.on('chainChanged', function(chainId) {
-                window.location.reload();
+            window.ethereum.on('chainChanged', async function(chainId) {
+                await checkNetwork();
+                if (userAddress) {
+                    await refreshAllBalances();
+                }
             });
         });
 
@@ -363,6 +380,9 @@
                 // Initialize token contracts
                 await initializeTokenContracts();
                 
+                // Check network
+                await checkNetwork();
+                
                 // Update UI
                 updateWalletInfo();
                 await refreshAllBalances();
@@ -380,6 +400,23 @@
             }
         }
 
+        async function checkNetwork() {
+            try {
+                const network = await provider.getNetwork();
+                if (network.chainId !== EXPECTED_CHAIN_ID) {
+                    document.getElementById('networkWarning').style.display = 'block';
+                    document.getElementById('networkWarning').textContent = `⚠️ Wrong Network! Expected Chain ID ${EXPECTED_CHAIN_ID}, but connected to ${network.chainId}. Switch to the correct network.`;
+                    return false;
+                } else {
+                    document.getElementById('networkWarning').style.display = 'none';
+                    return true;
+                }
+            } catch (error) {
+                console.error('Error checking network:', error);
+                return false;
+            }
+        }
+
         function disconnectWallet() {
             userAddress = null;
             signer = null;
@@ -394,6 +431,7 @@
             document.getElementById('networkInfo').textContent = '';
             document.getElementById('connectButton').style.display = 'inline-block';
             document.getElementById('disconnectButton').style.display = 'none';
+            document.getElementById('networkWarning').style.display = 'none';
             
             // Reset balances
             document.getElementById('wZYSBalance').textContent = '0';
@@ -408,7 +446,7 @@
             if (userAddress) {
                 try {
                     const network = await provider.getNetwork();
-                    document.getElementById('connectedAddress').textContent = userAddress;
+                    document.getElementById('connectedAddress').textContent = `${userAddress.substring(0, 6)}...${userAddress.substring(38)}`;
                     document.getElementById('networkInfo').textContent = `${network.name} (Chain ID: ${network.chainId})`;
                     document.getElementById('walletInfo').style.display = 'block';
                 } catch (error) {
@@ -437,21 +475,60 @@
             }
         }
 
+        async function getTokenAllowance(tokenContract, spender) {
+            try {
+                // Use allowance function if available, otherwise assume 0
+                const allowance = await tokenContract.allowance(userAddress, spender);
+                return allowance;
+            } catch (error) {
+                console.error('Error getting allowance:', error);
+                return 0;
+            }
+        }
+
+        async function ensureApproval(tokenContract, spender, amount, outputId) {
+            const allowance = await getTokenAllowance(tokenContract, spender);
+            const amountWei = ethers.utils.parseUnits(amount.toString(), 18);
+            
+            if (allowance.lt(amountWei)) {
+                try {
+                    document.getElementById(outputId).innerHTML = '<div class="alert alert-info">Approving tokens... Waiting for confirmation.</div>';
+                    
+                    // Use increaseAllowance if available, else approve
+                    let approveTx;
+                    try {
+                        approveTx = await tokenContract.increaseAllowance(spender, amountWei, { gasLimit: 100000 });
+                    } catch {
+                        approveTx = await tokenContract.approve(spender, amountWei, { gasLimit: 100000 });
+                    }
+                    
+                    await approveTx.wait();
+                    document.getElementById(outputId).innerHTML += '<div class="alert alert-success mt-2">Approval successful!</div>';
+                } catch (error) {
+                    console.error('Approval failed:', error);
+                    document.getElementById(outputId).innerHTML = `<div class="alert alert-danger">Approval failed: ${error.message}</div>`;
+                    throw error;
+                }
+            } else {
+                document.getElementById(outputId).innerHTML = '<div class="alert alert-info">Sufficient allowance found. Skipping approval.</div>';
+            }
+        }
+
         async function refreshAllBalances() {
             if (!userAddress || !wZYSToken || !YRSToken) return;
             
             try {
                 // Get user's wZYS balance
                 const wZYSBalance = await wZYSToken.balanceOf(userAddress);
-                document.getElementById('wZYSBalance').textContent = ethers.utils.formatUnits(wZYSBalance, 18);
+                document.getElementById('wZYSBalance').textContent = parseFloat(ethers.utils.formatUnits(wZYSBalance, 18)).toFixed(4);
                 
                 // Get user's YRS balance
                 const YRSBalance = await YRSToken.balanceOf(userAddress);
-                document.getElementById('YRSBalance').textContent = ethers.utils.formatUnits(YRSBalance, 18);
+                document.getElementById('YRSBalance').textContent = parseFloat(ethers.utils.formatUnits(YRSBalance, 18)).toFixed(4);
                 
                 // Get contract's YRS balance
                 const contractBalance = await YRSToken.balanceOf(contractAddress);
-                document.getElementById('contractYRSBalance').textContent = ethers.utils.formatUnits(contractBalance, 18);
+                document.getElementById('contractYRSBalance').textContent = parseFloat(ethers.utils.formatUnits(contractBalance, 18)).toFixed(4);
                 
             } catch (error) {
                 console.error('Error refreshing balances:', error);
@@ -463,153 +540,170 @@
         // =============================================
         
         async function buyYRS() {
-            if (!userAddress) {
-                alert('Please connect your wallet first!');
+            if (!userAddress || !await checkNetwork()) {
+                alert('Please connect your wallet and switch to the correct network!');
                 return;
             }
             
-            const wZYSAmount = document.getElementById('buyWZYSAmount').value;
-            const minYRSOut = document.getElementById('minYRSOut').value;
+            const wZYSAmount = parseFloat(document.getElementById('buyWZYSAmount').value);
+            const minYRSOut = parseFloat(document.getElementById('minYRSOut').value);
             
-            if (!wZYSAmount || !minYRSOut) {
-                alert('Please fill in all fields!');
+            if (!wZYSAmount || !minYRSOut || wZYSAmount <= 0 || minYRSOut <= 0) {
+                alert('Please enter valid positive amounts!');
                 return;
             }
             
+            const outputId = 'buyOutput';
             try {
-                // First, approve the contract to spend wZYS tokens
+                // Ensure approval
                 const wZYSAddress = await contract.wZYS();
                 const wZYSTokenWithSigner = new ethers.Contract(wZYSAddress, erc20ABI, signer);
+                await ensureApproval(wZYSTokenWithSigner, contractAddress, wZYSAmount, outputId);
                 
-                const approveTx = await wZYSTokenWithSigner.approve(
-                    contractAddress, 
-                    ethers.utils.parseUnits(wZYSAmount, 18)
-                );
-                
-                document.getElementById('buyOutput').innerHTML = '<div class="alert alert-info">Approving wZYS tokens... Waiting for transaction confirmation.</div>';
-                await approveTx.wait();
-                
-                // Now execute the buy transaction
+                // Now execute the buy transaction with manual gas limit
                 const buyTx = await contract.buy1(
-                    ethers.utils.parseUnits(wZYSAmount, 18),
-                    ethers.utils.parseUnits(minYRSOut, 18)
+                    ethers.utils.parseUnits(wZYSAmount.toString(), 18),
+                    ethers.utils.parseUnits(minYRSOut.toString(), 18),
+                    { gasLimit: 500000 } // Manual gas limit to avoid estimation issues
                 );
                 
-                document.getElementById('buyOutput').innerHTML = '<div class="alert alert-info">Buy transaction submitted! Waiting for confirmation...</div>';
-                await buyTx.wait();
+                document.getElementById(outputId).innerHTML += '<div class="alert alert-info">Buy transaction submitted! Waiting for confirmation...</div>';
+                const receipt = await buyTx.wait();
                 
-                document.getElementById('buyOutput').innerHTML = '<div class="alert alert-success">Successfully bought YRS tokens!</div>';
+                if (receipt.status === 1) {
+                    document.getElementById(outputId).innerHTML += '<div class="alert alert-success">Successfully bought YRS tokens! Tx: ' + receipt.transactionHash + '</div>';
+                } else {
+                    document.getElementById(outputId).innerHTML += '<div class="alert alert-danger">Transaction failed! Check details.</div>';
+                }
                 
                 // Refresh balances
-                refreshAllBalances();
+                await refreshAllBalances();
                 
             } catch (error) {
                 console.error('Error buying YRS:', error);
-                document.getElementById('buyOutput').innerHTML = `<div class="alert alert-danger">Error: ${error.message}</div>`;
+                let errorMsg = error.message;
+                if (error.code === 'UNPREDICTABLE_GAS_LIMIT') {
+                    errorMsg = 'Gas estimation failed. This may be due to insufficient funds, wrong parameters, or contract revert. Try adjusting slippage or amounts.';
+                } else if (error.data && error.data.includes('execution reverted')) {
+                    errorMsg = 'Transaction would revert. Check balances, allowances, or slippage protection.';
+                }
+                document.getElementById(outputId).innerHTML = `<div class="alert alert-danger">Error: ${errorMsg}</div>`;
             }
         }
 
         async function sellYRS() {
-            if (!userAddress) {
-                alert('Please connect your wallet first!');
+            if (!userAddress || !await checkNetwork()) {
+                alert('Please connect your wallet and switch to the correct network!');
                 return;
             }
             
-            const YRSAmount = document.getElementById('sellYRSAmount').value;
-            const minWZYSOut = document.getElementById('minWZYSOut').value;
+            const YRSAmount = parseFloat(document.getElementById('sellYRSAmount').value);
+            const minWZYSOut = parseFloat(document.getElementById('minWZYSOut').value);
             
-            if (!YRSAmount || !minWZYSOut) {
-                alert('Please fill in all fields!');
+            if (!YRSAmount || !minWZYSOut || YRSAmount <= 0 || minWZYSOut <= 0) {
+                alert('Please enter valid positive amounts!');
                 return;
             }
             
+            const outputId = 'sellOutput';
             try {
-                // First, approve the contract to spend YRS tokens
+                // Ensure approval
                 const YRSAddress = await contract.YRS();
                 const YRSTokenWithSigner = new ethers.Contract(YRSAddress, erc20ABI, signer);
+                await ensureApproval(YRSTokenWithSigner, contractAddress, YRSAmount, outputId);
                 
-                const approveTx = await YRSTokenWithSigner.approve(
-                    contractAddress, 
-                    ethers.utils.parseUnits(YRSAmount, 18)
-                );
-                
-                document.getElementById('sellOutput').innerHTML = '<div class="alert alert-info">Approving YRS tokens... Waiting for transaction confirmation.</div>';
-                await approveTx.wait();
-                
-                // Now execute the sell transaction
+                // Now execute the sell transaction with manual gas limit
                 const sellTx = await contract.sell1(
-                    ethers.utils.parseUnits(YRSAmount, 18),
-                    ethers.utils.parseUnits(minWZYSOut, 18)
+                    ethers.utils.parseUnits(YRSAmount.toString(), 18),
+                    ethers.utils.parseUnits(minWZYSOut.toString(), 18),
+                    { gasLimit: 500000 } // Manual gas limit to avoid estimation issues
                 );
                 
-                document.getElementById('sellOutput').innerHTML = '<div class="alert alert-info">Sell transaction submitted! Waiting for confirmation...</div>';
-                await sellTx.wait();
+                document.getElementById(outputId).innerHTML += '<div class="alert alert-info">Sell transaction submitted! Waiting for confirmation...</div>';
+                const receipt = await sellTx.wait();
                 
-                document.getElementById('sellOutput').innerHTML = '<div class="alert alert-success">Successfully sold YRS tokens!</div>';
+                if (receipt.status === 1) {
+                    document.getElementById(outputId).innerHTML += '<div class="alert alert-success">Successfully sold YRS tokens! Tx: ' + receipt.transactionHash + '</div>';
+                } else {
+                    document.getElementById(outputId).innerHTML += '<div class="alert alert-danger">Transaction failed! Check details.</div>';
+                }
                 
                 // Refresh balances
-                refreshAllBalances();
+                await refreshAllBalances();
                 
             } catch (error) {
                 console.error('Error selling YRS:', error);
-                document.getElementById('sellOutput').innerHTML = `<div class="alert alert-danger">Error: ${error.message}</div>`;
+                let errorMsg = error.message;
+                if (error.code === 'UNPREDICTABLE_GAS_LIMIT') {
+                    errorMsg = 'Gas estimation failed. This may be due to insufficient funds, wrong parameters, or contract revert. Try adjusting slippage or amounts.';
+                } else if (error.data && error.data.includes('execution reverted')) {
+                    errorMsg = 'Transaction would revert. Check balances, allowances, or slippage protection.';
+                }
+                document.getElementById(outputId).innerHTML = `<div class="alert alert-danger">Error: ${errorMsg}</div>`;
             }
         }
 
         async function burnYRS() {
-            if (!userAddress) {
-                alert('Please connect your wallet first!');
+            if (!userAddress || !await checkNetwork()) {
+                alert('Please connect your wallet and switch to the correct network!');
                 return;
             }
             
-            const burnAmount = document.getElementById('burnAmount').value;
+            const burnAmount = parseFloat(document.getElementById('burnAmount').value);
             
-            if (!burnAmount) {
-                alert('Please enter an amount to burn!');
+            if (!burnAmount || burnAmount <= 0) {
+                alert('Please enter a valid positive amount to burn!');
                 return;
             }
             
+            const outputId = 'burnOutput';
             try {
-                // First, approve the contract to spend YRS tokens
+                // Ensure approval
                 const YRSAddress = await contract.YRS();
                 const YRSTokenWithSigner = new ethers.Contract(YRSAddress, erc20ABI, signer);
+                await ensureApproval(YRSTokenWithSigner, contractAddress, burnAmount, outputId);
                 
-                const approveTx = await YRSTokenWithSigner.approve(
-                    contractAddress, 
-                    ethers.utils.parseUnits(burnAmount, 18)
+                // Now execute the burn transaction with manual gas limit
+                const burnTx = await contract.burn(
+                    ethers.utils.parseUnits(burnAmount.toString(), 18),
+                    { gasLimit: 300000 } // Manual gas limit
                 );
                 
-                document.getElementById('burnOutput').innerHTML = '<div class="alert alert-info">Approving YRS tokens for burning... Waiting for transaction confirmation.</div>';
-                await approveTx.wait();
+                document.getElementById(outputId).innerHTML += '<div class="alert alert-info">Burn transaction submitted! Waiting for confirmation...</div>';
+                const receipt = await burnTx.wait();
                 
-                // Now execute the burn transaction
-                const burnTx = await contract.burn(ethers.utils.parseUnits(burnAmount, 18));
-                
-                document.getElementById('burnOutput').innerHTML = '<div class="alert alert-info">Burn transaction submitted! Waiting for confirmation...</div>';
-                await burnTx.wait();
-                
-                document.getElementById('burnOutput').innerHTML = '<div class="alert alert-success">Successfully burned YRS tokens!</div>';
+                if (receipt.status === 1) {
+                    document.getElementById(outputId).innerHTML += '<div class="alert alert-success">Successfully burned YRS tokens! Tx: ' + receipt.transactionHash + '</div>';
+                } else {
+                    document.getElementById(outputId).innerHTML += '<div class="alert alert-danger">Transaction failed! Check details.</div>';
+                }
                 
                 // Refresh balances
-                refreshAllBalances();
+                await refreshAllBalances();
                 
             } catch (error) {
                 console.error('Error burning YRS:', error);
-                document.getElementById('burnOutput').innerHTML = `<div class="alert alert-danger">Error: ${error.message}</div>`;
+                let errorMsg = error.message;
+                if (error.code === 'UNPREDICTABLE_GAS_LIMIT') {
+                    errorMsg = 'Gas estimation failed. Try a smaller amount.';
+                } else if (error.data && error.data.includes('execution reverted')) {
+                    errorMsg = 'Transaction would revert. Check balance or allowance.';
+                }
+                document.getElementById(outputId).innerHTML = `<div class="alert alert-danger">Error: ${errorMsg}</div>`;
             }
         }
 
         async function recoverTokens() {
-            if (!userAddress) {
-                alert('Please connect your wallet first!');
+            if (!userAddress || !await checkNetwork()) {
+                alert('Please connect your wallet and switch to the correct network!');
                 return;
             }
             
             const tokenAddress = document.getElementById('recoverTokenAddress').value;
-            const amount = document.getElementById('recoverAmount').value;
+            const amount = parseFloat(document.getElementById('recoverAmount').value);
             
-            if (!tokenAddress || !amount) {
-                alert('Please fill in all fields!');
+            if (!tokenAddress || !amount || amount <= 0) {
+                alert('Please fill in all fields with valid positive amounts!');
                 return;
             }
             
@@ -619,20 +713,33 @@
                 return;
             }
             
+            const outputId = 'recoverOutput';
             try {
+                // Execute the recover transaction with manual gas limit
                 const recoverTx = await contract.recoverERC20(
                     tokenAddress,
-                    ethers.utils.parseUnits(amount, 18)
+                    ethers.utils.parseUnits(amount.toString(), 18),
+                    { gasLimit: 200000 } // Manual gas limit
                 );
                 
-                document.getElementById('recoverOutput').innerHTML = '<div class="alert alert-info">Recovery transaction submitted! Waiting for confirmation...</div>';
-                await recoverTx.wait();
+                document.getElementById(outputId).innerHTML = '<div class="alert alert-info">Recovery transaction submitted! Waiting for confirmation...</div>';
+                const receipt = await recoverTx.wait();
                 
-                document.getElementById('recoverOutput').innerHTML = '<div class="alert alert-success">Successfully recovered tokens!</div>';
+                if (receipt.status === 1) {
+                    document.getElementById(outputId).innerHTML += '<div class="alert alert-success">Successfully recovered tokens! Tx: ' + receipt.transactionHash + '</div>';
+                } else {
+                    document.getElementById(outputId).innerHTML += '<div class="alert alert-danger">Transaction failed! Check details.</div>';
+                }
                 
             } catch (error) {
                 console.error('Error recovering tokens:', error);
-                document.getElementById('recoverOutput').innerHTML = `<div class="alert alert-danger">Error: ${error.message}</div>`;
+                let errorMsg = error.message;
+                if (error.code === 'UNPREDICTABLE_GAS_LIMIT') {
+                    errorMsg = 'Gas estimation failed. Ensure you are the contract owner.';
+                } else if (error.data && error.data.includes('execution reverted')) {
+                    errorMsg = 'Transaction would revert. Only contract owner can recover tokens.';
+                }
+                document.getElementById(outputId).innerHTML = `<div class="alert alert-danger">Error: ${errorMsg}</div>`;
             }
         }
     </script>
