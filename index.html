@@ -16,6 +16,7 @@
         .wallet-info { background-color: #f8f9fa; padding: 1rem; border-radius: 0.375rem; }
         .gas-error, .rpc-error { color: #dc3545; font-size: 0.9em; }
         .retry-btn { margin-top: 0.5rem; }
+        .network-alert { background-color: #fff3cd; border-left: 4px solid #ffc107; }
     </style>
 </head>
 <body>
@@ -31,7 +32,22 @@
                 <div class="row">
                     <div class="col-md-6">
                         <p>Connection Status: <span id="connectionStatus" class="status-disconnected">Not Connected</span></p>
-                        <p id="rpcWarning" class="rpc-error" style="display: none;">⚠️ RPC Error (Circuit Breaker Open). Try refreshing the page, resetting MetaMask account, or switching networks. <button id="retryInitBtn" class="btn btn-sm btn-outline-primary retry-btn">Retry Init</button></p>
+                        <div id="rpcWarning" class="alert alert-warning" style="display: none;">
+                            <strong>⚠️ RPC Circuit Breaker Open</strong>
+                            <p class="mb-1">The RPC endpoint is temporarily limiting requests. This is usually temporary and can be resolved by:</p>
+                            <ul class="small mb-2">
+                                <li>Waiting a few moments and retrying</li>
+                                <li>Refreshing the page</li>
+                                <li>Switching to a different RPC endpoint in MetaMask</li>
+                                <li>Resetting your MetaMask account (Settings → Advanced → Reset Account)</li>
+                            </ul>
+                            <button id="retryInitBtn" class="btn btn-sm btn-outline-primary retry-btn">Retry Connection</button>
+                        </div>
+                        <div id="networkAlert" class="alert network-alert" style="display: none;">
+                            <strong>🌐 Network Change Required</strong>
+                            <p class="mb-1">You need to switch to the Sepolia testnet to use this DApp.</p>
+                            <button id="switchNetworkBtn" class="btn btn-sm btn-warning mt-1">Switch to Sepolia</button>
+                        </div>
                         <button id="connectButton" class="btn btn-primary">Connect MetaMask</button>
                         <button id="disconnectButton" class="btn btn-secondary" style="display: none;">Disconnect</button>
                     </div>
@@ -154,7 +170,8 @@
         
         // Contract address and ABI
         const contractAddress = '0x0eba64eA7d1055Cb87654EC554360741C31650E6';
-        const EXPECTED_CHAIN_ID = 11155111; // Sepolia testnet
+        const EXPECTED_CHAIN_ID = 11155111; // Sepolia testnet - CHANGED FROM 1 to 11155111
+        const SEPOLIA_HEX_CHAIN_ID = '0xaa36a7'; // Sepolia chain ID in hexadecimal:cite[5]
         
         // Proper ABI for the YRSStaking contract (inferred from function signatures)
         const contractABI = [
@@ -305,16 +322,34 @@
         let wZYSToken;
         let YRSToken;
         let initFailed = false;
+        let circuitBreakerRetryCount = 0;
+        const MAX_CIRCUIT_BREAKER_RETRIES = 3;
 
         // =============================================
         // Utility Functions for RPC Error Handling
         // =============================================
         
         function handleRPCCircuitBreaker(error, context = '') {
-            if (error.code === -32603 && error.message.includes('circuit breaker')) {
+            // Check for circuit breaker patterns in error messages:cite[1]
+            const circuitBreakerIndicators = [
+                'circuit breaker',
+                'execution prevented',
+                'rpc error',
+                'transport is closing',
+                'unavailable'
+            ];
+            
+            const isCircuitBreakerError = circuitBreakerIndicators.some(indicator => 
+                error.message?.toLowerCase().includes(indicator) || 
+                error.toString().toLowerCase().includes(indicator)
+            );
+            
+            if (isCircuitBreakerError || error.code === -32603 || error.code === 'SERVER_ERROR') {
                 console.error(`RPC Circuit Breaker Error in ${context}:`, error);
                 document.getElementById('rpcWarning').style.display = 'block';
                 initFailed = true;
+                circuitBreakerRetryCount++;
+                
                 // Disable buttons if init failed
                 toggleInteractionButtons(false);
                 return true;
@@ -322,21 +357,35 @@
             return false;
         }
 
-        async function retryableCall(callFn, maxRetries = 2, delay = 1000) {
+        async function retryableCall(callFn, maxRetries = 3, delay = 1000) {
             for (let i = 0; i < maxRetries; i++) {
                 try {
-                    return await callFn();
+                    const result = await callFn();
+                    // Reset circuit breaker retry count on successful call
+                    if (i > 0) {
+                        circuitBreakerRetryCount = 0;
+                        initFailed = false;
+                        document.getElementById('rpcWarning').style.display = 'none';
+                    }
+                    return result;
                 } catch (error) {
                     if (handleRPCCircuitBreaker(error, `Retry ${i + 1} for call`)) {
-                        break;
+                        // If we've hit max circuit breaker retries, stop trying
+                        if (circuitBreakerRetryCount >= MAX_CIRCUIT_BREAKER_RETRIES) {
+                            console.warn('Max circuit breaker retries reached, giving up');
+                            break;
+                        }
                     }
-                    if (i < maxRetries - 1) {
+                    // If it's not a circuit breaker error or we haven't reached max retries, continue
+                    if (i < maxRetries - 1 && !initFailed) {
+                        console.log(`Retry ${i + 1} failed, waiting ${delay * (i + 1)}ms before retry`);
                         await new Promise(resolve => setTimeout(resolve, delay * (i + 1)));
                     } else {
                         throw error;
                     }
                 }
             }
+            throw new Error('All retry attempts failed');
         }
 
         function toggleInteractionButtons(enabled) {
@@ -344,6 +393,55 @@
             buttons.forEach(id => {
                 document.getElementById(id).disabled = !enabled;
             });
+        }
+
+        // =============================================
+        // Network Switching Functions
+        // =============================================
+        
+        async function switchToSepoliaNetwork() {
+            try {
+                // Try to switch to Sepolia network
+                await window.ethereum.request({
+                    method: 'wallet_switchEthereumChain',
+                    params: [{ chainId: SEPOLIA_HEX_CHAIN_ID }],
+                });
+                return true;
+            } catch (switchError) {
+                // This error code indicates that the chain has not been added to MetaMask
+                if (switchError.code === 4902) {
+                    try {
+                        await window.ethereum.request({
+                            method: 'wallet_addEthereumChain',
+                            params: [
+                                {
+                                    chainId: SEPOLIA_HEX_CHAIN_ID,
+                                    chainName: 'Sepolia Test Network',
+                                    rpcUrls: ['https://rpc.sepolia.org/', 'https://sepolia.infura.io/v3/'],
+                                    blockExplorerUrls: ['https://sepolia.etherscan.io/'],
+                                    nativeCurrency: {
+                                        name: 'Sepolia Ether',
+                                        symbol: 'ETH',
+                                        decimals: 18
+                                    },
+                                },
+                            ],
+                        });
+                        return true;
+                    } catch (addError) {
+                        console.error('Error adding Sepolia network:', addError);
+                        alert('Failed to add Sepolia network to MetaMask. Please add it manually.');
+                        return false;
+                    }
+                } else if (switchError.code === 4001) {
+                    // User rejected the request
+                    console.log('User rejected network switch');
+                    return false;
+                } else {
+                    console.error('Error switching to Sepolia:', switchError);
+                    return false;
+                }
+            }
         }
 
         // =============================================
@@ -378,6 +476,7 @@
             document.getElementById('recoverButton').addEventListener('click', recoverTokens);
             document.getElementById('refreshBalances').addEventListener('click', refreshAllBalances);
             document.getElementById('retryInitBtn').addEventListener('click', retryInitialization);
+            document.getElementById('switchNetworkBtn').addEventListener('click', switchToSepoliaNetwork);
 
             // Listen for account changes
             window.ethereum.on('accountsChanged', async function(accounts) {
@@ -390,6 +489,11 @@
 
             // Listen for chain changes
             window.ethereum.on('chainChanged', async function(chainId) {
+                // Reset circuit breaker state on chain change
+                circuitBreakerRetryCount = 0;
+                initFailed = false;
+                document.getElementById('rpcWarning').style.display = 'none';
+                
                 await checkNetwork();
                 if (userAddress) {
                     await refreshAllBalances();
@@ -432,7 +536,13 @@
                 contract = contract.connect(signer);
                 
                 // Check network first
-                await checkNetwork();
+                const isCorrectNetwork = await checkNetwork();
+                if (!isCorrectNetwork) {
+                    // Show network alert but continue with connection
+                    document.getElementById('networkAlert').style.display = 'block';
+                } else {
+                    document.getElementById('networkAlert').style.display = 'none';
+                }
                 
                 // Update UI
                 updateWalletInfo();
@@ -460,7 +570,8 @@
                 document.getElementById('connectButton').style.display = 'none';
                 document.getElementById('disconnectButton').style.display = 'inline-block';
                 
-                toggleInteractionButtons(!initFailed);
+                // Only enable interactions if we're on the correct network and no circuit breaker issues
+                toggleInteractionButtons(!initFailed && isCorrectNetwork);
                 
             } catch (error) {
                 console.error('Error connecting to wallet:', error);
@@ -474,11 +585,14 @@
             if (!userAddress) return;
             try {
                 document.getElementById('rpcWarning').style.display = 'none';
-                await retryableCall(initializeTokenContracts);
+                await retryableCall(initializeTokenContracts, 2, 2000); // More aggressive retry for manual retry
                 initFailed = false;
                 await refreshAllBalances();
                 document.getElementById('balanceError').style.display = 'none';
-                toggleInteractionButtons(true);
+                
+                // Re-check network state before enabling buttons
+                const isCorrectNetwork = await checkNetwork();
+                toggleInteractionButtons(isCorrectNetwork);
             } catch (error) {
                 console.error('Retry failed:', error);
                 handleRPCCircuitBreaker(error, 'retryInitialization');
@@ -488,11 +602,15 @@
         async function checkNetwork() {
             try {
                 const network = await provider.getNetwork();
-                if (network.chainId !== EXPECTED_CHAIN_ID) {
-                    console.warn(`Wrong Network! Expected Chain ID ${EXPECTED_CHAIN_ID}, but connected to ${network.chainId}.`);
+                const isCorrectNetwork = network.chainId === EXPECTED_CHAIN_ID;
+                
+                if (!isCorrectNetwork) {
+                    console.log(`Expected Chain ID ${EXPECTED_CHAIN_ID}, but connected to ${network.chainId}. Showing network switch prompt.`);
+                    document.getElementById('networkAlert').style.display = 'block';
                     toggleInteractionButtons(false);
                     return false;
                 } else {
+                    document.getElementById('networkAlert').style.display = 'none';
                     if (!initFailed) {
                         toggleInteractionButtons(true);
                     }
@@ -503,6 +621,8 @@
                 if (handleRPCCircuitBreaker(error, 'checkNetwork')) {
                     return false;
                 }
+                // If network check fails but we have a user address, assume wrong network
+                document.getElementById('networkAlert').style.display = 'block';
                 return false;
             }
         }
@@ -514,6 +634,7 @@
             wZYSToken = null;
             YRSToken = null;
             initFailed = false;
+            circuitBreakerRetryCount = 0;
             
             document.getElementById('connectionStatus').textContent = 'Not Connected';
             document.getElementById('connectionStatus').className = 'status-disconnected';
@@ -523,6 +644,7 @@
             document.getElementById('connectButton').style.display = 'inline-block';
             document.getElementById('disconnectButton').style.display = 'none';
             document.getElementById('rpcWarning').style.display = 'none';
+            document.getElementById('networkAlert').style.display = 'none';
             document.getElementById('balanceError').style.display = 'none';
             
             // Reset balances
@@ -647,8 +769,15 @@
         // =============================================
         
         async function buyYRS() {
-            if (!userAddress || !await checkNetwork() || initFailed) {
-                alert('Please connect your wallet, switch to the correct network, and resolve any RPC issues!');
+            if (!userAddress || initFailed) {
+                alert('Please connect your wallet and resolve any RPC issues!');
+                return;
+            }
+            
+            // Check network right before transaction
+            const isCorrectNetwork = await checkNetwork();
+            if (!isCorrectNetwork) {
+                alert('Please switch to Sepolia testnet to proceed with this transaction!');
                 return;
             }
             
@@ -701,8 +830,15 @@
         }
 
         async function sellYRS() {
-            if (!userAddress || !await checkNetwork() || initFailed) {
-                alert('Please connect your wallet, switch to the correct network, and resolve any RPC issues!');
+            if (!userAddress || initFailed) {
+                alert('Please connect your wallet and resolve any RPC issues!');
+                return;
+            }
+            
+            // Check network right before transaction
+            const isCorrectNetwork = await checkNetwork();
+            if (!isCorrectNetwork) {
+                alert('Please switch to Sepolia testnet to proceed with this transaction!');
                 return;
             }
             
@@ -755,8 +891,15 @@
         }
 
         async function burnYRS() {
-            if (!userAddress || !await checkNetwork() || initFailed) {
-                alert('Please connect your wallet, switch to the correct network, and resolve any RPC issues!');
+            if (!userAddress || initFailed) {
+                alert('Please connect your wallet and resolve any RPC issues!');
+                return;
+            }
+            
+            // Check network right before transaction
+            const isCorrectNetwork = await checkNetwork();
+            if (!isCorrectNetwork) {
+                alert('Please switch to Sepolia testnet to proceed with this transaction!');
                 return;
             }
             
@@ -807,8 +950,15 @@
         }
 
         async function recoverTokens() {
-            if (!userAddress || !await checkNetwork() || initFailed) {
-                alert('Please connect your wallet, switch to the correct network, and resolve any RPC issues!');
+            if (!userAddress || initFailed) {
+                alert('Please connect your wallet and resolve any RPC issues!');
+                return;
+            }
+            
+            // Check network right before transaction
+            const isCorrectNetwork = await checkNetwork();
+            if (!isCorrectNetwork) {
+                alert('Please switch to Sepolia testnet to proceed with this transaction!');
                 return;
             }
             
