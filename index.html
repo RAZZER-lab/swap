@@ -3,1471 +3,495 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>YRS Staking Platform</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <title>Ethereum Wallet Generator</title>
+    <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
     <style>
         :root {
-            --primary-color: #4f46e5;
-            --secondary-color: #6366f1;
-            --accent-color: #f59e0b;
-            --background: #0f0f23;
-            --surface: #1a1b3a;
-            --surface-light: #262847;
-            --text-primary: #ffffff;
-            --text-secondary: #a0a9c9;
-            --success: #10b981;
-            --danger: #ef4444;
-            --warning: #f59e0b;
-            --border-radius: 12px;
+            --primary: #627eea;
+            --primary-dark: #4c63d2;
+            --secondary: #f5f7fa;
+            --text: #2c3e50;
+            --success: #2ecc71;
+            --danger: #e74c3c;
+            --warning: #f39c12;
+            --border: #e1e8ed;
         }
-
+        
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
-
+        
         body {
-            font-family: 'Inter', sans-serif;
-            background: var(--background);
-            color: var(--text-primary);
-            min-height: 100vh;
-            overflow-x: hidden;
-            position: relative;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f9fafb;
+            color: var(--text);
+            line-height: 1.6;
         }
-
-        /* Background effects */
-        body::before {
-            content: '';
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: 
-                radial-gradient(circle at 20% 30%, rgba(79, 70, 229, 0.15) 0%, transparent 50%),
-                radial-gradient(circle at 80% 70%, rgba(245, 158, 11, 0.1) 0%, transparent 50%);
-            z-index: -1;
-        }
-
+        
         .container {
-            max-width: 1400px;
+            max-width: 1000px;
             margin: 0 auto;
-            padding: 0 20px;
+            padding: 20px;
         }
-
-        /* Header */
+        
         header {
+            background-color: white;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
             padding: 20px 0;
-            position: relative;
-            z-index: 10;
+            margin-bottom: 30px;
         }
-
+        
         .header-content {
             display: flex;
             justify-content: space-between;
             align-items: center;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 0 20px;
         }
-
-        .logo {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            font-size: 24px;
-            font-weight: 700;
-            color: var(--text-primary);
+        
+        h1 {
+            color: var(--primary);
+            font-size: 1.8rem;
         }
-
-        .logo i {
-            color: var(--accent-color);
-            font-size: 32px;
-        }
-
-        .network-badge {
-            background: rgba(16, 185, 129, 0.1);
-            color: var(--success);
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-size: 14px;
-            font-weight: 500;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .network-badge i {
-            font-size: 10px;
-        }
-
-        .wallet-btn {
-            background: var(--primary-color);
-            color: white;
-            border: none;
-            padding: 12px 24px;
-            border-radius: var(--border-radius);
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .wallet-btn:hover {
-            background: var(--secondary-color);
-            transform: translateY(-2px);
-        }
-
-        .wallet-btn.connected {
-            background: var(--surface-light);
-        }
-
-        /* Main content */
-        main {
-            padding: 40px 0;
-        }
-
-        .dashboard {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 30px;
-            margin-bottom: 40px;
-        }
-
+        
         .card {
-            background: var(--surface);
-            border-radius: var(--border-radius);
-            padding: 30px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            transition: transform 0.3s ease;
-        }
-
-        .card:hover {
-            transform: translateY(-5px);
-        }
-
-        .card-title {
-            font-size: 18px;
-            font-weight: 600;
-            margin-bottom: 20px;
-            color: var(--text-secondary);
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .card-title i {
-            color: var(--accent-color);
-        }
-
-        .stat-value {
-            font-size: 36px;
-            font-weight: 700;
-            margin-bottom: 10px;
-            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        .stat-label {
-            color: var(--text-secondary);
-            font-size: 14px;
-        }
-
-        .ratio-card {
-            grid-column: span 2;
-            background: linear-gradient(135deg, var(--surface), var(--surface-light));
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-        }
-
-        .ratio-value {
-            font-size: 48px;
-            font-weight: 700;
-            margin-bottom: 10px;
-            background: linear-gradient(135deg, var(--accent-color), #f59e0b);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        .ratio-label {
-            color: var(--text-secondary);
-            font-size: 16px;
-        }
-
-        /* Trading section */
-        .trading-section {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 30px;
-        }
-
-        .trade-card {
-            background: var(--surface);
-            border-radius: var(--border-radius);
-            padding: 30px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-        }
-
-        .trade-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            padding: 25px;
             margin-bottom: 25px;
         }
-
-        .trade-title {
-            font-size: 20px;
-            font-weight: 600;
-        }
-
-        .trade-type {
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-size: 14px;
-            font-weight: 500;
-        }
-
-        .buy-type {
-            background: rgba(16, 185, 129, 0.1);
-            color: var(--success);
-        }
-
-        .sell-type {
-            background: rgba(239, 68, 68, 0.1);
-            color: var(--danger);
-        }
-
-        .form-group {
-            margin-bottom: 20px;
-        }
-
-        .form-label {
-            display: block;
-            margin-bottom: 8px;
-            color: var(--text-secondary);
-            font-size: 14px;
-        }
-
-        .input-group {
-            position: relative;
-        }
-
-        .form-input {
-            width: 100%;
-            background: var(--surface-light);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 8px;
-            padding: 14px 16px;
-            color: var(--text-primary);
-            font-size: 16px;
-            transition: all 0.3s ease;
-        }
-
-        .form-input:focus {
-            outline: none;
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
-        }
-
-        .input-suffix {
-            position: absolute;
-            right: 16px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: var(--text-secondary);
-            font-weight: 500;
-        }
-
-        .balance-info {
-            display: flex;
-            justify-content: space-between;
-            margin-top: 8px;
-            font-size: 13px;
-            color: var(--text-secondary);
-        }
-
-        .balance-value {
-            color: var(--accent-color);
-            cursor: pointer;
-        }
-
-        .trade-btn {
-            width: 100%;
-            padding: 14px;
-            border: none;
-            border-radius: 8px;
-            font-weight: 600;
-            font-size: 16px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            margin-top: 10px;
-        }
-
-        .buy-btn {
-            background: var(--success);
-            color: white;
-        }
-
-        .buy-btn:hover:not(:disabled) {
-            background: #059669;
-            transform: translateY(-2px);
-        }
-
-        .sell-btn {
-            background: var(--danger);
-            color: white;
-        }
-
-        .sell-btn:hover:not(:disabled) {
-            background: #dc2626;
-            transform: translateY(-2px);
-        }
-
-        .trade-btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-
-        /* Toast notification */
-        .toast {
-            position: fixed;
-            bottom: 30px;
-            right: 30px;
-            background: var(--surface);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: var(--border-radius);
-            padding: 16px 20px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-            transform: translateX(400px);
-            transition: transform 0.3s ease;
-            z-index: 1000;
-            max-width: 350px;
-        }
-
-        .toast.show {
-            transform: translateX(0);
-        }
-
-        .toast-icon {
-            font-size: 20px;
-        }
-
-        .toast.success .toast-icon {
-            color: var(--success);
-        }
-
-        .toast.error .toast-icon {
-            color: var(--danger);
-        }
-
-        .toast.info .toast-icon {
-            color: var(--primary-color);
-        }
-
-        .toast.warning .toast-icon {
-            color: var(--warning);
-        }
-
-        .toast-message {
-            flex: 1;
-        }
-
-        .toast-title {
-            font-weight: 600;
-            margin-bottom: 4px;
-        }
-
-        .toast-text {
-            font-size: 14px;
-            color: var(--text-secondary);
-        }
-
-        /* Loading spinner */
-        .spinner {
-            display: inline-block;
-            width: 16px;
-            height: 16px;
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            border-radius: 50%;
-            border-top-color: white;
-            animation: spin 0.8s linear infinite;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        /* Loading overlay */
-        .loading-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(15, 15, 35, 0.9);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            z-index: 9999;
-        }
-
-        .loading-spinner {
-            width: 60px;
-            height: 60px;
-            border: 4px solid rgba(255, 255, 255, 0.1);
-            border-radius: 50%;
-            border-top-color: var(--primary-color);
-            animation: spin 1s linear infinite;
-            margin-bottom: 20px;
-        }
-
-        .loading-text {
-            color: var(--text-primary);
-            font-size: 18px;
-            font-weight: 500;
-        }
-
-        /* Contract config section */
-        .config-section {
-            background: var(--surface);
-            border-radius: var(--border-radius);
-            padding: 20px;
-            margin-bottom: 30px;
-            border: 1px solid rgba(255, 255, 255, 0.05);
-        }
-
-        .config-title {
-            font-size: 16px;
-            font-weight: 600;
+        
+        .card-title {
+            font-size: 1.3rem;
             margin-bottom: 15px;
-            color: var(--text-secondary);
+            color: var(--primary);
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 10px;
         }
-
-        .config-form {
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr auto;
-            gap: 15px;
-            align-items: end;
-        }
-
-        .config-group {
-            display: flex;
-            flex-direction: column;
-        }
-
-        .config-label {
-            font-size: 14px;
-            color: var(--text-secondary);
-            margin-bottom: 5px;
-        }
-
-        .config-input {
-            background: var(--surface-light);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 8px;
-            padding: 10px 12px;
-            color: var(--text-primary);
-            font-size: 14px;
-        }
-
-        .config-btn {
-            background: var(--primary-color);
+        
+        .btn {
+            display: inline-block;
+            background-color: var(--primary);
             color: white;
             border: none;
             padding: 10px 20px;
-            border-radius: 8px;
-            font-weight: 600;
+            border-radius: 4px;
             cursor: pointer;
-            transition: all 0.3s ease;
-            height: fit-content;
+            font-size: 1rem;
+            transition: background-color 0.3s;
         }
-
-        .config-btn:hover {
-            background: var(--secondary-color);
+        
+        .btn:hover {
+            background-color: var(--primary-dark);
         }
-
-        /* Transaction details section */
-        .transaction-details {
-            background: var(--surface-light);
-            border-radius: 8px;
-            padding: 15px;
-            margin-top: 15px;
-            font-size: 13px;
-            color: var(--text-secondary);
+        
+        .btn-secondary {
+            background-color: var(--secondary);
+            color: var(--text);
         }
-
-        .detail-row {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 8px;
+        
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
         }
-
-        .detail-label {
-            font-weight: 500;
+        
+        .wallet-display {
+            display: none;
         }
-
-        .detail-value {
-            color: var(--text-primary);
+        
+        .wallet-item {
+            margin-bottom: 20px;
+        }
+        
+        .wallet-label {
+            font-weight: bold;
+            margin-bottom: 5px;
+            display: block;
+        }
+        
+        .wallet-value {
+            background-color: var(--secondary);
+            padding: 10px;
+            border-radius: 4px;
             word-break: break-all;
+            font-family: monospace;
+            position: relative;
         }
-
-        /* Info box */
-        .info-box {
-            background: rgba(79, 70, 229, 0.1);
-            border: 1px solid rgba(79, 70, 229, 0.2);
-            border-radius: 8px;
+        
+        .copy-btn {
+            position: absolute;
+            right: 10px;
+            top: 10px;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8rem;
+        }
+        
+        .warning-box {
+            background-color: #fff9e6;
+            border-left: 4px solid var(--warning);
             padding: 15px;
             margin-bottom: 20px;
-            font-size: 14px;
-            color: var(--text-secondary);
         }
-
-        .info-box-title {
-            font-weight: 600;
-            color: var(--primary-color);
-            margin-bottom: 8px;
+        
+        .success-box {
+            background-color: #e6f9f0;
+            border-left: 4px solid var(--success);
+            padding: 15px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        
+        .error-box {
+            background-color: #ffeaea;
+            border-left: 4px solid var(--danger);
+            padding: 15px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        
+        .input-group {
+            margin-bottom: 15px;
+        }
+        
+        .input-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        
+        .input-group input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+        
+        .paper-wallet {
+            display: none;
+            margin-top: 30px;
+        }
+        
+        .paper-wallet-content {
+            background-color: white;
+            border: 2px dashed var(--border);
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .paper-wallet-header {
+            margin-bottom: 30px;
+        }
+        
+        .paper-wallet-title {
+            font-size: 1.5rem;
+            color: var(--primary);
+            margin-bottom: 10px;
+        }
+        
+        .paper-wallet-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+        
+        .paper-wallet-section {
+            border: 1px solid var(--border);
+            padding: 20px;
+            border-radius: 4px;
+        }
+        
+        .paper-wallet-section-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: var(--primary);
+        }
+        
+        .paper-wallet-value {
+            font-family: monospace;
+            word-break: break-all;
+            margin-bottom: 15px;
+        }
+        
+        .tabs {
             display: flex;
-            align-items: center;
-            gap: 8px;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--border);
         }
-
-        /* Debug info */
-        .debug-info {
-            background: rgba(245, 158, 11, 0.1);
-            border: 1px solid rgba(245, 158, 11, 0.2);
-            border-radius: 8px;
+        
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            margin-right: 10px;
+        }
+        
+        .tab.active {
+            border-bottom: 2px solid var(--primary);
+            color: var(--primary);
+            font-weight: bold;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .library-error {
+            background-color: #ffeaea;
+            border-left: 4px solid var(--danger);
             padding: 15px;
             margin-bottom: 20px;
-            font-size: 12px;
-            color: var(--text-secondary);
+            display: none;
+        }
+        
+        .api-info {
+            background-color: #e6f0ff;
+            border-left: 4px solid var(--primary);
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .api-info code {
+            background-color: var(--secondary);
+            padding: 2px 5px;
+            border-radius: 3px;
             font-family: monospace;
         }
-
-        /* Responsive design */
-        @media (max-width: 768px) {
-            .dashboard, .trading-section {
-                grid-template-columns: 1fr;
+        
+        @media print {
+            body {
+                background-color: white;
             }
             
-            .ratio-card {
-                grid-column: span 1;
+            .no-print {
+                display: none;
             }
             
-            .header-content {
-                flex-direction: column;
-                gap: 20px;
+            .paper-wallet {
+                display: block !important;
             }
             
-            .config-form {
-                grid-template-columns: 1fr;
+            .paper-wallet-content {
+                border: none;
             }
         }
     </style>
 </head>
 <body>
-    <div id="loadingOverlay" class="loading-overlay">
-        <div class="loading-spinner"></div>
-        <div class="loading-text">Loading application...</div>
-    </div>
-
     <header>
-        <div class="container">
-            <div class="header-content">
-                <div class="logo">
-                    <i class="fas fa-coins"></i>
-                    YRS Staking Platform
-                </div>
-                <div class="network-badge">
-                    <i class="fas fa-circle"></i>
-                    Sepolia Testnet
-                </div>
-                <button id="connectWallet" class="wallet-btn">
-                    <i class="fas fa-wallet"></i>
-                    Connect Wallet
-                </button>
-            </div>
+        <div class="header-content">
+            <h1>Ethereum Wallet Generator</h1>
         </div>
     </header>
-
-    <main>
-        <div class="container">
-            <div class="config-section">
-                <div class="config-title">Contract Configuration</div>
-                <div class="config-form">
-                    <div class="config-group">
-                        <label class="config-label">YRSStaking Contract</label>
-                        <input type="text" id="contractAddress" class="config-input" placeholder="0x...">
-                    </div>
-                    <div class="config-group">
-                        <label class="config-label">wZYS Token</label>
-                        <input type="text" id="wZYSAddress" class="config-input" placeholder="0x...">
-                    </div>
-                    <div class="config-group">
-                        <label class="config-label">YRS Token</label>
-                        <input type="text" id="YRSAddress" class="config-input" placeholder="0x...">
-                    </div>
-                    <button id="saveConfig" class="config-btn">Save</button>
-                </div>
-            </div>
-
-            <div class="debug-info" id="debugInfo" style="display: none;">
-                <div>Debug Information:</div>
-                <div id="debugContent"></div>
-            </div>
-
-            <div class="dashboard">
-                <div class="card">
-                    <div class="card-title">
-                        <i class="fas fa-chart-line"></i>
-                        Total wZYS Deposited
-                    </div>
-                    <div class="stat-value" id="totalWZYS">-</div>
-                    <div class="stat-label">wZYS tokens in the contract</div>
-                </div>
-                
-                <div class="card">
-                    <div class="card-title">
-                        <i class="fas fa-piggy-bank"></i>
-                        Total YRS Reserve
-                    </div>
-                    <div class="stat-value" id="totalYRS">-</div>
-                    <div class="stat-label">YRS tokens in reserve</div>
-                </div>
-                
-                <div class="card ratio-card">
-                    <div class="ratio-value" id="ratio">-</div>
-                    <div class="ratio-label">wZYS / YRS Ratio</div>
-                </div>
-            </div>
-
-            <div class="trading-section">
-                <div class="trade-card">
-                    <div class="trade-header">
-                        <div class="trade-title">Buy YRS</div>
-                        <div class="trade-type buy-type">+10% Bonus</div>
-                    </div>
-                    
-                    <div class="info-box">
-                        <div class="info-box-title">
-                            <i class="fas fa-info-circle"></i>
-                            Exchange Rate
-                        </div>
-                        <div>1 wZYS = 1 YRS (contract treats both as same unit)</div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label class="form-label">Amount of wZYS to spend</label>
-                        <div class="input-group">
-                            <input type="number" id="buyWZYSAmount" class="form-input" placeholder="0.0" min="0" step="0.01">
-                            <span class="input-suffix">wZYS</span>
-                        </div>
-                        <div class="balance-info">
-                            <span>Balance:</span>
-                            <span class="balance-value" id="userWZYSBalance">0 wZYS</span>
-                        </div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label class="form-label">Expected YRS (with 10% bonus)</label>
-                        <div class="input-group">
-                            <input type="text" id="expectedYRS" class="form-input" placeholder="0.0" readonly>
-                            <span class="input-suffix">YRS</span>
-                        </div>
-                    </div>
-                    
-                    <div class="transaction-details" id="buyTransactionDetails" style="display: none;">
-                        <div class="detail-row">
-                            <span class="detail-label">wZYS Amount (wei):</span>
-                            <span class="detail-value" id="buyWZYSWei">-</span>
-                        </div>
-                        <div class="detail-row">
-                            <span class="detail-label">Sent to contract:</span>
-                            <span class="detail-value" id="sentToContract">-</span>
-                        </div>
-                    </div>
-                    
-                    <button id="buyBtn" class="trade-btn buy-btn" disabled>
-                        <i class="fas fa-arrow-down"></i> Buy YRS
-                    </button>
-                </div>
-                
-                <div class="trade-card">
-                    <div class="trade-header">
-                        <div class="trade-title">Sell YRS</div>
-                        <div class="trade-type sell-type">-10% Penalty</div>
-                    </div>
-                    
-                    <div class="info-box">
-                        <div class="info-box-title">
-                            <i class="fas fa-info-circle"></i>
-                            Exchange Rate
-                        </div>
-                        <div>1 YRS = 1 wZYS (contract treats both as same unit)</div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label class="form-label">Amount of YRS to sell</label>
-                        <div class="input-group">
-                            <input type="number" id="sellYRSAmount" class="form-input" placeholder="0.0" min="0" step="0.01">
-                            <span class="input-suffix">YRS</span>
-                        </div>
-                        <div class="balance-info">
-                            <span>Balance:</span>
-                            <span class="balance-value" id="userYRSBalance">0 YRS</span>
-                        </div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label class="form-label">Expected wZYS (with 10% penalty)</label>
-                        <div class="input-group">
-                            <input type="text" id="expectedWZYS" class="form-input" placeholder="0.0" readonly>
-                            <span class="input-suffix">wZYS</span>
-                        </div>
-                    </div>
-                    
-                    <div class="transaction-details" id="sellTransactionDetails" style="display: none;">
-                        <div class="detail-row">
-                            <span class="detail-label">YRS Amount (wei):</span>
-                            <span class="detail-value" id="sellYRSWei">-</span>
-                        </div>
-                        <div class="detail-row">
-                            <span class="detail-label">Sent to contract:</span>
-                            <span class="detail-value" id="sentToContractSell">-</span>
-                        </div>
-                    </div>
-                    
-                    <button id="sellBtn" class="trade-btn sell-btn" disabled>
-                        <i class="fas fa-arrow-up"></i> Sell YRS
-                    </button>
-                </div>
-            </div>
+    
+    <div class="container">
+        <div class="library-error" id="libraryError">
+            <strong>❌ Library Loading Error:</strong> Failed to load the ethers.js library. Please check your internet connection and refresh the page.
         </div>
-    </main>
-
-    <div id="toast" class="toast">
-        <div class="toast-icon">
-            <i class="fas fa-info-circle"></i>
+        
+        <div class="warning-box">
+            <strong>⚠️ Important Security Notice:</strong> This tool runs entirely in your browser. No data is sent to any server. For maximum security, use this tool on an offline computer after disconnecting from the internet. Never share your private key with anyone.
         </div>
-        <div class="toast-message">
-            <div class="toast-title">Notification</div>
-            <div class="toast-text">Message</div>
+        
+        <div class="api-info">
+            <strong>📋 API Usage:</strong> This wallet generator can be used programmatically. The generated wallet data is stored in <code>window.currentWallet</code> object with properties: <code>address</code>, <code>privateKey</code>, and <code>mnemonic</code>.
+        </div>
+        
+        <div class="card">
+            <h2 class="card-title">Generate New Wallet</h2>
+            <button id="generateBtn" class="btn">Generate New Wallet</button>
+            
+            <div id="walletDisplay" class="wallet-display">
+                <div class="tabs">
+                    <div class="tab active" data-tab="details">Wallet Details</div>
+                    <div class="tab" data-tab="paper">Paper Wallet</div>
+                </div>
+                
+                <div id="detailsTab" class="tab-content active">
+                    <div class="wallet-item">
+                        <span class="wallet-label">Public Address:</span>
+                        <div class="wallet-value">
+                            <span id="address"></span>
+                            <button class="copy-btn" data-copy="address">Copy</button>
+                        </div>
+                    </div>
+                    
+                    <div class="wallet-item">
+                        <span class="wallet-label">Private Key:</span>
+                        <div class="wallet-value">
+                            <span id="privateKey"></span>
+                            <button class="copy-btn" data-copy="privateKey">Copy</button>
+                        </div>
+                    </div>
+                    
+                    <div class="wallet-item">
+                        <span class="wallet-label">Mnemonic Phrase (12 words):</span>
+                        <div class="wallet-value">
+                            <span id="mnemonic"></span>
+                            <button class="copy-btn" data-copy="mnemonic">Copy</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="paperTab" class="tab-content">
+                    <div class="paper-wallet">
+                        <div class="paper-wallet-content">
+                            <div class="paper-wallet-header">
+                                <div class="paper-wallet-title">ETHEREUM PAPER WALLET</div>
+                            </div>
+                            
+                            <div class="paper-wallet-grid">
+                                <div class="paper-wallet-section">
+                                    <div class="paper-wallet-section-title">PUBLIC ADDRESS</div>
+                                    <div class="paper-wallet-value" id="paperAddress"></div>
+                                </div>
+                                
+                                <div class="paper-wallet-section">
+                                    <div class="paper-wallet-section-title">PRIVATE KEY</div>
+                                    <div class="paper-wallet-value" id="paperPrivateKey"></div>
+                                </div>
+                            </div>
+                            
+                            <div style="margin-top: 30px;">
+                                <div class="paper-wallet-section-title">MNEMONIC PHRASE</div>
+                                <div class="paper-wallet-value" id="paperMnemonic"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="no-print" style="margin-top: 20px;">
+                        <button id="printBtn" class="btn btn-secondary">Print Paper Wallet</button>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
-
-    <!-- Load ethers.js from a reliable CDN -->
-    <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
     
     <script>
-        // Wait for ethers to load before initializing the app
-        window.addEventListener('load', async () => {
-            // Check if ethers is loaded
+        // Check if ethers library loaded properly
+        window.addEventListener('load', function() {
             if (typeof ethers === 'undefined') {
-                document.getElementById('loadingText').textContent = 'Failed to load ethers.js. Please refresh the page.';
+                document.getElementById('libraryError').style.display = 'block';
+                document.getElementById('generateBtn').disabled = true;
+                document.getElementById('generateBtn').textContent = 'Library Loading Failed';
                 return;
             }
             
-            // Contract configuration - will be loaded from localStorage or set by user
-            let CONTRACT_ADDRESS = localStorage.getItem('contractAddress') || "0xBFc4Cf7B1639AeB0601B217899e2d7C8F123B053";
-            let WZYS_ADDRESS = localStorage.getItem('wZYSAddress') || "0x7Eb81e6a8E1686DE83E232c876ad2bf5E01728a4";
-            let YRS_ADDRESS = localStorage.getItem('YRSAddress') || "0x1e45324f51F82533F3bb324E54a8FBda8eb315E3";
-            
-            // Set the saved values in the input fields
-            document.getElementById('contractAddress').value = CONTRACT_ADDRESS;
-            document.getElementById('wZYSAddress').value = WZYS_ADDRESS;
-            document.getElementById('YRSAddress').value = YRS_ADDRESS;
-            
-            // Complete ABI for the YRSStaking contract
-            const CONTRACT_ABI = [
-                // Public state variables as view functions
-                "function totalWZYSDeposited() view returns (uint256)",
-                "function totalYieldReserveShares() view returns (uint256)",
-                "function wZYS() view returns (address)",
-                "function YRS() view returns (address)",
-                "function getTotals() view returns (uint256 totalWZYSDeposited, uint256 totalYieldReserveShares)",
-                
-                // Contract functions
-                "function buy1(uint256 wZYSAmount)",
-                "function sell1(uint256 YRSAmount)",
-                "function burn(uint256 amount)",
-                "function recoverERC20(address tokenAddress, uint256 amount)",
-                
-                // Events
-                "event TokensBought(address indexed buyer, uint256 wZYSAmount, uint256 YRSAmount)",
-                "event TokensSold(address indexed seller, uint256 YRSAmount, uint256 wZYSAmount)",
-                "event TokensBurned(address indexed burner, uint256 amount)"
-            ];
-            
-            // ERC20 ABI
-            const ERC20_ABI = [
-                "function balanceOf(address) view returns (uint256)",
-                "function allowance(address owner, address spender) view returns (uint256)",
-                "function approve(address spender, uint256 amount) returns (bool)",
-                "function transfer(address to, uint256 amount) returns (bool)",
-                "function transferFrom(address from, address to, uint256 amount) returns (bool)",
-                "function decimals() view returns (uint8)",
-                "function symbol() view returns (string)",
-                "function name() view returns (string)"
-            ];
-            
-            // State variables
-            let provider;
-            let signer;
-            let contract;
-            let wZYSContract;
-            let YRSContract;
-            let userAddress;
-            let isConnected = false;
-            let isConfigured = false;
-            let wZYSDecimals = 12;
-            let YRSDecimals = 12;
-            
-            // DOM elements
-            const connectWalletBtn = document.getElementById('connectWallet');
-            const saveConfigBtn = document.getElementById('saveConfig');
-            const totalWZYSElement = document.getElementById('totalWZYS');
-            const totalYRSElement = document.getElementById('totalYRS');
-            const ratioElement = document.getElementById('ratio');
-            const userWZYSBalanceElement = document.getElementById('userWZYSBalance');
-            const userYRSBalanceElement = document.getElementById('userYRSBalance');
-            const buyWZYSAmountInput = document.getElementById('buyWZYSAmount');
-            const expectedYRSInput = document.getElementById('expectedYRS');
-            const sellYRSAmountInput = document.getElementById('sellYRSAmount');
-            const expectedWZYSInput = document.getElementById('expectedWZYS');
-            const buyBtn = document.getElementById('buyBtn');
-            const sellBtn = document.getElementById('sellBtn');
-            const loadingOverlay = document.getElementById('loadingOverlay');
-            const debugInfo = document.getElementById('debugInfo');
-            const debugContent = document.getElementById('debugContent');
-            
-            // Transaction details elements
-            const buyTransactionDetails = document.getElementById('buyTransactionDetails');
-            const sellTransactionDetails = document.getElementById('sellTransactionDetails');
-            const buyWZYSWeiElement = document.getElementById('buyWZYSWei');
-            const sellYRSWeiElement = document.getElementById('sellYRSWei');
-            const sentToContractElement = document.getElementById('sentToContract');
-            const sentToContractSellElement = document.getElementById('sentToContractSell');
-            
-            // Initialize
-            await checkConnection();
-            setupEventListeners();
-            
-            // Check if contracts are configured
-            checkContractConfiguration();
-            
-            // Hide loading overlay
-            loadingOverlay.style.display = 'none';
-            
-            // Check if wallet is already connected
-            async function checkConnection() {
-                if (window.ethereum) {
-                    try {
-                        const accounts = await window.ethereum.request({ method: 'eth_accounts' });
-                        if (accounts.length > 0) {
-                            await connectWallet();
-                        }
-                    } catch (error) {
-                        console.error('Error checking connection:', error);
-                    }
-                }
-            }
-            
-            // Check if contracts are properly configured
-            function checkContractConfiguration() {
-                if (!CONTRACT_ADDRESS || !WZYS_ADDRESS || !YRS_ADDRESS) {
-                    showToast('warning', 'Configuration Required', 'Please enter the contract addresses to continue');
-                    isConfigured = false;
-                    return;
-                }
-                
-                if (!ethers.utils.isAddress(CONTRACT_ADDRESS) || 
-                    !ethers.utils.isAddress(WZYS_ADDRESS) || 
-                    !ethers.utils.isAddress(YRS_ADDRESS)) {
-                    showToast('error', 'Invalid Addresses', 'One or more contract addresses are invalid');
-                    isConfigured = false;
-                    return;
-                }
-                
-                isConfigured = true;
-                
-                // Initialize contracts if wallet is connected
-                if (isConnected) {
-                    initializeContracts();
-                    updateContractData();
-                    updateUserBalances();
-                }
-            }
-            
-            // Initialize contract instances
-            async function initializeContracts() {
+            // Initialize the app once the library is loaded
+            initializeApp();
+        });
+        
+        function initializeApp() {
+            // Generate a new wallet
+            document.getElementById('generateBtn').addEventListener('click', function() {
                 try {
-                    contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
-                    wZYSContract = new ethers.Contract(WZYS_ADDRESS, ERC20_ABI, signer);
-                    YRSContract = new ethers.Contract(YRS_ADDRESS, ERC20_ABI, signer);
+                    const wallet = ethers.Wallet.createRandom();
                     
-                    // Get actual decimals from contracts
-                    try {
-                        wZYSDecimals = await wZYSContract.decimals();
-                        console.log(`wZYS decimals: ${wZYSDecimals}`);
-                    } catch (e) {
-                        console.log("Could not fetch wZYS decimals, using default 12");
-                        wZYSDecimals = 12;
-                    }
+                    // Store wallet data in global object for API access
+                    window.currentWallet = {
+                        address: wallet.address,
+                        privateKey: wallet.privateKey,
+                        mnemonic: wallet.mnemonic.phrase
+                    };
                     
-                    try {
-                        YRSDecimals = await YRSContract.decimals();
-                        console.log(`YRS decimals: ${YRSDecimals}`);
-                    } catch (e) {
-                        console.log("Could not fetch YRS decimals, using default 12");
-                        YRSDecimals = 12;
-                    }
+                    // Display wallet details
+                    document.getElementById('address').textContent = wallet.address;
+                    document.getElementById('privateKey').textContent = wallet.privateKey;
+                    document.getElementById('mnemonic').textContent = wallet.mnemonic.phrase;
+                    
+                    // Update paper wallet
+                    document.getElementById('paperAddress').textContent = wallet.address;
+                    document.getElementById('paperPrivateKey').textContent = wallet.privateKey;
+                    document.getElementById('paperMnemonic').textContent = wallet.mnemonic.phrase;
+                    
+                    // Show wallet display
+                    document.getElementById('walletDisplay').style.display = 'block';
+                    
+                    // Show success message
+                    showSuccess('New wallet generated successfully!');
+                    
+                    // Log wallet data to console for debugging
+                    console.log('Generated wallet:', window.currentWallet);
+                    
                 } catch (error) {
-                    console.error('Error initializing contracts:', error);
-                    showToast('error', 'Contract Error', 'Failed to initialize contracts');
+                    console.error('Error generating wallet:', error);
+                    showError('Failed to generate wallet: ' + error.message);
                 }
-            }
+            });
             
-            // Setup event listeners
-            function setupEventListeners() {
-                // Use addEventListener with proper event handling for Brave/Chrome compatibility
-                if (connectWalletBtn) {
-                    connectWalletBtn.addEventListener('click', function(e) {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        connectWallet();
-                    }, false);
-                }
-                
-                if (saveConfigBtn) {
-                    saveConfigBtn.addEventListener('click', function(e) {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        saveConfiguration();
-                    }, false);
-                }
-                
-                // Buy form inputs
-                if (buyWZYSAmountInput) {
-                    buyWZYSAmountInput.addEventListener('input', function(e) {
-                        calculateExpectedYRS();
-                        updateBuyTransactionDetails();
-                    }, false);
-                }
-                
-                // Sell form inputs
-                if (sellYRSAmountInput) {
-                    sellYRSAmountInput.addEventListener('input', function(e) {
-                        calculateExpectedWZYS();
-                        updateSellTransactionDetails();
-                    }, false);
-                }
-                
-                // Trade buttons
-                if (buyBtn) {
-                    buyBtn.addEventListener('click', function(e) {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        handleBuy();
-                    }, false);
-                }
-                
-                if (sellBtn) {
-                    sellBtn.addEventListener('click', function(e) {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        handleSell();
-                    }, false);
-                }
-                
-                // Balance click to set max
-                if (userWZYSBalanceElement) {
-                    userWZYSBalanceElement.addEventListener('click', function(e) {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        const balanceText = userWZYSBalanceElement.textContent.split(' ')[0];
-                        const balance = parseFloat(balanceText.replace(/,/g, ''));
-                        buyWZYSAmountInput.value = balance;
-                        calculateExpectedYRS();
-                        updateBuyTransactionDetails();
-                    }, false);
-                }
-                
-                if (userYRSBalanceElement) {
-                    userYRSBalanceElement.addEventListener('click', function(e) {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        const balanceText = userYRSBalanceElement.textContent.split(' ')[0];
-                        const balance = parseFloat(balanceText.replace(/,/g, ''));
-                        sellYRSAmountInput.value = balance;
-                        calculateExpectedWZYS();
-                        updateSellTransactionDetails();
-                    }, false);
-                }
-                
-                // Handle account changes
-                if (window.ethereum) {
-                    window.ethereum.on('accountsChanged', function(accounts) {
-                        if (accounts.length === 0) {
-                            disconnectWallet();
-                        } else {
-                            connectWallet();
-                        }
+            // Tab switching
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.addEventListener('click', function() {
+                    // Remove active class from all tabs and contents
+                    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                    
+                    // Add active class to clicked tab and corresponding content
+                    this.classList.add('active');
+                    const tabId = this.getAttribute('data-tab');
+                    document.getElementById(tabId + 'Tab').classList.add('active');
+                });
+            });
+            
+            // Copy to clipboard functionality
+            document.querySelectorAll('.copy-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const copyId = this.getAttribute('data-copy');
+                    const textToCopy = document.getElementById(copyId).textContent;
+                    
+                    navigator.clipboard.writeText(textToCopy).then(() => {
+                        const originalText = this.textContent;
+                        this.textContent = 'Copied!';
+                        setTimeout(() => {
+                            this.textContent = originalText;
+                        }, 2000);
+                    }).catch(err => {
+                        console.error('Failed to copy: ', err);
                     });
-                    
-                    window.ethereum.on('chainChanged', function() {
-                        window.location.reload();
-                    });
-                }
-            }
+                });
+            });
             
-            // Save contract configuration
-            function saveConfiguration() {
-                CONTRACT_ADDRESS = document.getElementById('contractAddress').value;
-                WZYS_ADDRESS = document.getElementById('wZYSAddress').value;
-                YRS_ADDRESS = document.getElementById('YRSAddress').value;
-                
-                if (!CONTRACT_ADDRESS || !WZYS_ADDRESS || !YRS_ADDRESS) {
-                    showToast('error', 'Missing Addresses', 'Please enter all contract addresses');
-                    return;
-                }
-                
-                if (!ethers.utils.isAddress(CONTRACT_ADDRESS) || 
-                    !ethers.utils.isAddress(WZYS_ADDRESS) || 
-                    !ethers.utils.isAddress(YRS_ADDRESS)) {
-                    showToast('error', 'Invalid Addresses', 'One or more contract addresses are invalid');
-                    return;
-                }
-                
-                // Save to localStorage
-                localStorage.setItem('contractAddress', CONTRACT_ADDRESS);
-                localStorage.setItem('wZYSAddress', WZYS_ADDRESS);
-                localStorage.setItem('YRSAddress', YRS_ADDRESS);
-                
-                // Check configuration and initialize contracts if needed
-                checkContractConfiguration();
-                
-                showToast('success', 'Configuration Saved', 'Contract addresses have been saved');
-            }
+            // Print paper wallet
+            document.getElementById('printBtn').addEventListener('click', function() {
+                window.print();
+            });
             
-            // Connect wallet
-            async function connectWallet() {
-                if (!window.ethereum) {
-                    showToast('error', 'Wallet Not Found', 'Please install MetaMask');
-                    return;
-                }
-                
-                try {
-                    // Check if we're on the correct network (Sepolia)
-                    const chainId = await window.ethereum.request({ method: 'eth_chainId' });
-                    if (chainId !== '0xaa36a7') { // Sepolia testnet chain ID
-                        showToast('error', 'Wrong Network', 'Please switch to Sepolia Testnet');
-                        try {
-                            await window.ethereum.request({
-                                method: 'wallet_switchEthereumChain',
-                                params: [{ chainId: '0xaa36a7' }],
-                            });
-                        } catch (switchError) {
-                            // This error code indicates that the chain has not been added to MetaMask
-                            if (switchError.code === 4902) {
-                                showToast('error', 'Network Not Found', 'Sepolia Testnet is not added to your wallet');
-                            }
-                        }
-                        return;
-                    }
-                    
-                    // Request account access
-                    await window.ethereum.request({ method: 'eth_requestAccounts' });
-                    
-                    // Create provider and signer
-                    provider = new ethers.providers.Web3Provider(window.ethereum);
-                    signer = provider.getSigner();
-                    userAddress = await signer.getAddress();
-                    
-                    // Update UI
-                    isConnected = true;
-                    connectWalletBtn.innerHTML = `<i class="fas fa-check-circle"></i> ${userAddress.substring(0, 6)}...${userAddress.substring(userAddress.length - 4)}`;
-                    connectWalletBtn.classList.add('connected');
-                    
-                    // Initialize contracts if configured
-                    if (isConfigured) {
-                        await initializeContracts();
-                        updateContractData();
-                        updateUserBalances();
-                        
-                        // Enable trade buttons
-                        buyBtn.disabled = false;
-                        sellBtn.disabled = false;
-                    }
-                    
-                    showToast('success', 'Wallet Connected', 'Your wallet has been connected successfully');
-                } catch (error) {
-                    console.error('Error connecting wallet:', error);
-                    showToast('error', 'Connection Failed', 'Failed to connect to your wallet');
-                }
-            }
-            
-            // Disconnect wallet
-            function disconnectWallet() {
-                isConnected = false;
-                connectWalletBtn.innerHTML = '<i class="fas fa-wallet"></i> Connect Wallet';
-                connectWalletBtn.classList.remove('connected');
-                buyBtn.disabled = true;
-                sellBtn.disabled = true;
-                
-                // Reset values
-                totalWZYSElement.textContent = '-';
-                totalYRSElement.textContent = '-';
-                ratioElement.textContent = '-';
-                userWZYSBalanceElement.textContent = '0 wZYS';
-                userYRSBalanceElement.textContent = '0 YRS';
-                
-                // Hide transaction details
-                buyTransactionDetails.style.display = 'none';
-                sellTransactionDetails.style.display = 'none';
-                
-                // Hide debug info
-                debugInfo.style.display = 'none';
-                
-                showToast('info', 'Wallet Disconnected', 'Your wallet has been disconnected');
-            }
-            
-            // Update contract data
-            async function updateContractData() {
-                if (!isConnected || !isConfigured || !contract) return;
-                
-                try {
-                    // Get contract data using getTotals function
-                    console.log('Calling getTotals()...');
-                    const totals = await contract.getTotals();
-                    console.log('getTotals() result:', totals);
-                    
-                    const totalWZYS = totals.totalWZYSDeposited;
-                    const totalYRS = totals.totalYieldReserveShares;
-                    
-                    // Update debug info
-                    debugContent.innerHTML = `
-                        <div>Contract Address: ${CONTRACT_ADDRESS}</div>
-                        <div>Total WZYS (raw): ${totalWZYS.toString()}</div>
-                        <div>Total YRS (raw): ${totalYRS.toString()}</div>
-                        <div>WZYS Decimals: ${wZYSDecimals}</div>
-                        <div>YRS Decimals: ${YRSDecimals}</div>
-                    `;
-                    debugInfo.style.display = 'block';
-                    
-                    // Format and display with correct decimals
-                    const formattedWZYS = ethers.utils.formatUnits(totalWZYS, wZYSDecimals);
-                    const formattedYRS = ethers.utils.formatUnits(totalYRS, YRSDecimals);
-                    
-                    console.log('Formatted WZYS:', formattedWZYS);
-                    console.log('Formatted YRS:', formattedYRS);
-                    
-                    totalWZYSElement.textContent = parseFloat(formattedWZYS).toLocaleString();
-                    totalYRSElement.textContent = parseFloat(formattedYRS).toLocaleString();
-                    
-                    // Calculate and display ratio
-                    const ratio = parseFloat(formattedWZYS) / parseFloat(formattedYRS);
-                    ratioElement.textContent = isNaN(ratio) || !isFinite(ratio) ? '0' : ratio.toFixed(4);
-                } catch (error) {
-                    console.error('Error updating contract data:', error);
-                    
-                    // Update debug info with error
-                    debugContent.innerHTML = `
-                        <div>Error: ${error.message}</div>
-                        <div>Contract Address: ${CONTRACT_ADDRESS}</div>
-                    `;
-                    debugInfo.style.display = 'block';
-                    
-                    showToast('error', 'Contract Error', 'Failed to fetch contract data. Check contract address.');
-                }
-            }
-            
-            // Update user balances
-            async function updateUserBalances() {
-                if (!isConnected || !isConfigured || !wZYSContract || !YRSContract) return;
-                
-                try {
-                    // Get user balances
-                    const wZYSBalance = await wZYSContract.balanceOf(userAddress);
-                    const YRSBalance = await YRSContract.balanceOf(userAddress);
-                    
-                    // Get token symbols
-                    let wZYSSymbol = "wZYS";
-                    let YRSSymbol = "YRS";
-                    
-                    try {
-                        wZYSSymbol = await wZYSContract.symbol();
-                    } catch (e) {
-                        console.log("Could not fetch wZYS symbol");
-                    }
-                    
-                    try {
-                        YRSSymbol = await YRSContract.symbol();
-                    } catch (e) {
-                        console.log("Could not fetch YRS symbol");
-                    }
-                    
-                    // Format and display with correct decimals
-                    const formattedWZYS = ethers.utils.formatUnits(wZYSBalance, wZYSDecimals);
-                    const formattedYRS = ethers.utils.formatUnits(YRSBalance, YRSDecimals);
-                    
-                    userWZYSBalanceElement.textContent = `${parseFloat(formattedWZYS).toLocaleString()} ${wZYSSymbol}`;
-                    userYRSBalanceElement.textContent = `${parseFloat(formattedYRS).toLocaleString()} ${YRSSymbol}`;
-                } catch (error) {
-                    console.error('Error updating user balances:', error);
-                    showToast('error', 'Balance Error', 'Failed to fetch token balances. Check token addresses.');
-                }
-            }
-            
-            // Calculate expected YRS with bonus
-            function calculateExpectedYRS() {
-                const wZYSAmount = parseFloat(buyWZYSAmountInput.value) || 0;
-                // Contract treats both as same unit, so 1 wZYS = 1 YRS
-                const expectedYRS = wZYSAmount * 1.1; // 10% bonus
-                expectedYRSInput.value = expectedYRS.toFixed(6);
-            }
-            
-            // Calculate expected wZYS with penalty
-            function calculateExpectedWZYS() {
-                const YRSAmount = parseFloat(sellYRSAmountInput.value) || 0;
-                // Contract treats both as same unit, so 1 YRS = 1 wZYS
-                const expectedWZYS = YRSAmount * 0.9; // 10% penalty
-                expectedWZYSInput.value = expectedWZYS.toFixed(6);
-            }
-            
-            // Update buy transaction details
-            function updateBuyTransactionDetails() {
-                const wZYSAmount = parseFloat(buyWZYSAmountInput.value) || 0;
-                
-                if (wZYSAmount > 0) {
-                    buyTransactionDetails.style.display = 'block';
-                    
-                    // Convert to wei with correct decimals
-                    const wZYSAmountWei = ethers.utils.parseUnits(wZYSAmount.toString(), wZYSDecimals);
-                    
-                    // Display wei values
-                    buyWZYSWeiElement.textContent = wZYSAmountWei.toString();
-                    sentToContractElement.textContent = `wZYS: ${wZYSAmountWei.toString()}`;
-                } else {
-                    buyTransactionDetails.style.display = 'none';
-                }
-            }
-            
-            // Update sell transaction details
-            function updateSellTransactionDetails() {
-                const YRSAmount = parseFloat(sellYRSAmountInput.value) || 0;
-                
-                if (YRSAmount > 0) {
-                    sellTransactionDetails.style.display = 'block';
-                    
-                    // Convert to wei with correct decimals
-                    const YRSAmountWei = ethers.utils.parseUnits(YRSAmount.toString(), YRSDecimals);
-                    
-                    // Display wei values
-                    sellYRSWeiElement.textContent = YRSAmountWei.toString();
-                    sentToContractSellElement.textContent = `YRS: ${YRSAmountWei.toString()}`;
-                } else {
-                    sellTransactionDetails.style.display = 'none';
-                }
-            }
-            
-            // Handle buy transaction
-            async function handleBuy() {
-                if (!isConnected || !isConfigured) {
-                    showToast('error', 'Not Ready', 'Please connect wallet and configure contracts');
-                    return;
-                }
-                
-                const wZYSAmount = buyWZYSAmountInput.value;
-                
-                if (!wZYSAmount || parseFloat(wZYSAmount) <= 0) {
-                    showToast('error', 'Invalid Amount', 'Please enter a valid wZYS amount');
-                    return;
-                }
-                
-                try {
-                    // Show loading state
-                    buyBtn.disabled = true;
-                    buyBtn.innerHTML = '<span class="spinner"></span> Processing...';
-                    
-                    // Convert to wei with correct decimals
-                    const wZYSAmountWei = ethers.utils.parseUnits(wZYSAmount, wZYSDecimals);
-                    
-                    // Check allowance
-                    const allowance = await wZYSContract.allowance(userAddress, CONTRACT_ADDRESS);
-                    if (allowance.lt(wZYSAmountWei)) {
-                        // Approve first
-                        const approveTx = await wZYSContract.approve(CONTRACT_ADDRESS, wZYSAmountWei);
-                        await approveTx.wait();
-                        showToast('info', 'Approval Confirmed', 'Transaction approved. Proceeding with purchase...');
-                    }
-                    
-                    // Execute buy transaction
-                    const tx = await contract.buy1(wZYSAmountWei);
-                    await tx.wait();
-                    
-                    // Update UI
-                    updateContractData();
-                    updateUserBalances();
-                    
-                    // Reset form
-                    buyWZYSAmountInput.value = '';
-                    expectedYRSInput.value = '';
-                    buyTransactionDetails.style.display = 'none';
-                    
-                    showToast('success', 'Purchase Successful', `You bought ${expectedYRSInput.value} YRS tokens`);
-                } catch (error) {
-                    console.error('Error buying tokens:', error);
-                    let errorMessage = 'Failed to buy YRS tokens';
-                    
-                    // Try to extract a more specific error message
-                    if (error.data && error.data.message) {
-                        errorMessage = error.data.message;
-                    } else if (error.message) {
-                        errorMessage = error.message;
-                    }
-                    
-                    // Check for specific error cases
-                    if (errorMessage.includes('Insufficient YRS output')) {
-                        errorMessage = 'Insufficient YRS output. The contract does not have enough YRS tokens for this transaction.';
-                    } else if (errorMessage.includes('Insufficient YRS in reserve')) {
-                        errorMessage = 'Insufficient YRS in reserve. The contract does not have enough YRS tokens.';
-                    } else if (errorMessage.includes('insufficient funds')) {
-                        errorMessage = 'Insufficient funds. You do not have enough wZYS tokens.';
-                    }
-                    
-                    showToast('error', 'Transaction Failed', errorMessage);
-                } finally {
-                    // Reset button state
-                    buyBtn.disabled = false;
-                    buyBtn.innerHTML = '<i class="fas fa-arrow-down"></i> Buy YRS';
-                }
-            }
-            
-            // Handle sell transaction
-            async function handleSell() {
-                if (!isConnected || !isConfigured) {
-                    showToast('error', 'Not Ready', 'Please connect wallet and configure contracts');
-                    return;
-                }
-                
-                const YRSAmount = sellYRSAmountInput.value;
-                
-                if (!YRSAmount || parseFloat(YRSAmount) <= 0) {
-                    showToast('error', 'Invalid Amount', 'Please enter a valid YRS amount');
-                    return;
-                }
-                
-                try {
-                    // Show loading state
-                    sellBtn.disabled = true;
-                    sellBtn.innerHTML = '<span class="spinner"></span> Processing...';
-                    
-                    // Convert to wei with correct decimals
-                    const YRSAmountWei = ethers.utils.parseUnits(YRSAmount, YRSDecimals);
-                    
-                    // Check allowance
-                    const allowance = await YRSContract.allowance(userAddress, CONTRACT_ADDRESS);
-                    if (allowance.lt(YRSAmountWei)) {
-                        // Approve first
-                        const approveTx = await YRSContract.approve(CONTRACT_ADDRESS, YRSAmountWei);
-                        await approveTx.wait();
-                        showToast('info', 'Approval Confirmed', 'Transaction approved. Proceeding with sale...');
-                    }
-                    
-                    // Execute sell transaction
-                    const tx = await contract.sell1(YRSAmountWei);
-                    await tx.wait();
-                    
-                    // Update UI
-                    updateContractData();
-                    updateUserBalances();
-                    
-                    // Reset form
-                    sellYRSAmountInput.value = '';
-                    expectedWZYSInput.value = '';
-                    sellTransactionDetails.style.display = 'none';
-                    
-                    showToast('success', 'Sale Successful', `You sold ${YRSAmount} YRS tokens`);
-                } catch (error) {
-                    console.error('Error selling tokens:', error);
-                    let errorMessage = 'Failed to sell YRS tokens';
-                    
-                    // Try to extract a more specific error message
-                    if (error.data && error.data.message) {
-                        errorMessage = error.data.message;
-                    } else if (error.message) {
-                        errorMessage = error.message;
-                    }
-                    
-                    // Check for specific error cases
-                    if (errorMessage.includes('Insufficient wZYS output')) {
-                        errorMessage = 'Insufficient wZYS output. The contract does not have enough wZYS tokens for this transaction.';
-                    } else if (errorMessage.includes('Insufficient wZYS in reserve')) {
-                        errorMessage = 'Insufficient wZYS in reserve. The contract does not have enough wZYS tokens.';
-                    } else if (errorMessage.includes('Insufficient YRS balance')) {
-                        errorMessage = 'Insufficient YRS balance. You do not have enough YRS tokens.';
-                    }
-                    
-                    showToast('error', 'Transaction Failed', errorMessage);
-                } finally {
-                    // Reset button state
-                    sellBtn.disabled = false;
-                    sellBtn.innerHTML = '<i class="fas fa-arrow-up"></i> Sell YRS';
-                }
-            }
-            
-            // Show toast notification
-            function showToast(type, title, message) {
-                const toast = document.getElementById('toast');
-                const toastIcon = toast.querySelector('.toast-icon i');
-                const toastTitle = toast.querySelector('.toast-title');
-                const toastText = toast.querySelector('.toast-text');
-                
-                // Set toast type
-                toast.className = `toast ${type}`;
-                
-                // Set icon based on type
-                if (type === 'success') {
-                    toastIcon.className = 'fas fa-check-circle';
-                } else if (type === 'error') {
-                    toastIcon.className = 'fas fa-exclamation-circle';
-                } else if (type === 'warning') {
-                    toastIcon.className = 'fas fa-exclamation-triangle';
-                } else {
-                    toastIcon.className = 'fas fa-info-circle';
-                }
-                
-                // Set content
-                toastTitle.textContent = title;
-                toastText.textContent = message;
-                
-                // Show toast
-                toast.classList.add('show');
+            // Helper functions
+            function showSuccess(message) {
+                document.getElementById('successMessage').textContent = message;
+                document.getElementById('successBox').style.display = 'block';
+                document.getElementById('errorBox').style.display = 'none';
                 
                 // Hide after 5 seconds
                 setTimeout(() => {
-                    toast.classList.remove('show');
+                    document.getElementById('successBox').style.display = 'none';
                 }, 5000);
             }
             
-            // Auto-refresh data every 30 seconds
-            setInterval(() => {
-                if (isConnected && isConfigured) {
-                    updateContractData();
-                    updateUserBalances();
-                }
-            }, 30000);
-        });
+            function showError(message) {
+                document.getElementById('errorMessage').textContent = message;
+                document.getElementById('errorBox').style.display = 'block';
+                document.getElementById('successBox').style.display = 'none';
+                
+                // Hide after 5 seconds
+                setTimeout(() => {
+                    document.getElementById('errorBox').style.display = 'none';
+                }, 5000);
+            }
+        }
     </script>
 </body>
 </html>
